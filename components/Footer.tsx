@@ -120,7 +120,7 @@ export default function Footer() {
         }}>
           <p style={{ fontSize: 13, color: 'var(--text-hint)' }}>
             © {year} ClearRent. A product of{' '}
-            <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Verealty Technology Ltd.</span>
+            <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Verealty Technologies Ltd.</span>
           </p>
           <div style={{ display: 'flex', gap: 20 }}>
             {['Privacy Policy', 'Terms of Service'].map(item => (

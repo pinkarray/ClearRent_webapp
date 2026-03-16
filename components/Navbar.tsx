@@ -26,6 +26,7 @@ export default function Navbar() {
     { label: 'How It Works', href: '#how-it-works' },
     { label: 'For Landlords', href: '#landlords' },
     { label: 'For Tenants', href: '#tenants' },
+    { label: 'For Agents', href: '#agents' },
     { label: 'Pricing', href: '#pricing' },
   ]
 

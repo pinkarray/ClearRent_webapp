@@ -26,133 +26,127 @@ export default function Footer() {
         <div className="container">
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: 40,
-            marginBottom: 48,
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: 36,
+            marginBottom: 40,
           }}>
             {/* Brand */}
-            <div>
+            <div style={{ gridColumn: 'span 1' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
                 <div style={{
-                  width: 36, height: 36,
+                  width: 34, height: 34,
                   background: 'var(--primary)',
                   borderRadius: 10,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0,
                 }}>
-                  <span style={{ color: 'white', fontWeight: 800, fontSize: 16 }}>C</span>
+                  <span style={{ color: 'white', fontWeight: 800, fontSize: 15 }}>C</span>
                 </div>
-                <span style={{ fontWeight: 700, fontSize: 18, color: 'var(--text-primary)' }}>
+                <span style={{ fontWeight: 700, fontSize: 17, color: 'var(--text-primary)' }}>
                   Clear<span style={{ color: 'var(--primary)' }}>Rent</span>
                 </span>
               </div>
-              <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7, maxWidth: 240 }}>
+              <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7, maxWidth: 220 }}>
                 Nigeria's verification-first rental platform. Rent without regret.
               </p>
               <p style={{ fontSize: 12, color: 'var(--text-hint)', marginTop: 8 }}>
                 A product of Verealty Technologies Ltd. 🇳🇬
               </p>
-              <p style={{ fontSize: 12, color: 'var(--text-hint)', marginTop: 4 }}>
+              <p style={{ fontSize: 12, color: 'var(--text-hint)', marginTop: 2 }}>
                 Lagos, Nigeria
               </p>
             </div>
 
             {/* Platform */}
             <div>
-              <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)', marginBottom: 16, letterSpacing: '0.05em' }}>
+              <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--text-primary)', marginBottom: 14, letterSpacing: '0.06em' }}>
                 PLATFORM
               </div>
-              {['How It Works', 'For Tenants', 'For Landlords', 'For Agents', 'Pricing'].map(item => (
-                <div key={item} style={{ marginBottom: 10 }}>
-                  <a href="#" style={{ fontSize: 14, color: 'var(--text-secondary)', textDecoration: 'none', transition: 'color 0.2s' }}
+              {[
+                { label: 'How It Works', href: '#how-it-works' },
+                { label: 'For Tenants', href: '#how-it-works' },
+                { label: 'For Landlords', href: '#how-it-works' },
+                { label: 'For Agents', href: '#agents' },
+                { label: 'Pricing', href: '#pricing' },
+              ].map(item => (
+                <div key={item.label} style={{ marginBottom: 9 }}>
+                  <a href={item.href} style={{ fontSize: 13, color: 'var(--text-secondary)', textDecoration: 'none', transition: 'color 0.2s' }}
                     onMouseEnter={e => (e.currentTarget.style.color = 'var(--primary)')}
                     onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-secondary)')}>
-                    {item}
+                    {item.label}
                   </a>
                 </div>
               ))}
             </div>
 
-            {/* Company */}
+            {/* Legal */}
             <div>
-              <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)', marginBottom: 16, letterSpacing: '0.05em' }}>
-                COMPANY
+              <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--text-primary)', marginBottom: 14, letterSpacing: '0.06em' }}>
+                LEGAL
               </div>
-              {['About Us', 'Blog', 'Careers', 'Press'].map(item => (
-                <div key={item} style={{ marginBottom: 10 }}>
-                  <a href="#" style={{ fontSize: 14, color: 'var(--text-secondary)', textDecoration: 'none', transition: 'color 0.2s' }}
+              {legalLinks.map(link => (
+                <div key={link.label} style={{ marginBottom: 9 }}>
+                  <button
+                    onClick={() => setOpenModal(link.modal)}
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      fontSize: 13, color: 'var(--text-secondary)', padding: 0,
+                      fontFamily: 'Outfit', transition: 'color 0.2s',
+                      textAlign: 'left',
+                    }}
                     onMouseEnter={e => (e.currentTarget.style.color = 'var(--primary)')}
-                    onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-secondary)')}>
-                    {item}
-                  </a>
+                    onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-secondary)')}
+                  >
+                    {link.label}
+                  </button>
                 </div>
               ))}
             </div>
 
             {/* Contact */}
             <div>
-              <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)', marginBottom: 16, letterSpacing: '0.05em' }}>
+              <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--text-primary)', marginBottom: 14, letterSpacing: '0.06em' }}>
                 CONTACT
               </div>
               <a href="mailto:info@verealtytech.com" style={{
-                fontSize: 14,
+                fontSize: 13,
                 color: 'var(--primary)',
                 textDecoration: 'none',
-                fontWeight: 500,
+                fontWeight: 600,
                 display: 'block',
-                marginBottom: 10,
+                marginBottom: 6,
+                wordBreak: 'break-all',
               }}>
                 info@verealtytech.com
               </a>
               <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
-                Mon – Fri, 9am – 6pm WAT
+                Mon – Fri<br />9am – 6pm WAT
               </p>
-              <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
-                {['𝕏', 'in', 'ig'].map(s => (
-                  <div key={s} style={{
-                    width: 36, height: 36,
-                    background: 'var(--surface-secondary)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 8,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 13, fontWeight: 700,
-                    color: 'var(--text-secondary)',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                  }}>
-                    {s}
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
 
           {/* Bottom bar */}
           <div style={{
             borderTop: '1px solid var(--divider)',
-            paddingTop: 24,
+            paddingTop: 20,
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             flexWrap: 'wrap',
             gap: 12,
           }}>
-            <p style={{ fontSize: 13, color: 'var(--text-hint)' }}>
+            <p style={{ fontSize: 12, color: 'var(--text-hint)' }}>
               © {year} ClearRent · Verealty Technologies Ltd. All rights reserved.
             </p>
-            <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               {legalLinks.map(link => (
                 <button
                   key={link.label}
                   onClick={() => setOpenModal(link.modal)}
                   style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: 13,
-                    color: 'var(--text-hint)',
-                    padding: 0,
-                    fontFamily: 'Outfit',
-                    transition: 'color 0.2s',
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    fontSize: 12, color: 'var(--text-hint)', padding: 0,
+                    fontFamily: 'Outfit', transition: 'color 0.2s',
                   }}
                   onMouseEnter={e => (e.currentTarget.style.color = 'var(--primary)')}
                   onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-hint)')}
@@ -165,28 +159,13 @@ export default function Footer() {
         </div>
       </footer>
 
-      {/* Legal Modals */}
-      <LegalModal
-        isOpen={openModal === 'privacy'}
-        onClose={() => setOpenModal(null)}
-        title="Privacy Policy"
-      >
+      <LegalModal isOpen={openModal === 'privacy'} onClose={() => setOpenModal(null)} title="Privacy Policy">
         <PrivacyPolicyContent />
       </LegalModal>
-
-      <LegalModal
-        isOpen={openModal === 'terms'}
-        onClose={() => setOpenModal(null)}
-        title="Terms & Conditions"
-      >
+      <LegalModal isOpen={openModal === 'terms'} onClose={() => setOpenModal(null)} title="Terms & Conditions">
         <TermsContent />
       </LegalModal>
-
-      <LegalModal
-        isOpen={openModal === 'cookies'}
-        onClose={() => setOpenModal(null)}
-        title="Cookie Policy"
-      >
+      <LegalModal isOpen={openModal === 'cookies'} onClose={() => setOpenModal(null)} title="Cookie Policy">
         <CookiePolicyContent />
       </LegalModal>
     </>

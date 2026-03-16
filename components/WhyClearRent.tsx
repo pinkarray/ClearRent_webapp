@@ -85,7 +85,7 @@ export default function WhyClearRent() {
 
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))',
             gap: 24,
           }}>
             {features.map((f, i) => (
@@ -119,7 +119,7 @@ export default function WhyClearRent() {
         <div className="container">
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(440px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(440px, 100%), 1fr))',
             gap: 64,
             alignItems: 'center',
           }}>

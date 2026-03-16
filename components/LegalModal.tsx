@@ -11,18 +11,12 @@ interface LegalModalProps {
 
 export default function LegalModal({ isOpen, onClose, title, children }: LegalModalProps) {
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
+    document.body.style.overflow = isOpen ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
   }, [isOpen])
 
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [onClose])
@@ -33,15 +27,12 @@ export default function LegalModal({ isOpen, onClose, title, children }: LegalMo
     <div
       onClick={onClose}
       style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 1000,
+        position: 'fixed', inset: 0, zIndex: 1000,
         background: 'rgba(0,0,0,0.6)',
         backdropFilter: 'blur(4px)',
         display: 'flex',
         alignItems: 'flex-end',
         justifyContent: 'center',
-        padding: '0',
         animation: 'fadeIn 0.2s ease',
       }}
     >
@@ -49,36 +40,33 @@ export default function LegalModal({ isOpen, onClose, title, children }: LegalMo
         onClick={e => e.stopPropagation()}
         style={{
           background: 'var(--surface)',
-          borderRadius: '24px 24px 0 0',
+          borderRadius: '20px 20px 0 0',
           width: '100%',
           maxWidth: 760,
-          maxHeight: '90vh',
+          maxHeight: '92vh',
           display: 'flex',
           flexDirection: 'column',
           boxShadow: '0 -8px 40px rgba(0,0,0,0.2)',
           animation: 'slideUp 0.3s ease',
         }}
       >
+        {/* Drag handle */}
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 0' }}>
+          <div style={{ width: 40, height: 4, borderRadius: 2, background: 'var(--border)' }} />
+        </div>
+
         {/* Header */}
         <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '24px 28px 20px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '16px 24px 16px',
           borderBottom: '1px solid var(--border)',
           flexShrink: 0,
         }}>
           <div>
-            <h2 style={{
-              fontFamily: 'Outfit',
-              fontWeight: 800,
-              fontSize: 20,
-              color: 'var(--text-primary)',
-              margin: 0,
-            }}>
+            <h2 style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: 18, color: 'var(--text-primary)', margin: 0 }}>
               {title}
             </h2>
-            <p style={{ fontSize: 12, color: 'var(--text-hint)', margin: '4px 0 0' }}>
+            <p style={{ fontSize: 11, color: 'var(--text-hint)', margin: '3px 0 0' }}>
               Verealty Technologies Ltd. · Last updated March 2026
             </p>
           </div>
@@ -87,14 +75,14 @@ export default function LegalModal({ isOpen, onClose, title, children }: LegalMo
             style={{
               background: 'var(--surface-secondary)',
               border: '1px solid var(--border)',
-              borderRadius: 10,
-              width: 36, height: 36,
+              borderRadius: 8,
+              width: 34, height: 34,
               cursor: 'pointer',
-              fontSize: 18,
+              fontSize: 16,
               color: 'var(--text-secondary)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               flexShrink: 0,
-              transition: 'all 0.2s',
+              marginLeft: 12,
             }}
           >
             ✕
@@ -102,27 +90,19 @@ export default function LegalModal({ isOpen, onClose, title, children }: LegalMo
         </div>
 
         {/* Scrollable content */}
-        <div style={{
-          overflowY: 'auto',
-          padding: '28px',
-          flex: 1,
-        }}>
+        <div style={{ overflowY: 'auto', padding: '24px', flex: 1, WebkitOverflowScrolling: 'touch' }}>
           {children}
         </div>
 
         {/* Footer */}
         <div style={{
-          padding: '16px 28px',
+          padding: '16px 24px',
           borderTop: '1px solid var(--border)',
           flexShrink: 0,
-          display: 'flex',
-          justifyContent: 'flex-end',
+          display: 'flex', justifyContent: 'flex-end',
+          paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
         }}>
-          <button
-            onClick={onClose}
-            className="btn-primary"
-            style={{ padding: '10px 28px', fontSize: 14 }}
-          >
+          <button onClick={onClose} className="btn-primary" style={{ padding: '10px 28px', fontSize: 14 }}>
             I Understand
           </button>
         </div>

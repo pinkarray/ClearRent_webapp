@@ -6,11 +6,12 @@ const plans = [
     label: 'Tenant',
     icon: '🏡',
     price: '₦5,000',
-    period: 'one-time',
-    description: 'Everything you need to find and secure a verified property.',
+    period: 'to get verified',
+    renewal: '₦3,000/year to stay active',
+    description: 'Find and secure a verified property with confidence.',
     features: [
       'NIN identity verification',
-      'Access to all verified listings',
+      'Access all verified listings',
       'Direct landlord messaging',
       'Inspection booking system',
       'Tenancy agreement access',
@@ -24,14 +25,15 @@ const plans = [
     label: 'Landlord',
     icon: '🏠',
     price: '₦15,000',
-    period: 'one-time verification',
+    period: 'to get verified',
+    renewal: '₦8,000/year to stay active',
     description: 'List your property and connect with serious, verified tenants.',
     features: [
-      'NIN + property document verification',
-      'Property listing (first free)',
+      'NIN + ownership document verification',
+      'First property listing free',
       'Additional listings at flat fee',
       'Verified tenant pool access',
-      'Inspection management',
+      'Inspection management tools',
       'Direct tenant communication',
     ],
     cta: 'List Your Property',
@@ -42,13 +44,14 @@ const plans = [
     label: 'Agent',
     icon: '👔',
     price: '₦10,000',
-    period: 'one-time',
-    description: 'Earn commission on inspections with full platform support.',
+    period: 'to get verified',
+    renewal: '₦5,000/year to stay active',
+    description: 'Earn on inspections with full platform support.',
     features: [
       'Full identity + guarantor verification',
       'Property discovery dashboard',
       'Inspection assignment system',
-      'Commission paid via platform',
+      'Earnings paid via platform',
       'Tenant discovery & matching',
       'Verified agent badge',
     ],
@@ -74,10 +77,10 @@ export default function Pricing() {
             marginBottom: 16,
             letterSpacing: '-0.02em',
           }}>
-            Pay once. Access everything.
+            Get verified. Start renting.
           </h2>
-          <p style={{ fontSize: 17, color: 'var(--text-secondary)', maxWidth: 480, margin: '0 auto', lineHeight: 1.7 }}>
-            Verification is a one-time fee. No subscriptions, no hidden charges, no commissions on your rent.
+          <p style={{ fontSize: 17, color: 'var(--text-secondary)', maxWidth: 520, margin: '0 auto', lineHeight: 1.7 }}>
+            One-time verification to get on the platform. A small annual fee to stay active. No hidden charges, no commissions on your rent.
           </p>
         </div>
 
@@ -131,9 +134,17 @@ export default function Pricing() {
               }}>
                 {plan.label.toUpperCase()}
               </div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 4 }}>
                 <span style={{ fontFamily: 'Outfit', fontWeight: 800, fontSize: 36 }}>{plan.price}</span>
                 <span style={{ fontSize: 13, opacity: 0.7 }}>{plan.period}</span>
+              </div>
+              <div style={{
+                fontSize: 13,
+                opacity: 0.6,
+                marginBottom: 12,
+                fontWeight: 500,
+              }}>
+                then {plan.renewal}
               </div>
               <p style={{
                 fontSize: 14,

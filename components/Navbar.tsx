@@ -60,9 +60,14 @@ export default function Navbar() {
           }}>
             <span style={{ color: 'white', fontWeight: 800, fontSize: 15 }}>C</span>
           </div>
-          <span style={{ fontWeight: 700, fontSize: 17, color: 'var(--text-primary)', fontFamily: 'Outfit' }}>
-            Clear<span style={{ color: 'var(--primary)' }}>Rent</span>
-          </span>
+          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
+            <span style={{ fontWeight: 700, fontSize: 17, color: 'var(--text-primary)', fontFamily: 'Outfit' }}>
+              Clear<span style={{ color: 'var(--primary)' }}>Rent</span>
+            </span>
+            <span style={{ fontSize: 9, color: 'var(--text-hint)', fontWeight: 500, letterSpacing: '0.02em' }}>
+              by Verealty Technologies
+            </span>
+          </div>
         </a>
 
         {/* Desktop nav */}

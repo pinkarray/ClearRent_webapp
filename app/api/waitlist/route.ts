@@ -13,6 +13,80 @@ function getAdminApp() {
   })
 }
 
+/** Send a notification email to info@verealtytech.com via Resend */
+async function sendNotificationEmail({
+  name,
+  email,
+  phone,
+  userType,
+}: {
+  name: string
+  email: string
+  phone: string
+  userType: string
+}) {
+  const resendKey = process.env.RESEND_API_KEY
+  if (!resendKey) {
+    console.warn('⚠️ RESEND_API_KEY not set — skipping email notification')
+    return
+  }
+
+  try {
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${resendKey}`,
+      },
+      body: JSON.stringify({
+        from: 'ClearRent Waitlist <onboarding@resend.dev>',
+        to: 'info@verealtytech.com',
+        subject: `🚀 New Waitlist Signup: ${name} (${userType})`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 500px; padding: 24px;">
+            <h2 style="color: #0B3D2E; margin-bottom: 20px;">New Waitlist Signup</h2>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 10px 0; color: #666; width: 120px;">Name</td>
+                <td style="padding: 10px 0; font-weight: 600;">${name}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px 0; color: #666;">Email</td>
+                <td style="padding: 10px 0; font-weight: 600;">${email}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px 0; color: #666;">Phone</td>
+                <td style="padding: 10px 0; font-weight: 600;">${phone || 'Not provided'}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px 0; color: #666;">Type</td>
+                <td style="padding: 10px 0;">
+                  <span style="
+                    background: ${userType === 'landlord' ? '#0D9488' : userType === 'tenant' ? '#6366F1' : '#F59E0B'};
+                    color: white;
+                    padding: 4px 12px;
+                    border-radius: 12px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    text-transform: capitalize;
+                  ">${userType}</span>
+                </td>
+              </tr>
+            </table>
+            <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;" />
+            <p style="color: #999; font-size: 13px;">
+              This person just joined the ClearRent waitlist from the website.
+            </p>
+          </div>
+        `,
+      }),
+    })
+  } catch (err) {
+    console.error('❌ Failed to send notification email:', err)
+    // Don't throw — email failure shouldn't block the waitlist signup
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
@@ -42,6 +116,14 @@ export async function POST(req: NextRequest) {
       userType,
       joinedAt,
       source: 'webapp',
+    })
+
+    // Send email notification (fire and forget — doesn't block the response)
+    sendNotificationEmail({
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      phone: phone?.trim() || '',
+      userType,
     })
 
     return NextResponse.json({ success: true }, { status: 200 })

@@ -32,15 +32,15 @@ async function sendNotificationEmail({
   }
 
   try {
-    await fetch('https://api.resend.com/emails', {
+    const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${resendKey}`,
       },
       body: JSON.stringify({
-        from: 'ClearRent Waitlist <onboarding@resend.dev>',
-        to: 'info@verealtytech.com',
+        from: 'ClearRent Waitlist <waitlist@verealtytech.com>',
+        to: ['info@verealtytech.com', 'oredugbamide@gmail.com'],
         subject: `🚀 New Waitlist Signup: ${name} (${userType})`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 500px; padding: 24px;">
@@ -81,6 +81,13 @@ async function sendNotificationEmail({
         `,
       }),
     })
+
+    const resData = await res.json()
+    if (!res.ok) {
+      console.error('❌ Resend API error:', res.status, resData)
+    } else {
+      console.log('✅ Email sent successfully:', resData.id)
+    }
   } catch (err) {
     console.error('❌ Failed to send notification email:', err)
     // Don't throw — email failure shouldn't block the waitlist signup
@@ -118,8 +125,8 @@ export async function POST(req: NextRequest) {
       source: 'webapp',
     })
 
-    // Send email notification (fire and forget — doesn't block the response)
-    sendNotificationEmail({
+    // Send email notification — must await on Vercel (serverless kills after response)
+    await sendNotificationEmail({
       name: name.trim(),
       email: email.toLowerCase().trim(),
       phone: phone?.trim() || '',

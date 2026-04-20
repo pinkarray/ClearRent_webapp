@@ -189,7 +189,7 @@ export function TermsContent() {
         'Property listing fees: as displayed at time of listing',
         'Inspection fees: as agreed per property and displayed to tenants before booking',
       ])}
-      {p('All fees are currently processed manually via bank transfer to Verealty Technologies Ltd. Payment processing via Paystack will be introduced in a future update. All fees are subject to change with notice to registered users.')}
+      {p('All fees are processed securely via Paystack. All fees are subject to change with notice to registered users.')}
 
       {h('8. Prohibited Conduct')}
       {p('You must not use ClearRent to:')}

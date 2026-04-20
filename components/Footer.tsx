@@ -10,11 +10,19 @@ export default function Footer() {
   const year = new Date().getFullYear()
   const [openModal, setOpenModal] = useState<ModalType>(null)
 
-  const legalLinks = [
-    { label: 'Privacy Policy', modal: 'privacy' as ModalType },
-    { label: 'Terms of Service', modal: 'terms' as ModalType },
-    { label: 'Cookie Policy', modal: 'cookies' as ModalType },
+  const legalLinks: { label: string; modal: ModalType; href: string }[] = [
+    { label: 'Privacy Policy', modal: 'privacy', href: '/privacy' },
+    { label: 'Terms of Service', modal: 'terms', href: '/terms' },
+    { label: 'Cookie Policy', modal: 'cookies', href: '/cookies' },
   ]
+
+  // Open modal on click (nice UX on homepage), but the href
+  // still works if someone right-clicks → Open in New Tab,
+  // or if a crawler/Google Play reviewer pastes the URL directly.
+  const handleLegalClick = (e: React.MouseEvent, modal: ModalType) => {
+    e.preventDefault()
+    setOpenModal(modal)
+  }
 
   return (
     <>
@@ -86,19 +94,19 @@ export default function Footer() {
               </div>
               {legalLinks.map(link => (
                 <div key={link.label} style={{ marginBottom: 9 }}>
-                  <button
-                    onClick={() => setOpenModal(link.modal)}
+                  <a
+                    href={link.href}
+                    onClick={(e) => handleLegalClick(e, link.modal)}
                     style={{
-                      background: 'none', border: 'none', cursor: 'pointer',
-                      fontSize: 13, color: 'var(--text-secondary)', padding: 0,
+                      fontSize: 13, color: 'var(--text-secondary)',
                       fontFamily: 'Outfit', transition: 'color 0.2s',
-                      textAlign: 'left',
+                      textDecoration: 'none',
                     }}
                     onMouseEnter={e => (e.currentTarget.style.color = 'var(--primary)')}
                     onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-secondary)')}
                   >
                     {link.label}
-                  </button>
+                  </a>
                 </div>
               ))}
             </div>
@@ -140,19 +148,20 @@ export default function Footer() {
             </p>
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               {legalLinks.map(link => (
-                <button
+                <a
                   key={link.label}
-                  onClick={() => setOpenModal(link.modal)}
+                  href={link.href}
+                  onClick={(e) => handleLegalClick(e, link.modal)}
                   style={{
-                    background: 'none', border: 'none', cursor: 'pointer',
-                    fontSize: 12, color: 'var(--text-hint)', padding: 0,
+                    fontSize: 12, color: 'var(--text-hint)',
                     fontFamily: 'Outfit', transition: 'color 0.2s',
+                    textDecoration: 'none',
                   }}
                   onMouseEnter={e => (e.currentTarget.style.color = 'var(--primary)')}
                   onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-hint)')}
                 >
                   {link.label}
-                </button>
+                </a>
               ))}
             </div>
           </div>

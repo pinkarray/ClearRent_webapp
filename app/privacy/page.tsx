@@ -82,7 +82,7 @@ export default function PrivacyPolicyPage() {
           color: 'var(--text-hint)',
           margin: '0 0 32px',
         }}>
-          Verealty Technologies Ltd. · Last updated March 2026
+          Verealty Technologies Ltd. · Last updated May 2026
         </p>
 
         <PrivacyPolicyContent />

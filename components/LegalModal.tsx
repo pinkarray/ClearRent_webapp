@@ -67,7 +67,7 @@ export default function LegalModal({ isOpen, onClose, title, children }: LegalMo
               {title}
             </h2>
             <p style={{ fontSize: 11, color: 'var(--text-hint)', margin: '3px 0 0' }}>
-              Verealty Technologies Ltd. · Last updated March 2026
+              Verealty Technologies Ltd. · Last updated May 2026
             </p>
           </div>
           <button

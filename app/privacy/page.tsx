@@ -37,21 +37,12 @@ export default function PrivacyPolicyPage() {
               fontSize: 18,
             }}
           >
-            <span style={{
-              width: 32,
-              height: 32,
-              borderRadius: 8,
-              background: 'var(--primary)',
-              color: '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 16,
-              fontWeight: 800,
-            }}>
-              C
-            </span>
-            ClearRent
+            <img
+              src="/logos/clearrent_mark_color.svg"
+              alt="ClearRent"
+              style={{ width: 32, height: 32, objectFit: 'contain' }}
+            />
+            <span style={{ color: 'var(--secondary)' }}>Clear</span><span style={{ color: 'var(--primary)' }}>Rent</span>
           </a>
           <span style={{
             fontSize: 11,

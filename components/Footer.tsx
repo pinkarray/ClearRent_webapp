@@ -41,16 +41,12 @@ export default function Footer() {
             {/* Brand */}
             <div style={{ gridColumn: 'span 1' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                <div style={{
-                  width: 34, height: 34,
-                  background: 'var(--primary)',
-                  borderRadius: 10,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0,
-                }}>
-                  <span style={{ color: 'white', fontWeight: 800, fontSize: 15 }}>C</span>
-                </div>
-                <span style={{ fontWeight: 700, fontSize: 17, color: 'var(--text-primary)' }}>
+                <img
+                  src="/logos/clearrent_mark_color.svg"
+                  alt="ClearRent"
+                  style={{ width: 34, height: 34, objectFit: 'contain', flexShrink: 0 }}
+                />
+                <span style={{ fontWeight: 700, fontSize: 17, color: 'var(--secondary)' }}>
                   Clear<span style={{ color: 'var(--primary)' }}>Rent</span>
                 </span>
               </div>

@@ -51,17 +51,13 @@ export default function Navbar() {
 
         {/* Logo */}
         <a href="#" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', flexShrink: 0 }}>
-          <div style={{
-            width: 34, height: 34,
-            background: 'var(--primary)',
-            borderRadius: 10,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: 'var(--shadow-primary)',
-          }}>
-            <span style={{ color: 'white', fontWeight: 800, fontSize: 15 }}>C</span>
-          </div>
+          <img
+            src="/logos/clearrent_mark_color.svg"
+            alt="ClearRent"
+            style={{ width: 34, height: 34, objectFit: 'contain', flexShrink: 0 }}
+          />
           <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
-            <span style={{ fontWeight: 700, fontSize: 17, color: 'var(--text-primary)', fontFamily: 'Outfit' }}>
+            <span style={{ fontWeight: 700, fontSize: 17, color: 'var(--secondary)', fontFamily: 'Outfit' }}>
               Clear<span style={{ color: 'var(--primary)' }}>Rent</span>
             </span>
             <span style={{ fontSize: 9, color: 'var(--text-hint)', fontWeight: 500, letterSpacing: '0.02em' }}>

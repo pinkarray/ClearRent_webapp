@@ -19,9 +19,6 @@ export const metadata: Metadata = {
     title: 'ClearRent — Rent Without Regret',
     description: 'Nigeria\'s verification-first rental platform.',
   },
-  icons: {
-    icon: '/favicon.ico',
-  },
 }
 
 export default function RootLayout({

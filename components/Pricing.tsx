@@ -186,8 +186,8 @@ export default function Pricing() {
                   fontWeight: 700,
                   fontSize: 14,
                   textDecoration: 'none',
-                  background: plan.highlight ? 'white' : 'transparent',
-                  color: plan.highlight ? 'var(--primary)' : 'var(--primary)',
+                  background: plan.highlight ? 'var(--secondary)' : 'transparent',
+                  color: plan.highlight ? '#1A1A2E' : 'var(--primary)',
                   border: plan.highlight ? 'none' : '1.5px solid var(--primary)',
                   transition: 'all 0.2s',
                 }}

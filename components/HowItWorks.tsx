@@ -157,7 +157,7 @@ export default function HowItWorks() {
               Join as a Verified Agent →
             </a>
             <p style={{ marginTop: 12, fontSize: 13, color: 'var(--text-hint)' }}>
-              One-time ₦10,000 verification fee. Start earning immediately after approval.
+              One-time ₦7,000 verification fee. Start earning immediately after approval.
             </p>
           </div>
         )}

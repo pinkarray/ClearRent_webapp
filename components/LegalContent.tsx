@@ -220,9 +220,9 @@ export function TermsContent() {
       {h('10. Fees and Payments')}
       {p('The following fees apply on ClearRent:')}
       {ul([
-        'Tenant verification: ₦5,000 (one-time), with periodic renewal as displayed',
-        'Landlord verification: ₦15,000 (one-time), with periodic renewal as displayed',
-        'Agent verification: ₦10,000 (one-time), with periodic renewal as displayed',
+        'Tenant verification: ₦3,000 (one-time), with annual renewal as displayed',
+        'Landlord verification: ₦12,000 (one-time), with annual renewal as displayed',
+        'Agent verification: ₦7,000 (one-time), with annual renewal as displayed',
         'Property listing fees: as displayed at the time of listing',
         'Inspection fees: as displayed to tenants before booking, calculated by area and handler',
         'Deal completion fee: a fee charged to the parties to a completed rental on first rent payment, as displayed at the time, which unlocks post-deal tools',

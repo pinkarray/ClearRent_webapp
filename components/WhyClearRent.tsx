@@ -189,7 +189,7 @@ export default function WhyClearRent() {
                 Join as a Verified Agent →
               </a>
               <p style={{ marginTop: 10, fontSize: 12, color: 'var(--text-hint)' }}>
-                ₦10,000 one-time verification · Start earning after approval
+                ₦7,000 one-time verification · Start earning after approval
               </p>
             </div>
 

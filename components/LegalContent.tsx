@@ -231,7 +231,7 @@ export function TermsContent() {
       {p('All fees are displayed before you are charged. All fees are processed securely via Paystack. Fees are subject to change with notice to registered users; changes do not affect fees already paid.')}
 
       {h('11. Refunds')}
-      {p('Verification fees are non-refundable once your documents have been reviewed, regardless of outcome. Inspection fees are refundable where an inspection is declined by the handler, cancelled by the handler, or otherwise not conducted for reasons not attributable to the tenant, in accordance with the refund process shown in the app. Deal completion fees and subscription fees are non-refundable once the corresponding service or access has been provided, except as required by law.')}
+      {p('Verification fees are non-refundable once your documents have been reviewed, regardless of outcome. Inspection fees include a non-refundable platform service charge; the remaining handler\'s portion is refundable where an inspection is declined by the handler, cancelled by the handler, or otherwise not conducted for reasons not attributable to the tenant, in accordance with the refund process shown in the app. Deal completion fees and subscription fees are non-refundable once the corresponding service or access has been provided, except as required by law.')}
       {p('Specific refund conditions are shown in the app at the relevant point. Where a refund is due, it is processed within a reasonable period.')}
 
       {h('12. Payments and Payouts')}

@@ -9,10 +9,34 @@ React 19 / Tailwind 3, deployed on Vercel, branch `develop`).
 
 | Decision | Choice |
 |---|---|
-| Scope | **Public browse + tenant entry.** Landlord and agent operations stay mobile-only. |
+| Scope | **Public browse + tenant entry + landlord listing creation.** Agent operations stay mobile-only. |
 | Location | **Extend `clearrent_web`** — one domain, shared brand and legal pages. |
-| Rendering | **Server-rendered via `firebase-admin`.** Not client Firestore reads. |
+| Rendering (public) | **Server-rendered via `firebase-admin`.** Not client Firestore reads. |
+| Writes (landlord) | **Client Firebase Web SDK as the signed-in landlord.** Not admin writes. |
 | Firestore rules | **Unchanged.** No loosening for the web. |
+
+> **Scope revised twice on 2026-07-30.** First to add landlord listing, then to
+> the current target: **full feature parity — every app screen gets a web
+> version.** 48 screens across landlord (15), tenant (11), auth (6), agent (6),
+> property (2), notifications (1) and chat (1). This is a rebuild in React, not
+> a port; no Flutter code transfers.
+
+### Build order (agreed)
+
+1. **Auth + onboarding** — phone OTP → account type → profile → role dashboard. *Built.*
+2. **Landlord surface** — listings, edit, readiness, inspections.
+3. **Tenant surface** minus payments.
+4. **App Check + Paystack** — unlocks payments, NIN, inspection booking.
+5. **Agent, chat, notifications.**
+
+### Native dependencies — none are blockers
+
+| Flutter package | Web answer |
+|---|---|
+| `image_picker` | file input (already used for property photos) |
+| `firebase_messaging` | web push |
+| `flutter_local_notifications` | Notifications API |
+| `local_auth` (biometrics) | drop, or WebAuthn |
 
 ---
 
@@ -74,13 +98,87 @@ Deep-link to the app (or a "get the app" interstitial) until Phase 2 lands.
 
 ---
 
+## Step 1 — Auth + onboarding (built 2026-07-30)
+
+Routes: `/signup` (account type → phone+OTP → profile), `/login` (phone OTP,
+with an email/password tab for staff accounts), `/dashboard` (role-based home),
+`/list` (landlord add-property, now behind auth).
+
+**Two different reCAPTCHAs — do not conflate them.**
+
+| Need | What it is | Status |
+|---|---|---|
+| Phone sign-in | `RecaptchaVerifier`, client widget | Works. No console key needed; `localhost` and `verealtytech.com` are already authorized domains. CSP had to allow `www.google.com` + `www.gstatic.com`. |
+| Gated callables | App Check reCAPTCHA v3/Enterprise provider | **Not registered.** `recaptchaV3Config` and `recaptchaEnterpriseConfig` both 404 for the web app. |
+
+**Testing without SMS.** The project has test phone numbers configured, e.g.
+`+2349060883232` → `123456` (that is `mide@verealtytech.com`).
+
+**`phoneToE164` is ported verbatim** into `lib/phone.ts`. If web and app
+normalise differently, the same person gets two different `phone` values and
+every phone-keyed lookup silently misses.
+
+**Onboarding does not set `verificationStatus`.** That is NIN verification's
+job, via `submitNin` — which enforces App Check. So a landlord who onboards on
+web cannot list until they verify in the app. This is the first hard dependency
+on step 4, and it is why the dashboard says so explicitly rather than failing
+with an opaque `permission-denied`.
+
+---
+
+## Phase 1b — Landlord listing creation (`/list`)
+
+Added to scope 2026-07-30. Sign in with the Firebase Web SDK, then write the
+property from the **client, as the signed-in landlord** — not server-side.
+
+**Why the client and not an admin route.** `firestore.rules` enforces the create
+guards: self-assigned `landlordId`, a user doc with
+`verificationStatus == 'verified'`, `isVerified` pinned false at birth, and an
+allowlist on `ownershipDocStatus`. The Admin SDK bypasses rules entirely, so a
+server-side write would mean re-implementing every one of those guards as a
+second source of truth — the exact failure mode the rules comments document
+(a denylist that let `'inherited'` and `'not_uploaded'` walk through). Writing
+as the user means web and app are enforced by the same rules file.
+
+`lib/create-listing.ts` mirrors `PropertyService.createProperty` field for
+field, including the two-step write: parent doc first, then
+`properties/{id}/private/location`. They cannot be batched — the subdoc's write
+rule reads the parent's `landlordId` via `get()`, which is not visible for a doc
+created in the same batch.
+
+**One deliberate improvement over the app:** the Flutter service writes
+`'lga': ''` with a `// Can be added later` comment, so `approximateAddress` on
+app-created listings degrades to "city, state". The web form collects LGA
+properly. Schema-compatible in both directions.
+
+**Listing fee.** The free first listing (`totalListingsCreated == 0`) needs no
+payment, which is why this flow touches none of the App-Check-gated callables.
+Charging for subsequent listings on the web needs the Paystack web path and
+therefore App Check first — not built.
+
+---
+
 ## Phase 2 — Tenant entry
 
 Sign-up / sign-in with the Firebase Web SDK, then request an inspection.
 
 **Do App Check first, not last.** Web cannot use Play Integrity — it needs reCAPTCHA v3 or
-Enterprise, registered separately in the Firebase console. These callables are
-`enforceAppCheck: true` and will fail with `unauthenticated` until the web provider works:
+Enterprise, registered separately in the Firebase console.
+
+Measured 2026-07-30 via the App Check API — enforcement per service on
+`clearrent-app`:
+
+| Service | Enforcement |
+|---|---|
+| `firestore.googleapis.com` | `UNENFORCED` |
+| `firebasestorage.googleapis.com` | `UNENFORCED` |
+| `identitytoolkit.googleapis.com` | `UNENFORCED` |
+
+So **direct Firestore reads/writes and Auth from the web are not App Check
+gated today** — which is what lets Phase 1b ship without it. The gate is
+per-function in code, and only bites on these callables, which are
+`enforceAppCheck: true` and will fail with `unauthenticated` until the web
+provider works:
 
 ```
 createRentalInterest, recordRentPayment, confirmInspectionPayment,
@@ -99,8 +197,14 @@ Also required: tenant verification + NIN before booking, and a web path for Pays
 
 ## Cross-cutting
 
-- **Service account on Vercel.** Do NOT reuse `clearrent/functions/serviceAccountKey.json`.
-  Mint a dedicated account with the narrowest workable role and store it in Vercel env vars.
+- **Service account.** Done 2026-07-30: `clearrent-web-ssr@clearrent-app.iam.gserviceaccount.com`,
+  `roles/datastore.user`, in `.env.local`. **Still to do: set the same three
+  `FIREBASE_*` vars in Vercel** — the key previously in `.env.local` had been
+  revoked, so whatever Vercel is holding is suspect and the waitlist route may be
+  failing in production. Firestore IAM has no per-collection scoping, so
+  `datastore.user` (read + write, Firestore only) is the narrowest role that also
+  covers the waitlist write; it is still far narrower than the Firebase Admin SDK
+  default account, which carries Auth and Storage admin too.
 - **Caching.** Listing pages should use ISR/revalidation — Firestore reads on every request
   will be slow and costly.
 - **Brand assets.** `clearrent_lockup_*.svg` handoff for headers/footers is still open.
@@ -122,6 +226,12 @@ Also required: tenant verification + NIN before booking, and a web path for Pays
 ## Open questions
 
 1. Domain/route shape — `verealtytech.com/properties`, or a `clearrent.` subdomain?
+   Built at `/properties` for now; nothing links to it from the homepage yet.
 2. Does the waitlist landing page stay as the homepage, or does browse become the homepage?
+   **Still open** — the homepage was deliberately left untouched.
 3. Search — Firestore queries only, or an index (Algolia/Typesense) for text search?
    Firestore alone cannot do full-text; area/type/price filters are fine.
+4. The publication gate is currently applied **in memory** over the newest 200
+   listings, because a grouped unit's effective doc status lives on its building
+   and cannot be expressed as a Firestore query. Needs a composite index and
+   pagination before the catalogue gets large.

@@ -29,7 +29,10 @@ export default function Navbar() {
 
   const themeIcon = theme === 'light' ? '☀️' : theme === 'dark' ? '🌙' : '⚙️'
 
+  // 'Browse' is a real route; the rest are anchors on this page. The navbar is
+  // only rendered on the homepage, so the anchors always have a target.
   const navLinks = [
+    { label: 'Browse', href: '/properties' },
     { label: 'How It Works', href: '#how-it-works' },
     { label: 'For Agents', href: '#agents' },
     { label: 'Pricing', href: '#pricing' },
@@ -68,7 +71,7 @@ export default function Navbar() {
 
         {/* Desktop nav */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 28 }} className="desktop-nav">
-          {navLinks.slice(0, 3).map(link => (
+          {navLinks.slice(0, 4).map(link => (
             <a key={link.href} href={link.href} style={{
               color: 'var(--text-secondary)',
               textDecoration: 'none',
@@ -100,6 +103,20 @@ export default function Navbar() {
           }}>
             {themeIcon}
           </button>
+
+          <a href="/login" className="desktop-cta" style={{
+            color: 'var(--text-secondary)',
+            textDecoration: 'none',
+            fontSize: 14,
+            fontWeight: 500,
+            whiteSpace: 'nowrap',
+            transition: 'color 0.2s',
+          }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'var(--primary)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-secondary)')}
+          >
+            Log in
+          </a>
 
           <a href="#waitlist" className="btn-primary desktop-cta" style={{
             padding: '8px 18px',
@@ -182,6 +199,18 @@ export default function Navbar() {
             {link.label}
           </a>
         ))}
+        <a href="/login" onClick={() => setMenuOpen(false)} style={{
+          color: 'var(--text-primary)',
+          textDecoration: 'none',
+          fontSize: 16,
+          fontWeight: 500,
+          padding: '10px 0',
+          borderBottom: '1px solid var(--divider)',
+          display: 'block',
+        }}>
+          Log in
+        </a>
+
         <a href="#waitlist" onClick={() => setMenuOpen(false)} className="btn-amber" style={{
           marginTop: 16,
           padding: '13px 24px',

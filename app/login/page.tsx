@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { signInWithEmailAndPassword } from 'firebase/auth'
 import { PhoneOtpForm } from '../../components/PhoneOtpForm'
 import { PasswordField } from '../../components/PasswordField'
-import { clientAuth } from '../../lib/firebase-client'
+import { clientAuth, isClientConfigured } from '../../lib/firebase-client'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -42,6 +42,15 @@ export default function LoginPage() {
         </Link>
 
         <h1 className="mt-6 text-2xl font-bold text-[var(--text-primary)]">Log in</h1>
+
+        {!isClientConfigured() && (
+          <div className="card mt-6 border-l-4 border-l-[var(--secondary)] p-5">
+            <p className="font-semibold text-[var(--text-primary)]">Sign-in is unavailable</p>
+            <p className="mt-1 text-sm text-[var(--text-secondary)]">
+              This deployment is missing its Firebase web configuration. Browsing still works.
+            </p>
+          </div>
+        )}
 
         <div className="mt-6 flex gap-2">
           {(['phone', 'email'] as const).map((m) => (

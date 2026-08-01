@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { onAuthStateChanged, signOut as fbSignOut, type User } from 'firebase/auth'
-import { clientAuth, initAppCheck } from '../lib/firebase-client'
+import { clientAuth, initAppCheck, isClientConfigured } from '../lib/firebase-client'
 import { getUserProfile, type UserProfile } from '../lib/user-profile'
 
 type AuthState = {
@@ -22,6 +22,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
+    // This provider wraps the WHOLE app, including pages that never touch
+    // Firebase. Throwing here would blank the marketing and legal pages over a
+    // missing client env var, so an unconfigured deploy degrades to "signed
+    // out" instead. Auth-dependent pages surface it themselves.
+    if (!isClientConfigured()) {
+      console.error(
+        'Firebase web config missing — NEXT_PUBLIC_FIREBASE_* is not set. Sign-in is unavailable.',
+      )
+      // Async so the "ready" flip is not a synchronous setState in the effect
+      // body; the page still settles on its first paint.
+      ;(async () => setReady(true))()
+      return
+    }
+
     // Before any Firebase traffic, so gated callables have a token to send.
     initAppCheck()
     return onAuthStateChanged(clientAuth(), async (u) => {

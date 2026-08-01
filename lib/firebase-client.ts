@@ -33,7 +33,25 @@ const config = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 }
 
+/**
+ * True when the NEXT_PUBLIC_FIREBASE_* values were present at build time.
+ *
+ * They are inlined into the bundle by Next, so if the deploy environment is
+ * missing them every value here is undefined and `initializeApp` throws. That
+ * used to happen inside AuthProvider, which sits in the root layout — taking
+ * down the marketing and legal pages, which need Firebase for nothing at all.
+ * Callers check this and degrade instead.
+ */
+export function isClientConfigured(): boolean {
+  return Boolean(config.apiKey && config.projectId && config.appId)
+}
+
 export function clientApp(): FirebaseApp {
+  if (!isClientConfigured()) {
+    throw new Error(
+      'Firebase web config is missing. Set the NEXT_PUBLIC_FIREBASE_* environment variables.',
+    )
+  }
   const existing = getApps()
   return existing.length > 0 ? existing[0] : initializeApp(config)
 }
@@ -54,6 +72,7 @@ let appCheckStarted = false
  */
 export function initAppCheck(): void {
   if (appCheckStarted || typeof window === 'undefined') return
+  if (!isClientConfigured()) return
 
   const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY
   if (!siteKey) {

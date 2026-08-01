@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '../../../components/AuthProvider'
+import PushToggle from '../../../components/PushToggle'
 import { timeAgo } from '../../../lib/format'
 import {
   markAllRead,
@@ -42,6 +43,8 @@ export default function NotificationsPage() {
 
   return (
     <div>
+      <PushToggle />
+
       {unread > 0 && (
         <div className="mb-4 flex items-center justify-between gap-3">
           <p className="text-sm text-content-secondary">

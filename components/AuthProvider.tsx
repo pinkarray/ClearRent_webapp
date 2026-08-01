@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { onAuthStateChanged, signOut as fbSignOut, type User } from 'firebase/auth'
 import { clientAuth, initAppCheck, isClientConfigured } from '../lib/firebase-client'
 import { getUserProfile, type UserProfile } from '../lib/user-profile'
+import { disablePush } from '../lib/push'
 
 type AuthState = {
   user: User | null
@@ -54,6 +55,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (user) setProfile(await getUserProfile(user.uid))
       },
       signOut: async () => {
+        // Detach this browser's push token FIRST, while the user is still
+        // authenticated — the users-doc write needs their auth. Skipping it
+        // would leave a shared device receiving the previous user's
+        // notifications forever.
+        if (user) await disablePush(user.uid)
         await fbSignOut(clientAuth())
       },
     }),

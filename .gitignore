@@ -36,6 +36,10 @@ yarn-error.log*
 # vercel
 .vercel
 
+# Claude Code local permission cache — machine-specific absolute paths, not
+# project configuration.
+.claude
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

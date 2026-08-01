@@ -11,26 +11,25 @@
   }
 }
 
-@theme {
-  --font-outfit: "Outfit", sans-serif;
-  --font-lora: "Lora", serif;
+/*
+  The single source of truth for colour is the Flutter app's
+  `lib/core/constants/colors.dart`. Every value below is copied from it so the
+  two surfaces cannot drift; `tailwind.config.ts` maps these vars onto utility
+  classes, so `bg-surface` and `var(--surface)` always mean the same thing.
 
-  --color-primary: #0A7B6C;
-  --color-primary-light: #4DA69A;
-  --color-primary-dark: #065749;
-  --color-secondary: #F4A836;
-  --color-secondary-light: #F7C067;
-  --color-secondary-dark: #D4922E;
-}
-
-
+  Tints (`--success-tint` etc.) mirror the app's `successLight`/`errorLight`
+  family. They exist so product UI never hand-rolls `rgba(...)` literals, which
+  is what made status colours drift between web pages in the first place.
+*/
 :root {
   --primary: #0A7B6C;
   --primary-light: #4DA69A;
   --primary-dark: #065749;
+  --primary-tint: rgba(10, 123, 108, 0.10);
   --secondary: #F4A836;
   --secondary-light: #F7C067;
   --secondary-dark: #D4922E;
+  --secondary-tint: rgba(244, 168, 54, 0.15);
 
   --bg: #F8F9FA;
   --bg-secondary: #FFFFFF;
@@ -44,6 +43,15 @@
   --text-hint: #9CA3AF;
   --text-inverse: #FFFFFF;
 
+  --success: #10B981;
+  --success-tint: #D1FAE5;
+  --error: #EF4444;
+  --error-tint: #FEE2E2;
+  --warning: #F59E0B;
+  --warning-tint: #FEF3C7;
+  --info: #3B82F6;
+  --info-tint: #DBEAFE;
+
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
   --shadow-md: 0 4px 16px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
   --shadow-lg: 0 12px 40px rgba(0,0,0,0.10), 0 4px 12px rgba(0,0,0,0.06);
@@ -55,23 +63,43 @@
   --radius-xl: 32px;
 }
 
+/*
+  Neutral, not green-tinted — matching the app's `_dark` palette. Primary is
+  brightened to #0FA88F there for legibility on a dark ground; keeping the light
+  #0A7B6C failed contrast against #121212.
+*/
 [data-theme="dark"] {
-  --bg: #0B1512;
-  --bg-secondary: #111D1A;
-  --surface: #162420;
-  --surface-secondary: #1E302B;
-  --border: #243830;
-  --divider: #1E302B;
+  --primary: #0FA88F;
+  --primary-light: #5CC4B5;
+  --primary-dark: #087A6A;
+  --primary-tint: rgba(15, 168, 143, 0.15);
+  --secondary-tint: rgba(244, 168, 54, 0.18);
 
-  --text-primary: #F0FAF8;
-  --text-secondary: #8BA89F;
-  --text-hint: #5C7A72;
-  --text-inverse: #0B1512;
+  --bg: #121212;
+  --bg-secondary: #1E1E1E;
+  --surface: #1E1E1E;
+  --surface-secondary: #252525;
+  --border: #2E2E2E;
+  --divider: #252525;
+
+  --text-primary: #E8E8EC;
+  --text-secondary: #9CA3AF;
+  --text-hint: #6B7280;
+  --text-inverse: #121212;
+
+  --success: #34D399;
+  --success-tint: #064E3B;
+  --error: #F87171;
+  --error-tint: #7F1D1D;
+  --warning: #FBBF24;
+  --warning-tint: #78350F;
+  --info: #60A5FA;
+  --info-tint: #1E3A5F;
 
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
   --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
   --shadow-lg: 0 12px 40px rgba(0,0,0,0.5);
-  --shadow-primary: 0 8px 32px rgba(10, 123, 108, 0.4);
+  --shadow-primary: 0 8px 32px rgba(15, 168, 143, 0.35);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -237,3 +265,58 @@ body {
   .section { padding: 64px 0; }
   .container { padding: 0 20px; }
 }
+
+/* ─── Product surfaces ──────────────────────────────────────────────────────
+   The primitives above are tuned for the landing page: glow shadows, hover
+   lift, 20px radii. Those read as marketing when applied to dense product UI,
+   which is why the signed-in pages felt like a website rather than the app.
+
+   Rather than fork every primitive, `.app-surface` re-tunes them in place.
+   Anything rendered inside the app shell gets flat, quiet chrome; the homepage
+   is untouched. */
+
+.app-surface .card:hover {
+  box-shadow: var(--shadow-sm);
+  transform: none;
+  border-color: var(--border);
+}
+.app-surface a.card:hover,
+.app-surface button.card:hover {
+  border-color: var(--primary);
+}
+.app-surface .card { border-radius: var(--radius-md); }
+
+.app-surface .btn-primary,
+.app-surface .btn-amber {
+  box-shadow: none;
+  border-radius: var(--radius-sm);
+}
+.app-surface .btn-primary:hover,
+.app-surface .btn-amber:hover {
+  box-shadow: none;
+  transform: none;
+}
+.app-surface .btn-ghost { border-radius: var(--radius-sm); }
+.app-surface .input-field { border-radius: var(--radius-sm); }
+
+/* Status pill. Tone is set by the caller through --chip-bg / --chip-fg so the
+   palette stays in one place instead of rgba() literals per page. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 100px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  background: var(--chip-bg, var(--surface-secondary));
+  color: var(--chip-fg, var(--text-secondary));
+}
+.chip-live    { --chip-bg: var(--primary-tint);   --chip-fg: var(--primary); }
+.chip-pending { --chip-bg: var(--secondary-tint); --chip-fg: var(--secondary-dark); }
+.chip-success { --chip-bg: var(--success-tint);   --chip-fg: var(--success); }
+.chip-error   { --chip-bg: var(--error-tint);     --chip-fg: var(--error); }
+.chip-info    { --chip-bg: var(--info-tint);      --chip-fg: var(--info); }
+
+[data-theme="dark"] .chip-pending { --chip-fg: var(--secondary); }

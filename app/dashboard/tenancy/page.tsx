@@ -1,8 +1,6 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useAuth } from '../../../components/AuthProvider'
 import { startPayment } from '../../../lib/payments'
 import {
@@ -33,18 +31,13 @@ function formatNaira(n: number): string {
  * sees interests to accept, a tenant sees what they owe and can do next.
  */
 export default function TenancyPage() {
-  const router = useRouter()
-  const { user, profile, ready } = useAuth()
+  const { user, profile } = useAuth()
   const [interests, setInterests] = useState<RentalInterest[] | null>(null)
   const [rentals, setRentals] = useState<ActiveRental[] | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const isLandlord = profile?.accountType === 'landlord'
-
-  useEffect(() => {
-    if (ready && !user) router.replace('/login')
-  }, [ready, user, router])
 
   const load = useCallback(async () => {
     if (!user) return
@@ -99,35 +92,20 @@ export default function TenancyPage() {
     await run(r.id, () => requestMoveOut(r.id, parsed, reason))
   }
 
-  if (!ready || !user) {
-    return (
-      <main className="mesh-bg min-h-screen">
-        <div className="container py-16 text-[var(--text-secondary)]">Loading…</div>
-      </main>
-    )
-  }
+  if (!user) return null
 
   return (
-    <main className="mesh-bg min-h-screen">
-      <div className="container max-w-3xl py-12">
-        <Link
-          href="/dashboard"
-          className="text-sm font-medium text-[var(--primary)] no-underline hover:underline"
-        >
-          ← Dashboard
-        </Link>
+    <>
+      <div>
+        {error && <p className="mb-4 text-sm text-error">{error}</p>}
 
-        <h1 className="mt-4 text-3xl font-bold text-[var(--text-primary)]">Tenancy</h1>
-
-        {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
-
-        <h2 className="mt-8 text-sm font-semibold uppercase tracking-wide text-[var(--text-hint)]">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-content-hint">
           Rental interests
         </h2>
         {interests === null ? (
-          <p className="mt-3 text-sm text-[var(--text-secondary)]">Loading…</p>
+          <p className="mt-3 text-sm text-content-secondary">Loading…</p>
         ) : interests.length === 0 ? (
-          <div className="card mt-3 p-6 text-center text-sm text-[var(--text-secondary)]">
+          <div className="card mt-3 p-6 text-center text-sm text-content-secondary">
             {isLandlord
               ? 'No tenants have expressed interest yet.'
               : 'Once you complete and rate an inspection, you can express interest from My inspections.'}
@@ -138,12 +116,12 @@ export default function TenancyPage() {
               <div key={i.id} className="card p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="font-semibold text-[var(--text-primary)]">{i.propertyTitle}</p>
-                    <p className="text-sm text-[var(--text-secondary)]">
+                    <p className="font-semibold text-content">{i.propertyTitle}</p>
+                    <p className="text-sm text-content-secondary">
                       {isLandlord ? i.tenantName : formatNaira(i.paymentAmount) + ' total'}
                     </p>
                   </div>
-                  <span className="shrink-0 rounded-full bg-[var(--surface-secondary)] px-3 py-1 text-xs font-semibold text-[var(--text-secondary)]">
+                  <span className="chip shrink-0">
                     {INTEREST_COPY[i.status] ?? i.status}
                   </span>
                 </div>
@@ -162,13 +140,13 @@ export default function TenancyPage() {
           </div>
         )}
 
-        <h2 className="mt-10 text-sm font-semibold uppercase tracking-wide text-[var(--text-hint)]">
+        <h2 className="mt-10 text-sm font-semibold uppercase tracking-wide text-content-hint">
           Active rentals
         </h2>
         {rentals === null ? (
-          <p className="mt-3 text-sm text-[var(--text-secondary)]">Loading…</p>
+          <p className="mt-3 text-sm text-content-secondary">Loading…</p>
         ) : rentals.length === 0 ? (
-          <div className="card mt-3 p-6 text-center text-sm text-[var(--text-secondary)]">
+          <div className="card mt-3 p-6 text-center text-sm text-content-secondary">
             Nothing active yet.
           </div>
         ) : (
@@ -177,13 +155,13 @@ export default function TenancyPage() {
               <div key={r.id} className="card p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="font-semibold text-[var(--text-primary)]">{r.propertyTitle}</p>
-                    <p className="text-sm text-[var(--text-secondary)]">
+                    <p className="font-semibold text-content">{r.propertyTitle}</p>
+                    <p className="text-sm text-content-secondary">
                       {formatNaira(r.rentAmount)} · agreement {r.agreementStatus} · rent{' '}
                       {r.rentPaymentStatus}
                     </p>
                   </div>
-                  <span className="shrink-0 rounded-full bg-[var(--surface-secondary)] px-3 py-1 text-xs font-semibold text-[var(--text-secondary)]">
+                  <span className="chip shrink-0">
                     {r.status}
                   </span>
                 </div>
@@ -223,7 +201,7 @@ export default function TenancyPage() {
                 )}
 
                 {!isLandlord && r.agreementStatus !== 'finalized' && (
-                  <p className="mt-3 text-xs text-[var(--text-hint)]">
+                  <p className="mt-3 text-xs text-content-hint">
                     Accepting the agreement finalizes it — that is what unlocks rent payment.
                     There is no separate landlord step.
                   </p>
@@ -233,6 +211,6 @@ export default function TenancyPage() {
           </div>
         )}
       </div>
-    </main>
+    </>
   )
 }

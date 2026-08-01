@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { collection, getDocs, orderBy, query, where } from 'firebase/firestore'
 import { useAuth } from '../../../components/AuthProvider'
 import { clientDb } from '../../../lib/firebase-client'
@@ -47,15 +46,10 @@ function formatNaira(n: number): string {
  * by a field naming this user.
  */
 export default function HandlerRequestsPage() {
-  const router = useRouter()
-  const { user, profile, ready } = useAuth()
+  const { user, profile } = useAuth()
   const [rows, setRows] = useState<Row[] | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (ready && !user) router.replace('/login')
-  }, [ready, user, router])
 
   const load = useCallback(async () => {
     if (!user) return
@@ -131,40 +125,23 @@ export default function HandlerRequestsPage() {
     else await load()
   }
 
-  if (!ready || !user) {
-    return (
-      <main className="mesh-bg min-h-screen">
-        <div className="container py-16 text-[var(--text-secondary)]">Loading…</div>
-      </main>
-    )
-  }
+  if (!user) return null
 
   const open = rows?.filter((r) => OPEN_STATUSES.includes(r.status)) ?? []
   const rest = rows?.filter((r) => !OPEN_STATUSES.includes(r.status)) ?? []
 
   return (
-    <main className="mesh-bg min-h-screen">
-      <div className="container max-w-3xl py-12">
-        <Link
-          href="/dashboard"
-          className="text-sm font-medium text-[var(--primary)] no-underline hover:underline"
-        >
-          ← Dashboard
-        </Link>
-
-        <h1 className="mt-4 text-3xl font-bold text-[var(--text-primary)]">
-          Inspection requests
-        </h1>
-
+    <>
+      <div>
         {!profile?.hasBankDetails && (
-          <div className="card mt-6 border-l-4 border-l-[var(--secondary)] p-5">
-            <p className="font-semibold text-[var(--text-primary)]">
+          <div className="card mb-6 border-l-4 border-l-secondary p-5">
+            <p className="font-semibold text-content">
               Add a payout account to approve
             </p>
-            <p className="mt-1 text-sm text-[var(--text-secondary)]">
+            <p className="mt-1 text-sm text-content-secondary">
               Rules require a payout destination before you can accept an inspection — that is
               where your {formatNaira(7000)} handler fee is settled.{' '}
-              <Link href="/dashboard/bank" className="text-[var(--primary)] no-underline">
+              <Link href="/dashboard/bank" className="text-primary no-underline">
                 Add one
               </Link>
               .
@@ -172,19 +149,19 @@ export default function HandlerRequestsPage() {
           </div>
         )}
 
-        {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+        {error && <p className="mb-4 text-sm text-error">{error}</p>}
 
         {rows === null ? (
-          <p className="mt-6 text-sm text-[var(--text-secondary)]">Loading…</p>
+          <p className="text-sm text-content-secondary">Loading…</p>
         ) : rows.length === 0 ? (
-          <div className="card mt-6 p-8 text-center">
-            <p className="text-[var(--text-secondary)]">No inspection requests yet.</p>
+          <div className="card p-8 text-center">
+            <p className="text-content-secondary">No inspection requests yet.</p>
           </div>
         ) : (
           <>
             {open.length > 0 && (
-              <div className="mt-6 space-y-3">
-                <h2 className="text-sm font-semibold uppercase tracking-wide text-[var(--text-hint)]">
+              <div className="space-y-3">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-content-hint">
                   Needs your decision
                 </h2>
                 {open.map((r) => (
@@ -193,21 +170,21 @@ export default function HandlerRequestsPage() {
                       <div className="min-w-0">
                         <Link
                           href={`/properties/${r.propertyId}`}
-                          className="font-semibold text-[var(--text-primary)] no-underline hover:underline"
+                          className="font-semibold text-content no-underline hover:underline"
                         >
                           {r.propertyTitle}
                         </Link>
-                        <p className="text-sm text-[var(--text-secondary)]">
+                        <p className="text-sm text-content-secondary">
                           {r.tenantName}
                           {r.tenantPhone ? ` · ${r.tenantPhone}` : ''}
                         </p>
                       </div>
-                      <span className="shrink-0 text-sm font-semibold text-[var(--primary)]">
+                      <span className="shrink-0 text-sm font-semibold text-primary">
                         You earn {formatNaira(r.agentEarnings)}
                       </span>
                     </div>
 
-                    <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm text-[var(--text-secondary)]">
+                    <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm text-content-secondary">
                       {r.requestedDate && (
                         <span>
                           {r.requestedDate.toLocaleDateString('en-NG', {
@@ -221,7 +198,7 @@ export default function HandlerRequestsPage() {
                     </div>
 
                     {r.notes && (
-                      <p className="mt-3 rounded-[var(--radius-md)] bg-[var(--surface-secondary)] p-3 text-sm text-[var(--text-secondary)]">
+                      <p className="mt-3 rounded-md bg-surface-secondary p-3 text-sm text-content-secondary">
                         {r.notes}
                       </p>
                     )}
@@ -243,7 +220,7 @@ export default function HandlerRequestsPage() {
                       </button>
                     </div>
 
-                    <p className="mt-3 text-xs text-[var(--text-hint)]">
+                    <p className="mt-3 text-xs text-content-hint">
                       The tenant pays {formatNaira(r.totalFee)} after you approve. Nothing has
                       been charged yet.
                     </p>
@@ -254,7 +231,7 @@ export default function HandlerRequestsPage() {
 
             {rest.length > 0 && (
               <div className="mt-8 space-y-3">
-                <h2 className="text-sm font-semibold uppercase tracking-wide text-[var(--text-hint)]">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-content-hint">
                   Everything else
                 </h2>
                 {rest.map((r) => (
@@ -263,12 +240,12 @@ export default function HandlerRequestsPage() {
                     className="card flex flex-wrap items-center justify-between gap-3 p-5"
                   >
                     <div className="min-w-0">
-                      <p className="font-semibold text-[var(--text-primary)]">
+                      <p className="font-semibold text-content">
                         {r.propertyTitle}
                       </p>
-                      <p className="text-sm text-[var(--text-secondary)]">{r.tenantName}</p>
+                      <p className="text-sm text-content-secondary">{r.tenantName}</p>
                     </div>
-                    <span className="shrink-0 rounded-full bg-[var(--surface-secondary)] px-3 py-1 text-xs font-semibold text-[var(--text-secondary)]">
+                    <span className="chip shrink-0">
                       {r.status}
                       {r.paymentStatus === 'paid' ? ' · paid' : ''}
                     </span>
@@ -288,6 +265,6 @@ export default function HandlerRequestsPage() {
           </>
         )}
       </div>
-    </main>
+    </>
   )
 }

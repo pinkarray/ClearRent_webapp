@@ -101,8 +101,8 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="text-sm font-medium text-[var(--text-primary)]">{label}</span>
-      {hint && <span className="mt-0.5 block text-xs text-[var(--text-hint)]">{hint}</span>}
+      <span className="text-sm font-medium text-content">{label}</span>
+      {hint && <span className="mt-0.5 block text-xs text-content-hint">{hint}</span>}
       <div className="mt-1.5">{children}</div>
     </label>
   )
@@ -191,7 +191,7 @@ export default function ListPropertyPage() {
   if (!ready || !user) {
     return (
       <main className="mesh-bg min-h-screen">
-        <div className="container py-16 text-[var(--text-secondary)]">Loading…</div>
+        <div className="container py-16 text-content-secondary">Loading…</div>
       </main>
     )
   }
@@ -202,23 +202,23 @@ export default function ListPropertyPage() {
         <div className="flex items-center justify-between gap-4">
           <Link
             href="/dashboard"
-            className="text-sm font-medium text-[var(--primary)] no-underline hover:underline"
+            className="text-sm font-medium text-primary no-underline hover:underline"
           >
             ← Dashboard
           </Link>
-          <span className="text-sm text-[var(--text-secondary)]">
+          <span className="text-sm text-content-secondary">
             {user.phoneNumber ?? user.email}
           </span>
         </div>
 
-        <h1 className="mt-4 text-3xl font-bold text-[var(--text-primary)]">List a property</h1>
+        <h1 className="mt-4 text-3xl font-bold text-content">List a property</h1>
 
         {verificationStatus !== null && verificationStatus !== 'verified' && (
-          <div className="card mt-6 border-l-4 border-l-[var(--secondary)] p-5">
-            <p className="font-semibold text-[var(--text-primary)]">
+          <div className="card mt-6 border-l-4 border-l-secondary p-5">
+            <p className="font-semibold text-content">
               This account is not a verified landlord
             </p>
-            <p className="mt-1 text-sm text-[var(--text-secondary)]">
+            <p className="mt-1 text-sm text-content-secondary">
               Firestore rules require <code>verificationStatus == &apos;verified&apos;</code> to
               create a listing. Current value: <code>{verificationStatus}</code>. Complete
               verification in the ClearRent app first.
@@ -227,9 +227,9 @@ export default function ListPropertyPage() {
         )}
 
         {createdId && (
-          <div className="card mt-6 border-l-4 border-l-[var(--primary)] p-5">
-            <p className="font-semibold text-[var(--text-primary)]">Listing created</p>
-            <p className="mt-1 text-sm text-[var(--text-secondary)]">
+          <div className="card mt-6 border-l-4 border-l-primary p-5">
+            <p className="font-semibold text-content">Listing created</p>
+            <p className="mt-1 text-sm text-content-secondary">
               Property ID <code>{createdId}</code>. It is now visible in the ClearRent app under
               your listings. It will <strong>not</strong> appear on public browse until an admin
               verifies the ownership document and the property is marked ready for inspections.
@@ -239,7 +239,7 @@ export default function ListPropertyPage() {
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
           <section className="card space-y-4 p-6">
-            <h2 className="font-semibold text-[var(--text-primary)]">The basics</h2>
+            <h2 className="font-semibold text-content">The basics</h2>
             <Field label="Title">
               <input
                 className="input-field px-4 py-3"
@@ -304,7 +304,7 @@ export default function ListPropertyPage() {
           </section>
 
           <section className="card space-y-4 p-6">
-            <h2 className="font-semibold text-[var(--text-primary)]">The space</h2>
+            <h2 className="font-semibold text-content">The space</h2>
             <div className="grid gap-4 sm:grid-cols-3">
               {(
                 [
@@ -330,7 +330,7 @@ export default function ListPropertyPage() {
           </section>
 
           <section className="card space-y-4 p-6">
-            <h2 className="font-semibold text-[var(--text-primary)]">Location</h2>
+            <h2 className="font-semibold text-content">Location</h2>
             <Field
               label="Street address"
               hint="Stored in the gated private/location subdoc — never shown publicly, released only after an inspection is approved."
@@ -370,7 +370,7 @@ export default function ListPropertyPage() {
           </section>
 
           <section className="card space-y-4 p-6">
-            <h2 className="font-semibold text-[var(--text-primary)]">Money</h2>
+            <h2 className="font-semibold text-content">Money</h2>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Rent (₦)">
                 <input
@@ -411,7 +411,7 @@ export default function ListPropertyPage() {
                 />
               </Field>
             </div>
-            <label className="flex items-center gap-2 text-sm text-[var(--text-primary)]">
+            <label className="flex items-center gap-2 text-sm text-content">
               <input
                 type="checkbox"
                 checked={draft.cautionDepositRefundable}
@@ -422,18 +422,18 @@ export default function ListPropertyPage() {
           </section>
 
           <section className="card space-y-4 p-6">
-            <h2 className="font-semibold text-[var(--text-primary)]">Photos & video</h2>
+            <h2 className="font-semibold text-content">Photos & video</h2>
             <Field label="Photos" hint="Uploaded to the same Cloudinary cloud as the app.">
               <input
                 type="file"
                 accept="image/*"
                 multiple
                 onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
-                className="text-sm text-[var(--text-secondary)]"
+                className="text-sm text-content-secondary"
               />
             </Field>
             {files.length > 0 && (
-              <p className="text-sm text-[var(--text-secondary)]">
+              <p className="text-sm text-content-secondary">
                 {files.length} photo{files.length === 1 ? '' : 's'} selected
               </p>
             )}
@@ -447,7 +447,7 @@ export default function ListPropertyPage() {
           </section>
 
           <section className="card space-y-4 p-6">
-            <h2 className="font-semibold text-[var(--text-primary)]">Details & occupancy</h2>
+            <h2 className="font-semibold text-content">Details & occupancy</h2>
             <Field label="Amenities" hint="Comma separated, e.g. borehole, prepaid meter, parking">
               <input
                 className="input-field px-4 py-3"
@@ -482,7 +482,7 @@ export default function ListPropertyPage() {
                 />
               </Field>
             </div>
-            <div className="space-y-2 text-sm text-[var(--text-primary)]">
+            <div className="space-y-2 text-sm text-content">
               {(
                 [
                   ['landlordLivesInProperty', 'Landlord lives in this property'],
@@ -504,7 +504,7 @@ export default function ListPropertyPage() {
           </section>
 
           {error && <p className="text-sm text-red-600">{error}</p>}
-          {status && <p className="text-sm text-[var(--text-secondary)]">{status}</p>}
+          {status && <p className="text-sm text-content-secondary">{status}</p>}
 
           <button
             className="btn-primary w-full px-6 py-4"
@@ -514,7 +514,7 @@ export default function ListPropertyPage() {
             {busy ? 'Working…' : 'Create listing'}
           </button>
 
-          <p className="text-center text-xs text-[var(--text-hint)]">
+          <p className="text-center text-xs text-content-hint">
             The listing is created unverified. An admin must approve its ownership document and
             it must be marked ready for inspections before it appears on public browse.
           </p>

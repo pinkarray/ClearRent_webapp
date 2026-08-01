@@ -109,7 +109,22 @@ with an email/password tab for staff accounts), `/dashboard` (role-based home),
 | Need | What it is | Status |
 |---|---|---|
 | Phone sign-in | `RecaptchaVerifier`, client widget | Works. No console key needed; `localhost` and `verealtytech.com` are already authorized domains. CSP had to allow `www.google.com` + `www.gstatic.com`. |
-| Gated callables | App Check reCAPTCHA v3/Enterprise provider | **Not registered.** `recaptchaV3Config` and `recaptchaEnterpriseConfig` both 404 for the web app. |
+| Gated callables | App Check reCAPTCHA v3/Enterprise provider | **Registered 2026-07-31.** Verified 2026-08-01 against the App Check API. |
+
+**App Check is wired (verified 2026-08-01).** Both `recaptchaEnterpriseConfig` and
+`recaptchaV3Config` now exist on app `1:513996752248:web:937fd2f2525b35b4dd348d`. The
+Enterprise site key `6LcmHG8t…Bb5k` ("ClearRent Web App Check", created 2026-07-31) matches
+`NEXT_PUBLIC_RECAPTCHA_SITE_KEY` in `.env.local`, and `next.config.ts` already admits
+`https://*.googleapis.com` (covers `firebaseappcheck` + `content-firebaseappcheck`) and
+`https://www.google.com` on `connect-src`. `lib/firebase-client.ts:73` attaches the provider.
+
+Two things that will still bite:
+- The key's `allowedDomains` are `verealtytech.com` and `localhost` only. **Vercel preview
+  deployments (`*.vercel.app`) are not allowed**, so every gated callable fails on a preview
+  URL while working in production. That is not a bug to chase.
+- `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` must be set in Vercel too, alongside the three `FIREBASE_*`
+  vars below. It is inlined at build time, so a deploy without it ships an app with no App
+  Check at all.
 
 **Testing without SMS.** The project has test phone numbers configured, e.g.
 `+2349060883232` → `123456` (that is `mide@verealtytech.com`).

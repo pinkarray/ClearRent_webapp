@@ -45,19 +45,12 @@ export default async function PropertiesPage({
   const hasFilters = Object.values(filters).some((v) => v !== undefined)
 
   return (
-    <main className="mesh-bg min-h-screen">
-      <div className="container py-12">
-        <Link
-          href="/"
-          className="text-sm font-medium text-[var(--primary)] no-underline hover:underline"
-        >
-          ← ClearRent
-        </Link>
-
-        <h1 className="mt-4 text-3xl font-bold text-[var(--text-primary)] sm:text-4xl">
+    <main>
+      <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+        <h1 className="text-2xl font-bold text-content sm:text-3xl">
           Verified properties
         </h1>
-        <p className="mt-2 max-w-2xl text-[var(--text-secondary)]">
+        <p className="mt-2 max-w-2xl text-content-secondary">
           Every listing here has passed ownership-document verification and is ready for
           inspection. Exact addresses are shared once your inspection is approved.
         </p>
@@ -96,10 +89,10 @@ export default async function PropertiesPage({
 
         {properties.length === 0 ? (
           <div className="card mt-10 p-10 text-center">
-            <p className="text-lg font-semibold text-[var(--text-primary)]">
+            <p className="text-lg font-semibold text-content">
               {hasFilters ? 'No properties match those filters' : 'No verified listings yet'}
             </p>
-            <p className="mt-2 text-sm text-[var(--text-secondary)]">
+            <p className="mt-2 text-sm text-content-secondary">
               {hasFilters
                 ? 'Try widening your search.'
                 : 'Listings appear here once a landlord’s ownership document is verified and the property is marked ready for inspections.'}
@@ -115,7 +108,7 @@ export default async function PropertiesPage({
           </div>
         ) : (
           <>
-            <p className="mt-8 text-sm text-[var(--text-secondary)]">
+            <p className="mt-8 text-sm text-content-secondary">
               {properties.length} {properties.length === 1 ? 'property' : 'properties'}
             </p>
             <div className="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

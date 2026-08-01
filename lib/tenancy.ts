@@ -123,6 +123,19 @@ export type ActiveRental = {
   agreementStatus: string
   rentPaymentStatus: string
   rentAmount: number
+  // Lease detail. Written by rental_interest_ops on first tenancy and by
+  // renewal_ops:484 on promotion; both surfaces read the same names.
+  propertyAddress: string
+  landlordName: string
+  landlordPhone: string | null
+  agentFee: number
+  totalPaid: number
+  rentFrequency: string
+  leaseStartDate: Date | null
+  leaseEndDate: Date | null
+  nextPaymentDue: Date | null
+  agreementUrl: string
+  createdAt: Date | null
 }
 
 export async function activeRentals(
@@ -145,8 +158,59 @@ export async function activeRentals(
       agreementStatus: (x.agreementStatus as string) ?? 'pending',
       rentPaymentStatus: (x.rentPaymentStatus as string) ?? 'unpaid',
       rentAmount: (x.rentAmount as number) ?? 0,
+      propertyAddress: (x.propertyAddress as string) ?? '',
+      landlordName: (x.landlordName as string) ?? '',
+      landlordPhone: (x.landlordPhone as string) ?? null,
+      agentFee: (x.agentFee as number) ?? 0,
+      totalPaid: (x.totalPaid as number) ?? 0,
+      rentFrequency: (x.rentFrequency as string) ?? 'yearly',
+      leaseStartDate: x.leaseStartDate?.toDate?.() ?? null,
+      leaseEndDate: x.leaseEndDate?.toDate?.() ?? null,
+      nextPaymentDue: x.nextPaymentDue?.toDate?.() ?? null,
+      agreementUrl: (x.agreementUrl as string) ?? '',
+      createdAt: x.createdAt?.toDate?.() ?? null,
     } satisfies ActiveRental
   })
+}
+
+/** Every rental this tenant has had, newest first — the app's "My rentals". */
+export async function tenantRentalHistory(uid: string): Promise<ActiveRental[]> {
+  const rentals = await activeRentals('tenantId', uid)
+  return rentals.sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0))
+}
+
+/** The landlord's side of the same list. */
+export async function landlordRentals(uid: string): Promise<ActiveRental[]> {
+  const rentals = await activeRentals('landlordId', uid)
+  return rentals.sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0))
+}
+
+/**
+ * Attaches an uploaded tenancy agreement to a rental.
+ *
+ * `agreementUrl` holds the STORAGE PATH, not a URL — the file is private and is
+ * only ever served through `getSignedAgreementUrl`, which checks rental
+ * membership server-side (storage rules cannot: they cannot read Firestore).
+ *
+ * Only allowlisted fields may be written here; `firestore.rules:1054` rejects
+ * the whole update if it touches anything else, which is what stops a landlord
+ * self-applying a rent change through this path.
+ */
+export async function attachAgreement(
+  rentalId: string,
+  storagePath: string,
+): Promise<string | null> {
+  try {
+    await updateDoc(doc(clientDb(), 'active_rentals', rentalId), {
+      agreementUrl: storagePath,
+      agreementUploadedAt: serverTimestamp(),
+      agreementStatus: 'pending_review',
+      updatedAt: serverTimestamp(),
+    })
+    return null
+  } catch {
+    return 'Could not attach that agreement.'
+  }
 }
 
 /**

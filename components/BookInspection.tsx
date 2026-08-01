@@ -49,7 +49,7 @@ export function BookInspection({ propertyId }: { propertyId: string }) {
 
   if (!ready) {
     return (
-      <div className="card p-6 text-sm text-[var(--text-secondary)]">Loading…</div>
+      <div className="card p-6 text-sm text-content-secondary">Loading…</div>
     )
   }
 
@@ -57,10 +57,10 @@ export function BookInspection({ propertyId }: { propertyId: string }) {
   if (!user) {
     return (
       <div className="card p-6">
-        <h2 className="text-base font-semibold text-[var(--text-primary)]">
+        <h2 className="text-base font-semibold text-content">
           Book an inspection
         </h2>
-        <p className="mt-2 text-sm text-[var(--text-secondary)]">
+        <p className="mt-2 text-sm text-content-secondary">
           The exact street address is released once your inspection is{' '}
           <strong>approved and paid</strong>.
         </p>
@@ -70,9 +70,9 @@ export function BookInspection({ propertyId }: { propertyId: string }) {
         >
           Log in to book
         </Link>
-        <p className="mt-3 text-center text-sm text-[var(--text-secondary)]">
+        <p className="mt-3 text-center text-sm text-content-secondary">
           New here?{' '}
-          <Link href="/signup" className="text-[var(--primary)] no-underline">
+          <Link href="/signup" className="text-primary no-underline">
             Create an account
           </Link>
         </p>
@@ -87,10 +87,10 @@ export function BookInspection({ propertyId }: { propertyId: string }) {
   if (!verified || !hasBank) {
     return (
       <div className="card p-6">
-        <h2 className="text-base font-semibold text-[var(--text-primary)]">
+        <h2 className="text-base font-semibold text-content">
           Book an inspection
         </h2>
-        <p className="mt-2 text-sm text-[var(--text-secondary)]">
+        <p className="mt-2 text-sm text-content-secondary">
           Two things first — both are required before an inspection can be booked.
         </p>
         <div className="mt-4 space-y-3">
@@ -119,9 +119,9 @@ export function BookInspection({ propertyId }: { propertyId: string }) {
 
   if (requestId) {
     return (
-      <div className="card border-l-4 border-l-[var(--primary)] p-6">
-        <h2 className="text-base font-semibold text-[var(--text-primary)]">Request sent</h2>
-        <p className="mt-2 text-sm text-[var(--text-secondary)]">
+      <div className="card border-l-4 border-l-primary p-6">
+        <h2 className="text-base font-semibold text-content">Request sent</h2>
+        <p className="mt-2 text-sm text-content-secondary">
           The handler will approve or decline it. You pay only after it is approved — nothing
           has been charged yet.
         </p>
@@ -136,7 +136,7 @@ export function BookInspection({ propertyId }: { propertyId: string }) {
   }
 
   if (!property) {
-    return <div className="card p-6 text-sm text-[var(--text-secondary)]">Loading…</div>
+    return <div className="card p-6 text-sm text-content-secondary">Loading…</div>
   }
 
   const allowedDays = property.inspectionDays
@@ -171,24 +171,24 @@ export function BookInspection({ propertyId }: { propertyId: string }) {
 
   return (
     <form onSubmit={handleSubmit} className="card p-6">
-      <h2 className="text-base font-semibold text-[var(--text-primary)]">Book an inspection</h2>
+      <h2 className="text-base font-semibold text-content">Book an inspection</h2>
 
       {property.inspectionFeeTotal > 0 && (
-        <div className="mt-3 rounded-[var(--radius-md)] bg-[var(--surface-secondary)] p-4">
+        <div className="mt-3 rounded-md bg-surface-secondary p-4">
           <div className="flex items-baseline justify-between">
-            <span className="text-sm text-[var(--text-secondary)]">Inspection fee</span>
-            <span className="font-bold text-[var(--primary)]">
+            <span className="text-sm text-content-secondary">Inspection fee</span>
+            <span className="font-bold text-primary">
               {formatNaira(property.inspectionFeeTotal)}
             </span>
           </div>
-          <p className="mt-1 text-xs text-[var(--text-hint)]">
+          <p className="mt-1 text-xs text-content-hint">
             Charged only after the handler approves. Nothing is taken now.
           </p>
         </div>
       )}
 
       <div className="mt-4">
-        <span className="text-sm font-medium text-[var(--text-primary)]">Preferred date</span>
+        <span className="text-sm font-medium text-content">Preferred date</span>
         <div className="mt-1.5">
           {minDate && (
             <Calendar
@@ -200,21 +200,21 @@ export function BookInspection({ propertyId }: { propertyId: string }) {
           )}
         </div>
         {date && (
-          <p className="mt-2 text-sm text-[var(--text-secondary)]">
-            Selected: <span className="font-medium text-[var(--text-primary)]">{prettyDate}</span>
+          <p className="mt-2 text-sm text-content-secondary">
+            Selected: <span className="font-medium text-content">{prettyDate}</span>
           </p>
         )}
       </div>
 
       <fieldset className="mt-4">
-        <legend className="text-sm font-medium text-[var(--text-primary)]">Time</legend>
+        <legend className="text-sm font-medium text-content">Time</legend>
         <div className="mt-2 grid gap-2">
           {slots.map((s) => (
             <button
               key={s}
               type="button"
               onClick={() => setSlot(s)}
-              className="rounded-[var(--radius-md)] px-4 py-3 text-left text-sm"
+              className="rounded-md px-4 py-3 text-left text-sm"
               style={{
                 background: slot === s ? 'var(--primary)' : 'var(--surface-secondary)',
                 color: slot === s ? '#fff' : 'var(--text-primary)',
@@ -222,7 +222,7 @@ export function BookInspection({ propertyId }: { propertyId: string }) {
               }}
             >
               <span className="font-medium">{TIME_SLOT_LABEL[s] ?? s}</span>
-              <span className={slot === s ? 'opacity-90' : 'text-[var(--text-secondary)]'}>
+              <span className={slot === s ? 'opacity-90' : 'text-content-secondary'}>
                 {' '}
                 · {TIME_SLOT_DISPLAY[s] ?? ''}
               </span>
@@ -232,8 +232,8 @@ export function BookInspection({ propertyId }: { propertyId: string }) {
       </fieldset>
 
       <label className="mt-4 block">
-        <span className="text-sm font-medium text-[var(--text-primary)]">
-          Notes <span className="text-[var(--text-hint)]">(optional)</span>
+        <span className="text-sm font-medium text-content">
+          Notes <span className="text-content-hint">(optional)</span>
         </span>
         <textarea
           className="input-field mt-1.5 px-4 py-3"
@@ -253,7 +253,7 @@ export function BookInspection({ propertyId }: { propertyId: string }) {
         {busy ? 'Requesting…' : 'Request inspection'}
       </button>
 
-      <p className="mt-3 text-xs text-[var(--text-hint)]">
+      <p className="mt-3 text-xs text-content-hint">
         The exact street address is released once your inspection is approved and paid.
       </p>
     </form>

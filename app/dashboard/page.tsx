@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { collection, getDocs, query, where } from 'firebase/firestore'
+import AgentHome from '../../components/AgentHome'
 import { useAuth } from '../../components/AuthProvider'
 import { clientDb } from '../../lib/firebase-client'
 import { saveAccountType, type AccountType } from '../../lib/user-profile'
@@ -33,14 +33,10 @@ function listingState(l: OwnListing): { label: string; tone: 'live' | 'pending' 
 }
 
 export default function DashboardPage() {
-  const router = useRouter()
-  const { user, profile, ready, refreshProfile, signOut } = useAuth()
+  // AppShell guarantees a signed-in user before children render.
+  const { user, profile, refreshProfile } = useAuth()
   const [listings, setListings] = useState<OwnListing[] | null>(null)
   const [savingType, setSavingType] = useState(false)
-
-  useEffect(() => {
-    if (ready && !user) router.replace('/login')
-  }, [ready, user, router])
 
   useEffect(() => {
     if (!user || profile?.accountType !== 'landlord') return
@@ -65,266 +61,269 @@ export default function DashboardPage() {
     })()
   }, [user, profile])
 
-  if (!ready || !user) {
-    return (
-      <main className="mesh-bg min-h-screen">
-        <div className="container py-16 text-[var(--text-secondary)]">Loading…</div>
-      </main>
-    )
-  }
+  if (!user) return null
 
   const accountType = profile?.accountType
 
   return (
-    <main className="mesh-bg min-h-screen">
-      <div className="container max-w-4xl py-12">
-        <div className="flex items-center justify-between gap-4">
-          <Link
-            href="/"
-            className="text-sm font-medium text-[var(--primary)] no-underline hover:underline"
-          >
-            ← ClearRent
-          </Link>
-          <button
-            className="text-sm text-[var(--text-secondary)] underline"
-            onClick={async () => {
-              await signOut()
-              router.push('/')
-            }}
-          >
-            Sign out
-          </button>
-        </div>
-
-        <h1 className="mt-4 text-3xl font-bold text-[var(--text-primary)]">
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-content">
           {profile?.fullName ? `Hello, ${profile.fullName.split(' ')[0]}` : 'Your dashboard'}
-        </h1>
-        <p className="mt-1 text-[var(--text-secondary)]">
-          {accountType ? `Signed in as ${accountType}` : 'Signed in'} · {user.phoneNumber ?? user.email}
+        </h2>
+        <p className="mt-0.5 text-sm text-content-secondary">
+          {accountType ? `Signed in as ${accountType}` : 'Signed in'}
         </p>
+      </div>
 
-        {/*
-          Accounts predating web onboarding (and the two staff accounts) have no
-          accountType, and every section below keys off it. Without this they
-          would land on an empty dashboard with no way forward.
-        */}
-        {!accountType && (
-          <div className="card mt-6 p-6">
-            <h2 className="font-semibold text-[var(--text-primary)]">
-              How do you use ClearRent?
-            </h2>
-            <p className="mt-1 text-sm text-[var(--text-secondary)]">
-              This account has no role set yet. Pick one to see your tools.
+      {/*
+        Accounts predating web onboarding (and the two staff accounts) have no
+        accountType, and every section below keys off it. Without this they
+        would land on an empty dashboard with no way forward.
+      */}
+      {!accountType && (
+        <section className="card p-6">
+          <h3 className="font-semibold text-content">How do you use ClearRent?</h3>
+          <p className="mt-1 text-sm text-content-secondary">
+            This account has no role set yet. Pick one to see your tools.
+          </p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            {(['landlord', 'tenant', 'agent'] as AccountType[]).map((t) => (
+              <button
+                key={t}
+                className="btn-ghost px-4 py-3 capitalize"
+                disabled={savingType}
+                onClick={async () => {
+                  setSavingType(true)
+                  await saveAccountType(user.uid, t)
+                  await refreshProfile()
+                  setSavingType(false)
+                }}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {accountType && !profile?.profileCompleted && (
+        <section className="card border-l-4 border-l-secondary p-5">
+          <p className="font-semibold text-content">Finish setting up</p>
+          <p className="mt-1 text-sm text-content-secondary">
+            Your profile is incomplete.{' '}
+            <Link href="/signup" className="text-primary no-underline">
+              Complete it
+            </Link>
+            .
+          </p>
+        </section>
+      )}
+
+      {accountType === 'landlord' && (
+        <>
+          {profile?.verificationStatus !== 'verified' && (
+            <section className="card border-l-4 border-l-secondary p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-semibold text-content">Verify your identity to list</p>
+                  <p className="mt-0.5 text-sm text-content-secondary">
+                    Listing requires a verified account.
+                  </p>
+                </div>
+                <span className="chip chip-pending shrink-0">
+                  {profile?.verificationStatus ?? 'Not started'}
+                </span>
+              </div>
+              <Link
+                href="/dashboard/verification"
+                className="btn-primary mt-4 inline-block px-5 py-2.5 text-sm no-underline"
+              >
+                Get verified
+              </Link>
+            </section>
+          )}
+
+          <section className="card p-6">
+            <h3 className="text-lg font-semibold text-content">Inspection requests</h3>
+            <p className="mt-1 text-sm text-content-secondary">
+              Approve or decline tenants who want to view your properties. You earn ₦7,000
+              per completed inspection.
             </p>
-            <div className="mt-4 grid gap-3 sm:grid-cols-3">
-              {(['landlord', 'tenant', 'agent'] as AccountType[]).map((t) => (
-                <button
-                  key={t}
-                  className="btn-ghost px-4 py-3 capitalize"
-                  disabled={savingType}
-                  onClick={async () => {
-                    setSavingType(true)
-                    await saveAccountType(user.uid, t)
-                    await refreshProfile()
-                    setSavingType(false)
-                  }}
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Link href="/dashboard/requests" className="btn-primary px-5 py-2.5 text-sm no-underline">
+                View requests
+              </Link>
+              <Link href="/dashboard/tenancy" className="btn-ghost px-5 py-2.5 text-sm no-underline">
+                Tenancy
+              </Link>
+            </div>
+          </section>
+
+          <section className="card p-6">
+            <h3 className="text-lg font-semibold text-content">Managing your properties</h3>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {[
+                { href: '/dashboard/rentals', label: 'Rentals & agreements' },
+                { href: '/dashboard/earnings', label: 'Earnings' },
+                { href: '/dashboard/issues', label: 'Issues' },
+                { href: '/dashboard/activity', label: 'Recent activity' },
+              ].map((l) => (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  className="btn-ghost px-4 py-3 text-center text-sm no-underline"
                 >
-                  {t}
-                </button>
+                  {l.label}
+                </Link>
               ))}
             </div>
+          </section>
+
+          <div className="flex items-center justify-between gap-4">
+            <h3 className="text-lg font-semibold text-content">Your listings</h3>
+            <Link href="/list" className="btn-primary px-4 py-2 text-sm no-underline">
+              Add property
+            </Link>
           </div>
-        )}
 
-        {accountType && !profile?.profileCompleted && (
-          <div className="card mt-6 border-l-4 border-l-[var(--secondary)] p-5">
-            <p className="font-semibold text-[var(--text-primary)]">Finish setting up</p>
-            <p className="mt-1 text-sm text-[var(--text-secondary)]">
-              Your profile is incomplete.{' '}
-              <Link href="/signup" className="text-[var(--primary)] no-underline">
-                Complete it
-              </Link>
-              .
-            </p>
-          </div>
-        )}
-
-        {accountType === 'landlord' && (
-          <>
-            {profile?.verificationStatus !== 'verified' && (
-              <div className="card mt-6 border-l-4 border-l-[var(--secondary)] p-5">
-                <p className="font-semibold text-[var(--text-primary)]">
-                  Verify your identity to list
-                </p>
-                <p className="mt-1 text-sm text-[var(--text-secondary)]">
-                  Listing requires a verified account. NIN verification runs through a Cloud
-                  Function that enforces App Check, which is not yet wired for web — complete
-                  verification in the ClearRent app for now. Current status:{' '}
-                  <code>{profile?.verificationStatus ?? 'not started'}</code>.
-                </p>
-              </div>
-            )}
-
-            <div className="card mt-8 p-6">
-              <h2 className="text-lg font-semibold text-[var(--text-primary)]">
-                Inspection requests
-              </h2>
-              <p className="mt-1 text-sm text-[var(--text-secondary)]">
-                Approve or decline tenants who want to view your properties. You earn{' '}
-                ₦7,000 per completed inspection.
-              </p>
-              <div className="mt-4 flex flex-wrap gap-3">
-                <Link href="/dashboard/requests" className="btn-primary px-6 py-3 no-underline">
-                  View requests
-                </Link>
-                <Link href="/dashboard/tenancy" className="btn-ghost px-6 py-3 no-underline">
-                  Tenancy
-                </Link>
-              </div>
+          {listings === null ? (
+            <p className="text-sm text-content-secondary">Loading listings…</p>
+          ) : listings.length === 0 ? (
+            <div className="card p-8 text-center">
+              <p className="text-content-secondary">No listings yet.</p>
             </div>
-
-            <div className="mt-8 flex items-center justify-between gap-4">
-              <h2 className="text-xl font-semibold text-[var(--text-primary)]">Your listings</h2>
-              <Link href="/list" className="btn-primary px-5 py-2.5 text-sm no-underline">
-                Add property
-              </Link>
-            </div>
-
-            {listings === null ? (
-              <p className="mt-4 text-sm text-[var(--text-secondary)]">Loading listings…</p>
-            ) : listings.length === 0 ? (
-              <div className="card mt-4 p-8 text-center">
-                <p className="text-[var(--text-secondary)]">No listings yet.</p>
-              </div>
-            ) : (
-              <div className="mt-4 space-y-3">
-                {listings.map((l) => {
-                  const state = listingState(l)
-                  return (
-                    <Link
-                      key={l.id}
-                      href={`/dashboard/listings/${l.id}`}
-                      className="card flex items-center justify-between gap-4 p-5 no-underline"
-                    >
-                      <div>
-                        <p className="font-semibold text-[var(--text-primary)]">{l.title}</p>
-                        <p className="text-sm text-[var(--text-secondary)]">
-                          {[l.city, l.state].filter(Boolean).join(', ')}
-                        </p>
-                      </div>
-                      <span
-                        className="shrink-0 rounded-full px-3 py-1 text-xs font-semibold"
-                        style={{
-                          background:
-                            state.tone === 'live'
-                              ? 'rgba(10,123,108,0.1)'
-                              : 'rgba(244,168,54,0.15)',
-                          color:
-                            state.tone === 'live' ? 'var(--primary)' : 'var(--secondary-dark)',
-                        }}
-                      >
-                        {state.label}
-                      </span>
-                    </Link>
-                  )
-                })}
-              </div>
-            )}
-          </>
-        )}
-
-        {accountType === 'tenant' && (
-          <>
-            {/*
-              Both of these are enforced by firestore.rules on the
-              inspection_requests create — verificationStatus via the client
-              gate, hasBankDetails via actorHasBankDetails(). Showing them as a
-              checklist means the tenant knows why booking is unavailable
-              instead of meeting a permission error at the end.
-            */}
-            <div className="card mt-8 p-6">
-              <h2 className="text-lg font-semibold text-[var(--text-primary)]">
-                Before you can book an inspection
-              </h2>
-              <div className="mt-4 space-y-3">
-                {[
-                  {
-                    done: profile?.verificationStatus === 'verified',
-                    pending: profile?.verificationStatus === 'pending',
-                    label: 'Identity verified',
-                    hint: 'NIN and proof of address, reviewed by an admin.',
-                    href: '/dashboard/verification',
-                    cta: 'Get verified',
-                  },
-                  {
-                    done: profile?.hasBankDetails === true,
-                    pending: false,
-                    label: 'Payout account on file',
-                    hint: 'So a refund has somewhere to go if an inspection is disputed.',
-                    href: '/dashboard/bank',
-                    cta: 'Add account',
-                  },
-                ].map((step) => (
-                  <div
-                    key={step.label}
-                    className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--divider)] pb-3 last:border-0 last:pb-0"
+          ) : (
+            <div className="space-y-3">
+              {listings.map((l) => {
+                const state = listingState(l)
+                return (
+                  <Link
+                    key={l.id}
+                    href={`/dashboard/listings/${l.id}`}
+                    className="card flex items-center justify-between gap-4 p-4 no-underline"
                   >
                     <div className="min-w-0">
-                      <p className="font-medium text-[var(--text-primary)]">
-                        {step.done ? '✓ ' : ''}
-                        {step.label}
+                      <p className="truncate font-medium text-content">{l.title}</p>
+                      <p className="truncate text-sm text-content-secondary">
+                        {[l.city, l.state].filter(Boolean).join(', ')}
                       </p>
-                      <p className="text-sm text-[var(--text-secondary)]">{step.hint}</p>
                     </div>
-                    {step.done ? (
-                      <span className="verified-badge shrink-0">Done</span>
-                    ) : step.pending ? (
-                      <span className="shrink-0 text-sm text-[var(--text-secondary)]">
-                        Under review
-                      </span>
-                    ) : (
-                      <Link
-                        href={step.href}
-                        className="btn-ghost shrink-0 px-4 py-2 text-sm no-underline"
-                      >
-                        {step.cta}
-                      </Link>
-                    )}
+                    <span
+                      className={`chip shrink-0 ${
+                        state.tone === 'live' ? 'chip-live' : 'chip-pending'
+                      }`}
+                    >
+                      {state.label}
+                    </span>
+                  </Link>
+                )
+              })}
+            </div>
+          )}
+        </>
+      )}
+
+      {accountType === 'tenant' && (
+        <>
+          {/*
+            Both of these are enforced by firestore.rules on the
+            inspection_requests create — verificationStatus via the client
+            gate, hasBankDetails via actorHasBankDetails(). Showing them as a
+            checklist means the tenant knows why booking is unavailable
+            instead of meeting a permission error at the end.
+          */}
+          <section className="card p-6">
+            <h3 className="text-lg font-semibold text-content">
+              Before you can book an inspection
+            </h3>
+            <div className="mt-4 space-y-3">
+              {[
+                {
+                  done: profile?.verificationStatus === 'verified',
+                  pending: profile?.verificationStatus === 'pending',
+                  label: 'Identity verified',
+                  hint: 'NIN and proof of address, reviewed by an admin.',
+                  href: '/dashboard/verification',
+                  cta: 'Get verified',
+                },
+                {
+                  done: profile?.hasBankDetails === true,
+                  pending: false,
+                  label: 'Payout account on file',
+                  hint: 'So a refund has somewhere to go if an inspection is disputed.',
+                  href: '/dashboard/bank',
+                  cta: 'Add account',
+                },
+              ].map((step) => (
+                <div
+                  key={step.label}
+                  className="flex flex-wrap items-center justify-between gap-3 border-b border-divider pb-3 last:border-0 last:pb-0"
+                >
+                  <div className="min-w-0">
+                    <p className="font-medium text-content">
+                      {step.done ? '✓ ' : ''}
+                      {step.label}
+                    </p>
+                    <p className="text-sm text-content-secondary">{step.hint}</p>
                   </div>
-                ))}
-              </div>
+                  {step.done ? (
+                    <span className="verified-badge shrink-0">Done</span>
+                  ) : step.pending ? (
+                    <span className="chip chip-pending shrink-0">Under review</span>
+                  ) : (
+                    <Link
+                      href={step.href}
+                      className="btn-ghost shrink-0 px-4 py-2 text-sm no-underline"
+                    >
+                      {step.cta}
+                    </Link>
+                  )}
+                </div>
+              ))}
             </div>
+          </section>
 
-            <div className="card mt-6 p-6">
-              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Find a place</h2>
-              <p className="mt-1 text-sm text-[var(--text-secondary)]">
-                Browse verified listings and book an inspection.
-              </p>
-              <div className="mt-4 flex flex-wrap gap-3">
-                <Link href="/properties" className="btn-primary px-6 py-3 no-underline">
-                  Browse properties
-                </Link>
-                <Link href="/dashboard/inspections" className="btn-ghost px-6 py-3 no-underline">
-                  My inspections
-                </Link>
-                <Link href="/dashboard/tenancy" className="btn-ghost px-6 py-3 no-underline">
-                  Tenancy
-                </Link>
-              </div>
-            </div>
-          </>
-        )}
-
-        {accountType === 'agent' && (
-          <div className="card mt-8 p-6">
-            <h2 className="text-lg font-semibold text-[var(--text-primary)]">Agent tools</h2>
-            <p className="mt-1 text-sm text-[var(--text-secondary)]">
-              Assignment and inspection handling are still app-only. They are next after the
-              landlord surface.
+          <section className="card p-6">
+            <h3 className="text-lg font-semibold text-content">Find a place</h3>
+            <p className="mt-1 text-sm text-content-secondary">
+              Browse verified listings and book an inspection.
             </p>
-          </div>
-        )}
-      </div>
-    </main>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Link href="/properties" className="btn-primary px-5 py-2.5 text-sm no-underline">
+                Browse properties
+              </Link>
+              <Link
+                href="/dashboard/inspections"
+                className="btn-ghost px-5 py-2.5 text-sm no-underline"
+              >
+                My inspections
+              </Link>
+            </div>
+          </section>
+
+          <section className="card p-6">
+            <h3 className="text-lg font-semibold text-content">Your tenancy</h3>
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              {[
+                { href: '/dashboard/rentals', label: 'My rentals' },
+                { href: '/dashboard/documents', label: 'Documents' },
+                { href: '/dashboard/issues', label: 'Report an issue' },
+              ].map((l) => (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  className="btn-ghost px-4 py-3 text-center text-sm no-underline"
+                >
+                  {l.label}
+                </Link>
+              ))}
+            </div>
+          </section>
+        </>
+      )}
+
+      {accountType === 'agent' && <AgentHome verified={profile?.verificationStatus === 'verified'} />}
+    </div>
   )
 }

@@ -36,17 +36,17 @@ export default function LoginPage() {
       <div className="container max-w-md py-16">
         <Link
           href="/"
-          className="text-sm font-medium text-[var(--primary)] no-underline hover:underline"
+          className="text-sm font-medium text-primary no-underline hover:underline"
         >
           ← ClearRent
         </Link>
 
-        <h1 className="mt-6 text-2xl font-bold text-[var(--text-primary)]">Log in</h1>
+        <h1 className="mt-6 text-2xl font-bold text-content">Log in</h1>
 
         {!isClientConfigured() && (
-          <div className="card mt-6 border-l-4 border-l-[var(--secondary)] p-5">
-            <p className="font-semibold text-[var(--text-primary)]">Sign-in is unavailable</p>
-            <p className="mt-1 text-sm text-[var(--text-secondary)]">
+          <div className="card mt-6 border-l-4 border-l-secondary p-5">
+            <p className="font-semibold text-content">Sign-in is unavailable</p>
+            <p className="mt-1 text-sm text-content-secondary">
               This deployment is missing its Firebase web configuration. Browsing still works.
             </p>
           </div>
@@ -60,7 +60,7 @@ export default function LoginPage() {
                 setMode(m)
                 setError(null)
               }}
-              className="flex-1 rounded-[var(--radius-md)] px-4 py-2 text-sm font-medium"
+              className="flex-1 rounded-md px-4 py-2 text-sm font-medium"
               style={{
                 background: mode === m ? 'var(--primary)' : 'var(--surface-secondary)',
                 color: mode === m ? '#fff' : 'var(--text-secondary)',
@@ -77,7 +77,7 @@ export default function LoginPage() {
           ) : (
             <form onSubmit={handleEmailLogin} className="space-y-4">
               <label className="block">
-                <span className="text-sm font-medium text-[var(--text-primary)]">Email</span>
+                <span className="text-sm font-medium text-content">Email</span>
                 <input
                   className="input-field mt-1.5 px-4 py-3"
                   type="email"
@@ -97,7 +97,7 @@ export default function LoginPage() {
               <button className="btn-primary w-full px-6 py-3" type="submit" disabled={busy}>
                 {busy ? 'Signing in…' : 'Log in'}
               </button>
-              <p className="text-xs text-[var(--text-hint)]">
+              <p className="text-xs text-content-hint">
                 Most accounts sign in by phone. Email works only for accounts that were given a
                 password, which is mainly staff.
               </p>
@@ -105,9 +105,9 @@ export default function LoginPage() {
           )}
         </div>
 
-        <p className="mt-6 text-center text-sm text-[var(--text-secondary)]">
+        <p className="mt-6 text-center text-sm text-content-secondary">
           New here?{' '}
-          <Link href="/signup" className="font-medium text-[var(--primary)] no-underline">
+          <Link href="/signup" className="font-medium text-primary no-underline">
             Create an account
           </Link>
         </p>

@@ -73,12 +73,12 @@ export function InspectionActions({
   if (!live && state.status !== 'completed') return null
 
   return (
-    <div className="mt-4 border-t border-[var(--divider)] pt-4">
+    <div className="mt-4 border-t border-divider pt-4">
       {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
 
       {live && (
         <>
-          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-hint)]">
+          <p className="text-xs font-semibold uppercase tracking-wide text-content-hint">
             On the day
           </p>
 
@@ -92,10 +92,10 @@ export function InspectionActions({
                 I&apos;ve arrived
               </button>
             ) : (
-              <span className="text-sm text-[var(--text-secondary)]">✓ You arrived</span>
+              <span className="text-sm text-content-secondary">✓ You arrived</span>
             )}
 
-            <span className="text-sm text-[var(--text-secondary)]">
+            <span className="text-sm text-content-secondary">
               {theyArrived
                 ? `✓ ${mine ? 'Handler' : 'Tenant'} arrived`
                 : `Waiting for the ${mine ? 'handler' : 'tenant'}`}
@@ -113,7 +113,7 @@ export function InspectionActions({
                   Confirm we met
                 </button>
               ) : (
-                <span className="text-sm text-[var(--text-secondary)]">✓ You confirmed</span>
+                <span className="text-sm text-content-secondary">✓ You confirmed</span>
               )}
             </div>
           )}
@@ -132,10 +132,10 @@ export function InspectionActions({
 
       {state.status === 'completed' && role === 'tenant' && !state.tenantRated && (
         <div>
-          <p className="text-sm font-medium text-[var(--text-primary)]">
+          <p className="text-sm font-medium text-content">
             Rate {state.handlerName}
           </p>
-          <p className="mt-0.5 text-xs text-[var(--text-hint)]">
+          <p className="mt-0.5 text-xs text-content-hint">
             Required before you can express interest in renting — it is what confirms the visit
             happened.
           </p>
@@ -182,7 +182,7 @@ export function InspectionActions({
       )}
 
       {state.status === 'completed' && state.tenantRated && role === 'tenant' && (
-        <p className="text-sm text-[var(--text-secondary)]">
+        <p className="text-sm text-content-secondary">
           ✓ Rated. You can now express interest in renting this property.
         </p>
       )}

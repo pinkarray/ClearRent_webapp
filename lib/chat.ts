@@ -1,0 +1,253 @@
+import {
+  Timestamp,
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  increment,
+  onSnapshot,
+  orderBy,
+  query,
+  updateDoc,
+  where,
+} from 'firebase/firestore'
+import { clientDb } from './firebase-client'
+
+/*
+  Mirrors `conversation_service.dart`.
+
+  Rules worth knowing before changing anything here (`firestore.rules:471`):
+  - `list` requires the caller be a participant, so the inbox query MUST filter
+    `participants array-contains uid`. An unscoped read is rejected.
+  - Sending a message requires the sender be an ACTIVE participant AND
+    `isVerified()`. An unverified tenant gets `permission-denied` on send, not
+    on open — so the composer is disabled up front rather than failing at the
+    end.
+  - Messages carry `timestamp`, not `createdAt`. The ordering index is on
+    `timestamp` ascending.
+*/
+
+export type Conversation = {
+  id: string
+  propertyId: string
+  propertyTitle: string
+  landlordId: string
+  landlordName: string
+  tenantId: string
+  tenantName: string
+  agentId: string
+  agentName: string
+  participants: string[]
+  lastMessage: string
+  lastMessageTime: Date | null
+  lastMessageSenderId: string
+  unread: number
+}
+
+export type Message = {
+  id: string
+  senderId: string
+  senderName: string
+  senderRole: string
+  text: string
+  imageUrl: string | null
+  timestamp: Date | null
+}
+
+function toConversation(id: string, x: Record<string, unknown>, uid: string): Conversation {
+  const unreadCounts = (x.unreadCounts as Record<string, number> | undefined) ?? {}
+  return {
+    id,
+    propertyId: (x.propertyId as string) ?? '',
+    propertyTitle: (x.propertyTitle as string) ?? '(property)',
+    landlordId: (x.landlordId as string) ?? '',
+    landlordName: (x.landlordName as string) ?? '',
+    tenantId: (x.tenantId as string) ?? '',
+    tenantName: (x.tenantName as string) ?? '',
+    agentId: (x.agentId as string) ?? '',
+    agentName: (x.agentName as string) ?? '',
+    participants: Array.isArray(x.participants)
+      ? x.participants.filter((p): p is string => typeof p === 'string')
+      : [],
+    lastMessage: (x.lastMessage as string) ?? '',
+    lastMessageTime: (x.lastMessageTime as Timestamp | undefined)?.toDate?.() ?? null,
+    lastMessageSenderId: (x.lastMessageSenderId as string) ?? '',
+    unread: unreadCounts[uid] ?? 0,
+  }
+}
+
+export async function myConversations(uid: string): Promise<Conversation[]> {
+  const snap = await getDocs(
+    query(collection(clientDb(), 'conversations'), where('participants', 'array-contains', uid)),
+  )
+  return snap.docs
+    .map((d) => toConversation(d.id, d.data(), uid))
+    .sort((a, b) => (b.lastMessageTime?.getTime() ?? 0) - (a.lastMessageTime?.getTime() ?? 0))
+}
+
+export async function getConversation(id: string, uid: string): Promise<Conversation | null> {
+  const snap = await getDoc(doc(clientDb(), 'conversations', id))
+  if (!snap.exists()) return null
+  return toConversation(snap.id, snap.data(), uid)
+}
+
+/**
+ * Live message stream. Chat is the one screen where polling is visibly wrong,
+ * so this is the only realtime listener on the web surface.
+ */
+export function watchMessages(
+  conversationId: string,
+  onChange: (messages: Message[]) => void,
+): () => void {
+  return onSnapshot(
+    query(
+      collection(clientDb(), 'conversations', conversationId, 'messages'),
+      orderBy('timestamp', 'asc'),
+    ),
+    (snap) => {
+      onChange(
+        snap.docs.map((d) => {
+          const x = d.data()
+          return {
+            id: d.id,
+            senderId: (x.senderId as string) ?? '',
+            senderName: (x.senderName as string) ?? '',
+            senderRole: (x.senderRole as string) ?? '',
+            text: (x.text as string) ?? '',
+            imageUrl: (x.imageUrl as string) ?? null,
+            timestamp: (x.timestamp as Timestamp | undefined)?.toDate?.() ?? null,
+          }
+        }),
+      )
+    },
+  )
+}
+
+/** Returns null on success, or a message to show the sender. */
+export async function sendMessage(
+  conversationId: string,
+  sender: { uid: string; name: string; role: string },
+  text: string,
+): Promise<string | null> {
+  const trimmed = text.trim()
+  if (!trimmed) return null
+
+  try {
+    const conversationRef = doc(clientDb(), 'conversations', conversationId)
+    await addDoc(collection(conversationRef, 'messages'), {
+      conversationId,
+      senderId: sender.uid,
+      senderName: sender.name,
+      senderRole: sender.role,
+      text: trimmed,
+      timestamp: Timestamp.now(),
+      isRead: false,
+    })
+
+    // The inbox reads these, and the app writes them on every send. Skipping it
+    // would leave the other party's list showing a stale preview and no badge.
+    const snap = await getDoc(conversationRef)
+    const participants = (snap.data()?.participants as string[] | undefined) ?? []
+    const bumps: Record<string, unknown> = {
+      lastMessage: trimmed,
+      lastMessageTime: Timestamp.now(),
+      lastMessageSenderId: sender.uid,
+    }
+    for (const p of participants) {
+      if (p !== sender.uid) bumps[`unreadCounts.${p}`] = increment(1)
+    }
+    await updateDoc(conversationRef, bumps)
+    return null
+  } catch (err) {
+    const code = (err as { code?: string })?.code ?? ''
+    if (code === 'permission-denied') {
+      return 'Messaging requires a verified account. Complete verification first.'
+    }
+    return err instanceof Error ? err.message : 'Could not send that message.'
+  }
+}
+
+export async function clearUnread(conversationId: string, uid: string): Promise<void> {
+  try {
+    await updateDoc(doc(clientDb(), 'conversations', conversationId), {
+      [`unreadCounts.${uid}`]: 0,
+    })
+  } catch {
+    // A failed badge reset is not worth interrupting the conversation for.
+  }
+}
+
+/**
+ * The agent → landlord pitch thread, mirroring
+ * `conversation_service.dart:871`.
+ *
+ * Deduped on (landlordId, agentId, conversationType) so an agent pitching the
+ * same landlord about a second property reuses the existing thread rather than
+ * opening a parallel one — the pitch is about the agent, not the property,
+ * which is why `propertyId` is deliberately empty.
+ *
+ * Both parties must be verified. The app checks this client-side before
+ * creating; the rules enforce it on the first message either way, so an
+ * unverified agent gets a thread they cannot send in. Checked here too, so the
+ * failure is explained rather than silent.
+ */
+export async function getOrCreatePitchConversation(
+  landlordId: string,
+  agent: { uid: string; name: string },
+): Promise<{ id: string } | { error: string }> {
+  if (!landlordId) return { error: 'That listing has no landlord on it.' }
+
+  try {
+    const existing = await getDocs(
+      query(
+        collection(clientDb(), 'conversations'),
+        where('landlordId', '==', landlordId),
+        where('agentId', '==', agent.uid),
+        where('conversationType', '==', 'agent_pitch'),
+      ),
+    )
+    if (!existing.empty) return { id: existing.docs[0].id }
+
+    const landlordSnap = await getDoc(doc(clientDb(), 'users', landlordId))
+    const landlord = landlordSnap.data()
+    if (!landlord) return { error: 'Could not find that landlord.' }
+    if (landlord.verificationStatus !== 'verified') {
+      return { error: 'That landlord is not verified yet, so messaging is closed.' }
+    }
+
+    const ref = await addDoc(collection(clientDb(), 'conversations'), {
+      propertyId: '',
+      propertyTitle: 'Agent Services Inquiry',
+      propertyImage: '',
+      landlordId,
+      landlordName: (landlord.fullName as string) ?? 'Landlord',
+      tenantId: '',
+      tenantName: '',
+      agentId: agent.uid,
+      agentName: agent.name,
+      participants: [landlordId, agent.uid],
+      lastMessage: '',
+      lastMessageTime: Timestamp.now(),
+      lastMessageSenderId: '',
+      unreadCounts: { [landlordId]: 0, [agent.uid]: 0 },
+      conversationType: 'agent_pitch',
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    })
+    return { id: ref.id }
+  } catch (err) {
+    return {
+      error: err instanceof Error ? err.message : 'Could not start that conversation.',
+    }
+  }
+}
+
+/** Who the other side is, for the inbox row and the thread header. */
+export function counterparty(c: Conversation, uid: string): string {
+  // A pitch thread has no tenant — it is the agent and the landlord.
+  if (c.agentId === uid) return c.landlordName || 'Landlord'
+  if (c.landlordId === uid) return c.agentName || c.tenantName || 'Tenant'
+  if (c.tenantId === uid) return c.agentId ? c.agentName || c.landlordName : c.landlordName
+  return c.tenantName || 'Tenant'
+}

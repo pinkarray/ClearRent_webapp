@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { BookInspection } from '../../../components/BookInspection'
 import { CloudinaryImage } from '../../../components/CloudinaryImage'
+import SaveButton from '../../../components/SaveButton'
 import {
   formatNairaFull,
   getPublishedProperty,
@@ -34,12 +35,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 function Row({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-[var(--divider)] py-3 last:border-0">
+    <div className="flex items-start justify-between gap-4 border-b border-divider py-3 last:border-0">
       <div>
-        <span className="text-sm text-[var(--text-secondary)]">{label}</span>
-        {hint && <p className="mt-0.5 text-xs text-[var(--text-hint)]">{hint}</p>}
+        <span className="text-sm text-content-secondary">{label}</span>
+        {hint && <p className="mt-0.5 text-xs text-content-hint">{hint}</p>}
       </div>
-      <span className="shrink-0 text-sm font-semibold text-[var(--text-primary)]">{value}</span>
+      <span className="shrink-0 text-sm font-semibold text-content">{value}</span>
     </div>
   )
 }
@@ -47,7 +48,7 @@ function Row({ label, value, hint }: { label: string; value: string; hint?: stri
 function Pricing({ property }: { property: PublicProperty }) {
   return (
     <div className="card p-6">
-      <h2 className="text-lg font-semibold text-[var(--text-primary)]">The full package</h2>
+      <h2 className="text-lg font-semibold text-content">The full package</h2>
       <div className="mt-3">
         <Row
           label="Rent"
@@ -69,16 +70,16 @@ function Pricing({ property }: { property: PublicProperty }) {
         )}
       </div>
 
-      <div className="mt-4 flex items-baseline justify-between border-t border-[var(--border)] pt-4">
-        <span className="font-semibold text-[var(--text-primary)]">Total to move in</span>
-        <span className="text-xl font-bold text-[var(--primary)]">
+      <div className="mt-4 flex items-baseline justify-between border-t border-border pt-4">
+        <span className="font-semibold text-content">Total to move in</span>
+        <span className="text-xl font-bold text-primary">
           {formatNairaFull(totalPackage(property))}
         </span>
       </div>
 
       {property.recurringDues.length > 0 && (
         <div className="mt-6">
-          <h3 className="text-sm font-semibold text-[var(--text-primary)]">Recurring dues</h3>
+          <h3 className="text-sm font-semibold text-content">Recurring dues</h3>
           <div className="mt-1">
             {property.recurringDues.map((due, i) => (
               <Row
@@ -100,33 +101,36 @@ export default async function PropertyDetailPage({ params }: Props) {
   if (!property) notFound()
 
   return (
-    <main className="mesh-bg min-h-screen">
-      <div className="container py-12">
+    <main>
+      <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
         <Link
           href="/properties"
-          className="text-sm font-medium text-[var(--primary)] no-underline hover:underline"
+          className="text-sm font-medium text-primary no-underline hover:underline"
         >
           ← All properties
         </Link>
 
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <span className="verified-badge">Ownership verified</span>
-          <span className="text-sm capitalize text-[var(--text-secondary)]">
+          <span className="text-sm capitalize text-content-secondary">
             {property.propertyType.replace(/_/g, ' ')}
           </span>
         </div>
 
-        <h1 className="mt-3 text-3xl font-bold text-[var(--text-primary)] sm:text-4xl">
+        <h1 className="mt-3 text-3xl font-bold text-content sm:text-4xl">
           {property.title}
         </h1>
-        <p className="mt-2 text-[var(--text-secondary)]">{property.approximateAddress}</p>
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-content-secondary">{property.approximateAddress}</p>
+          <SaveButton propertyId={property.id} />
+        </div>
 
         {property.images.length > 0 && (
           <div className="mt-8 grid gap-3 sm:grid-cols-2">
             {property.images.slice(0, 6).map((src, i) => (
               <div
                 key={src}
-                className={`relative overflow-hidden rounded-[var(--radius-lg)] bg-[var(--surface-secondary)] ${
+                className={`relative overflow-hidden rounded-lg bg-surface-secondary ${
                   i === 0 ? 'aspect-[16/10] sm:col-span-2' : 'aspect-[4/3]'
                 }`}
               >
@@ -146,7 +150,7 @@ export default async function PropertyDetailPage({ params }: Props) {
         <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_380px]">
           <div>
             <div className="card p-6">
-              <h2 className="text-lg font-semibold text-[var(--text-primary)]">The space</h2>
+              <h2 className="text-lg font-semibold text-content">The space</h2>
               <div className="mt-3 grid grid-cols-2 gap-x-6 sm:grid-cols-3">
                 <Row label="Bedrooms" value={String(property.bedrooms)} />
                 <Row label="Bathrooms" value={String(property.bathrooms)} />
@@ -164,8 +168,8 @@ export default async function PropertyDetailPage({ params }: Props) {
 
             {property.description && (
               <div className="card mt-6 p-6">
-                <h2 className="text-lg font-semibold text-[var(--text-primary)]">About</h2>
-                <p className="mt-2 whitespace-pre-line text-[var(--text-secondary)]">
+                <h2 className="text-lg font-semibold text-content">About</h2>
+                <p className="mt-2 whitespace-pre-line text-content-secondary">
                   {property.description}
                 </p>
               </div>
@@ -173,12 +177,12 @@ export default async function PropertyDetailPage({ params }: Props) {
 
             {property.amenities.length > 0 && (
               <div className="card mt-6 p-6">
-                <h2 className="text-lg font-semibold text-[var(--text-primary)]">Amenities</h2>
+                <h2 className="text-lg font-semibold text-content">Amenities</h2>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {property.amenities.map((a) => (
                     <span
                       key={a}
-                      className="rounded-full bg-[var(--surface-secondary)] px-3 py-1.5 text-sm capitalize text-[var(--text-secondary)]"
+                      className="rounded-full bg-surface-secondary px-3 py-1.5 text-sm capitalize text-content-secondary"
                     >
                       {a.replace(/_/g, ' ')}
                     </span>
@@ -189,8 +193,8 @@ export default async function PropertyDetailPage({ params }: Props) {
 
             {property.rules.length > 0 && (
               <div className="card mt-6 p-6">
-                <h2 className="text-lg font-semibold text-[var(--text-primary)]">House rules</h2>
-                <ul className="mt-3 list-inside list-disc space-y-1 text-[var(--text-secondary)]">
+                <h2 className="text-lg font-semibold text-content">House rules</h2>
+                <ul className="mt-3 list-inside list-disc space-y-1 text-content-secondary">
                   {property.rules.map((r) => (
                     <li key={r}>{r}</li>
                   ))}

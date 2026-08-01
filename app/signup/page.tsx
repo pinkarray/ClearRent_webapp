@@ -96,7 +96,7 @@ export default function SignupPage() {
       <div className="container max-w-md py-16">
         <Link
           href="/"
-          className="text-sm font-medium text-[var(--primary)] no-underline hover:underline"
+          className="text-sm font-medium text-primary no-underline hover:underline"
         >
           ← ClearRent
         </Link>
@@ -118,7 +118,7 @@ export default function SignupPage() {
 
         {step === 'type' && (
           <>
-            <h1 className="mt-6 text-2xl font-bold text-[var(--text-primary)]">
+            <h1 className="mt-6 text-2xl font-bold text-content">
               How will you use ClearRent?
             </h1>
             <div className="mt-6 space-y-3">
@@ -132,8 +132,8 @@ export default function SignupPage() {
                   }}
                   onClick={() => setAccountType(t.id)}
                 >
-                  <span className="font-semibold text-[var(--text-primary)]">{t.label}</span>
-                  <span className="mt-1 block text-sm text-[var(--text-secondary)]">
+                  <span className="font-semibold text-content">{t.label}</span>
+                  <span className="mt-1 block text-sm text-content-secondary">
                     {t.blurb}
                   </span>
                 </button>
@@ -151,17 +151,17 @@ export default function SignupPage() {
 
         {step === 'phone' && (
           <>
-            <h1 className="mt-6 text-2xl font-bold text-[var(--text-primary)]">
+            <h1 className="mt-6 text-2xl font-bold text-content">
               Verify your phone
             </h1>
-            <p className="mt-2 text-sm text-[var(--text-secondary)]">
+            <p className="mt-2 text-sm text-content-secondary">
               This is how you will sign in, on web and in the app.
             </p>
             <div className="card mt-6 p-6">
               <PhoneOtpForm onVerified={handleVerified} submitLabel="Verify" />
             </div>
             <button
-              className="mt-4 w-full text-sm text-[var(--text-secondary)] underline"
+              className="mt-4 w-full text-sm text-content-secondary underline"
               onClick={() => setStep('type')}
             >
               Back
@@ -171,12 +171,12 @@ export default function SignupPage() {
 
         {step === 'profile' && (
           <>
-            <h1 className="mt-6 text-2xl font-bold text-[var(--text-primary)]">
+            <h1 className="mt-6 text-2xl font-bold text-content">
               Tell us about you
             </h1>
             <form onSubmit={handleProfile} className="card mt-6 space-y-4 p-6">
               <label className="block">
-                <span className="text-sm font-medium text-[var(--text-primary)]">Full name</span>
+                <span className="text-sm font-medium text-content">Full name</span>
                 <input
                   className="input-field mt-1.5 px-4 py-3"
                   required
@@ -185,8 +185,8 @@ export default function SignupPage() {
                 />
               </label>
               <label className="block">
-                <span className="text-sm font-medium text-[var(--text-primary)]">Email</span>
-                <span className="mt-0.5 block text-xs text-[var(--text-hint)]">
+                <span className="text-sm font-medium text-content">Email</span>
+                <span className="mt-0.5 block text-xs text-content-hint">
                   Receipts and payments use this address.
                 </span>
                 <input
@@ -211,7 +211,7 @@ export default function SignupPage() {
               {accountType === 'tenant' && (
                 <>
                   <label className="block">
-                    <span className="text-sm font-medium text-[var(--text-primary)]">
+                    <span className="text-sm font-medium text-content">
                       Occupation
                     </span>
                     <input
@@ -221,7 +221,7 @@ export default function SignupPage() {
                     />
                   </label>
                   <label className="block">
-                    <span className="text-sm font-medium text-[var(--text-primary)]">
+                    <span className="text-sm font-medium text-content">
                       Employer
                     </span>
                     <input
@@ -231,7 +231,7 @@ export default function SignupPage() {
                     />
                   </label>
                   <label className="block">
-                    <span className="text-sm font-medium text-[var(--text-primary)]">
+                    <span className="text-sm font-medium text-content">
                       Monthly income
                     </span>
                     <select
@@ -253,7 +253,7 @@ export default function SignupPage() {
               {accountType === 'agent' && (
                 <>
                   <label className="block">
-                    <span className="text-sm font-medium text-[var(--text-primary)]">
+                    <span className="text-sm font-medium text-content">
                       Base location
                     </span>
                     <input
@@ -263,10 +263,10 @@ export default function SignupPage() {
                     />
                   </label>
                   <label className="block">
-                    <span className="text-sm font-medium text-[var(--text-primary)]">
+                    <span className="text-sm font-medium text-content">
                       Service areas
                     </span>
-                    <span className="mt-0.5 block text-xs text-[var(--text-hint)]">
+                    <span className="mt-0.5 block text-xs text-content-hint">
                       Comma separated.
                     </span>
                     <input
@@ -286,9 +286,9 @@ export default function SignupPage() {
           </>
         )}
 
-        <p className="mt-6 text-center text-sm text-[var(--text-secondary)]">
+        <p className="mt-6 text-center text-sm text-content-secondary">
           Already have an account?{' '}
-          <Link href="/login" className="font-medium text-[var(--primary)] no-underline">
+          <Link href="/login" className="font-medium text-primary no-underline">
             Log in
           </Link>
         </p>

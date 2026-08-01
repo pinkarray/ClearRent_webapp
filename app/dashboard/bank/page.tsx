@@ -1,14 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { useAuth } from '../../../components/AuthProvider'
 import { BANKS, resolveAccount, saveBankDetails } from '../../../lib/bank'
 
 export default function BankDetailsPage() {
-  const router = useRouter()
-  const { user, profile, ready, refreshProfile } = useAuth()
+  // AppShell handles the signed-out redirect and the loading state.
+  const { user, profile, refreshProfile } = useAuth()
 
   const [accountNumber, setAccountNumber] = useState('')
   const [bankCode, setBankCode] = useState('')
@@ -16,10 +14,6 @@ export default function BankDetailsPage() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
-
-  useEffect(() => {
-    if (ready && !user) router.replace('/login')
-  }, [ready, user, router])
 
   // A changed number or bank invalidates the resolved name — saving a stale one
   // would put the wrong payout destination on file. Done in the handlers rather
@@ -67,45 +61,31 @@ export default function BankDetailsPage() {
     await refreshProfile()
   }
 
-  if (!ready || !user) {
-    return (
-      <main className="mesh-bg min-h-screen">
-        <div className="container py-16 text-[var(--text-secondary)]">Loading…</div>
-      </main>
-    )
-  }
+  if (!user) return null
 
   return (
-    <main className="mesh-bg min-h-screen">
-      <div className="container max-w-2xl py-12">
-        <Link
-          href="/dashboard"
-          className="text-sm font-medium text-[var(--primary)] no-underline hover:underline"
-        >
-          ← Dashboard
-        </Link>
-
-        <h1 className="mt-4 text-3xl font-bold text-[var(--text-primary)]">Payout account</h1>
-        <p className="mt-2 text-[var(--text-secondary)]">
+    <>
+      <div className="mx-auto max-w-2xl">
+        <p className="text-content-secondary">
           Required before you can book an inspection, so any refund has somewhere to go. Your
           account details are stored privately — only you and an admin can read them.
         </p>
 
         {profile?.hasBankDetails && !saved && (
-          <div className="card mt-6 border-l-4 border-l-[var(--primary)] p-5">
-            <p className="font-semibold text-[var(--text-primary)]">
+          <div className="card mt-6 border-l-4 border-l-primary p-5">
+            <p className="font-semibold text-content">
               You already have an account on file
             </p>
-            <p className="mt-1 text-sm text-[var(--text-secondary)]">
+            <p className="mt-1 text-sm text-content-secondary">
               Submitting below will replace it.
             </p>
           </div>
         )}
 
         {saved && (
-          <div className="card mt-6 border-l-4 border-l-[var(--primary)] p-5">
-            <p className="font-semibold text-[var(--text-primary)]">Saved</p>
-            <p className="mt-1 text-sm text-[var(--text-secondary)]">
+          <div className="card mt-6 border-l-4 border-l-primary p-5">
+            <p className="font-semibold text-content">Saved</p>
+            <p className="mt-1 text-sm text-content-secondary">
               {accountName} · {BANKS.find((b) => b.code === bankCode)?.name}
             </p>
           </div>
@@ -113,7 +93,7 @@ export default function BankDetailsPage() {
 
         <div className="card mt-6 space-y-5 p-6">
           <label className="block">
-            <span className="text-sm font-medium text-[var(--text-primary)]">Bank</span>
+            <span className="text-sm font-medium text-content">Bank</span>
             <select
               className="input-field mt-1.5 px-4 py-3"
               value={bankCode}
@@ -129,7 +109,7 @@ export default function BankDetailsPage() {
           </label>
 
           <label className="block">
-            <span className="text-sm font-medium text-[var(--text-primary)]">
+            <span className="text-sm font-medium text-content">
               Account number
             </span>
             <input
@@ -145,9 +125,9 @@ export default function BankDetailsPage() {
 
           {accountName ? (
             <>
-              <div className="rounded-[var(--radius-md)] bg-[var(--surface-secondary)] p-4">
-                <p className="text-xs text-[var(--text-secondary)]">Account name</p>
-                <p className="mt-0.5 font-semibold text-[var(--text-primary)]">{accountName}</p>
+              <div className="rounded-md bg-surface-secondary p-4">
+                <p className="text-xs text-content-secondary">Account name</p>
+                <p className="mt-0.5 font-semibold text-content">{accountName}</p>
               </div>
               <button
                 className="btn-primary w-full px-6 py-3"
@@ -168,6 +148,6 @@ export default function BankDetailsPage() {
           )}
         </div>
       </div>
-    </main>
+    </>
   )
 }

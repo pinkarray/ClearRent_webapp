@@ -86,25 +86,25 @@ export function Calendar({
   }
 
   return (
-    <div className="rounded-[var(--radius-md)] border border-[var(--border)] p-3">
+    <div className="rounded-md border border-border p-3">
       <div className="flex items-center justify-between">
         <button
           type="button"
           onClick={() => shiftMonth(-1)}
           disabled={atFloor}
           aria-label="Previous month"
-          className="rounded-[var(--radius-sm)] px-3 py-1.5 text-lg leading-none text-[var(--text-secondary)] disabled:opacity-30"
+          className="rounded-sm px-3 py-1.5 text-lg leading-none text-content-secondary disabled:opacity-30"
         >
           ‹
         </button>
-        <span className="text-sm font-semibold text-[var(--text-primary)]">
+        <span className="text-sm font-semibold text-content">
           {MONTH_NAMES[view.month]} {view.year}
         </span>
         <button
           type="button"
           onClick={() => shiftMonth(1)}
           aria-label="Next month"
-          className="rounded-[var(--radius-sm)] px-3 py-1.5 text-lg leading-none text-[var(--text-secondary)]"
+          className="rounded-sm px-3 py-1.5 text-lg leading-none text-content-secondary"
         >
           ›
         </button>
@@ -114,7 +114,7 @@ export function Calendar({
         {DAY_INITIALS.map((d, i) => (
           <span
             key={i}
-            className="py-1 text-center text-xs font-medium text-[var(--text-hint)]"
+            className="py-1 text-center text-xs font-medium text-content-hint"
             aria-hidden="true"
           >
             {d}
@@ -144,7 +144,7 @@ export function Calendar({
                 reason === 'closed' ? ' — not available' : ''
               }`}
               onClick={() => onChange(iso)}
-              className="aspect-square rounded-[var(--radius-sm)] text-sm transition-colors disabled:cursor-not-allowed"
+              className="aspect-square rounded-sm text-sm transition-colors disabled:cursor-not-allowed"
               style={{
                 background: isSelected ? 'var(--primary)' : 'transparent',
                 color: isSelected
@@ -166,7 +166,7 @@ export function Calendar({
       </div>
 
       {allowedDayNames.length > 0 && allowedDayNames.length < 7 && (
-        <p className="mt-3 text-xs text-[var(--text-hint)]">
+        <p className="mt-3 text-xs text-content-hint">
           Struck-through days are not offered for this property.
         </p>
       )}

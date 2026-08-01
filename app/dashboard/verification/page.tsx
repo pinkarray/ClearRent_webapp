@@ -1,8 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { useAuth } from '../../../components/AuthProvider'
 import { SECOND_DOCUMENT, submitVerification } from '../../../lib/verification'
 import type { AccountType } from '../../../lib/user-profile'
@@ -26,8 +24,7 @@ const STATUS_COPY: Record<string, { title: string; body: string; tone: 'ok' | 'w
 }
 
 export default function VerificationPage() {
-  const router = useRouter()
-  const { user, profile, ready, refreshProfile } = useAuth()
+  const { user, profile, refreshProfile } = useAuth()
 
   const [nin, setNin] = useState('')
   const [ninSlip, setNinSlip] = useState<File | null>(null)
@@ -42,10 +39,6 @@ export default function VerificationPage() {
   const [done, setDone] = useState(false)
 
   const accountType = profile?.accountType as AccountType | undefined
-
-  useEffect(() => {
-    if (ready && !user) router.replace('/login')
-  }, [ready, user, router])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -77,30 +70,16 @@ export default function VerificationPage() {
     await refreshProfile()
   }
 
-  if (!ready || !user) {
-    return (
-      <main className="mesh-bg min-h-screen">
-        <div className="container py-16 text-[var(--text-secondary)]">Loading…</div>
-      </main>
-    )
-  }
+  if (!user) return null
 
   const status = profile?.verificationStatus ?? 'none'
   const copy = STATUS_COPY[status]
   const spec = accountType ? SECOND_DOCUMENT[accountType] : null
 
   return (
-    <main className="mesh-bg min-h-screen">
-      <div className="container max-w-2xl py-12">
-        <Link
-          href="/dashboard"
-          className="text-sm font-medium text-[var(--primary)] no-underline hover:underline"
-        >
-          ← Dashboard
-        </Link>
-
-        <h1 className="mt-4 text-3xl font-bold text-[var(--text-primary)]">Get verified</h1>
-        <p className="mt-2 text-[var(--text-secondary)]">
+    <>
+      <div className="mx-auto max-w-2xl">
+        <p className="text-content-secondary">
           ClearRent verifies every party before money moves. You need this before you can book an
           inspection.
         </p>
@@ -114,18 +93,18 @@ export default function VerificationPage() {
                   ? 'var(--primary)'
                   : copy.tone === 'wait'
                     ? 'var(--secondary)'
-                    : '#dc2626',
+                    : 'var(--error)',
             }}
           >
-            <p className="font-semibold text-[var(--text-primary)]">{copy.title}</p>
-            <p className="mt-1 text-sm text-[var(--text-secondary)]">{copy.body}</p>
+            <p className="font-semibold text-content">{copy.title}</p>
+            <p className="mt-1 text-sm text-content-secondary">{copy.body}</p>
           </div>
         )}
 
         {done && status !== 'verified' && (
-          <div className="card mt-6 border-l-4 border-l-[var(--primary)] p-5">
-            <p className="font-semibold text-[var(--text-primary)]">Submitted</p>
-            <p className="mt-1 text-sm text-[var(--text-secondary)]">
+          <div className="card mt-6 border-l-4 border-l-primary p-5">
+            <p className="font-semibold text-content">Submitted</p>
+            <p className="mt-1 text-sm text-content-secondary">
               Your NIN is encrypted and your documents are queued for admin review.
             </p>
           </div>
@@ -134,8 +113,8 @@ export default function VerificationPage() {
         {status !== 'verified' && status !== 'pending' && (
           <form onSubmit={handleSubmit} className="card mt-6 space-y-5 p-6">
             <label className="block">
-              <span className="text-sm font-medium text-[var(--text-primary)]">NIN</span>
-              <span className="mt-0.5 block text-xs text-[var(--text-hint)]">
+              <span className="text-sm font-medium text-content">NIN</span>
+              <span className="mt-0.5 block text-xs text-content-hint">
                 11 digits. Encrypted on our servers — never stored in the clear.
               </span>
               <input
@@ -149,15 +128,15 @@ export default function VerificationPage() {
             </label>
 
             <label className="block">
-              <span className="text-sm font-medium text-[var(--text-primary)]">NIN slip</span>
-              <span className="mt-0.5 block text-xs text-[var(--text-hint)]">
+              <span className="text-sm font-medium text-content">NIN slip</span>
+              <span className="mt-0.5 block text-xs text-content-hint">
                 A photo or scan of your NIN slip.
               </span>
               <input
                 type="file"
                 accept="image/*,application/pdf"
                 required
-                className="mt-1.5 text-sm text-[var(--text-secondary)]"
+                className="mt-1.5 text-sm text-content-secondary"
                 onChange={(e) => setNinSlip(e.target.files?.[0] ?? null)}
               />
             </label>
@@ -165,33 +144,33 @@ export default function VerificationPage() {
             {/* The second document differs by role — a tenant proves income,
                 a landlord and an agent prove address. */}
             <label className="block">
-              <span className="text-sm font-medium text-[var(--text-primary)]">
+              <span className="text-sm font-medium text-content">
                 {spec?.label ?? 'Supporting document'}
               </span>
-              <span className="mt-0.5 block text-xs text-[var(--text-hint)]">
+              <span className="mt-0.5 block text-xs text-content-hint">
                 {spec?.hint}
               </span>
               <input
                 type="file"
                 accept="image/*,application/pdf"
                 required
-                className="mt-1.5 text-sm text-[var(--text-secondary)]"
+                className="mt-1.5 text-sm text-content-secondary"
                 onChange={(e) => setSecondDocument(e.target.files?.[0] ?? null)}
               />
             </label>
 
             {accountType === 'agent' && (
-              <div className="space-y-5 border-t border-[var(--divider)] pt-5">
+              <div className="space-y-5 border-t border-divider pt-5">
                 <div>
-                  <h2 className="font-semibold text-[var(--text-primary)]">Your guarantor</h2>
-                  <p className="mt-1 text-sm text-[var(--text-secondary)]">
+                  <h2 className="font-semibold text-content">Your guarantor</h2>
+                  <p className="mt-1 text-sm text-content-secondary">
                     Agents handle inspections on other people&apos;s property, so we need
                     someone who vouches for you.
                   </p>
                 </div>
 
                 <label className="block">
-                  <span className="text-sm font-medium text-[var(--text-primary)]">
+                  <span className="text-sm font-medium text-content">
                     Guarantor name
                   </span>
                   <input
@@ -203,7 +182,7 @@ export default function VerificationPage() {
                 </label>
 
                 <label className="block">
-                  <span className="text-sm font-medium text-[var(--text-primary)]">
+                  <span className="text-sm font-medium text-content">
                     Guarantor phone
                   </span>
                   <input
@@ -217,7 +196,7 @@ export default function VerificationPage() {
                 </label>
 
                 <label className="block">
-                  <span className="text-sm font-medium text-[var(--text-primary)]">
+                  <span className="text-sm font-medium text-content">
                     Guarantor address
                   </span>
                   <input
@@ -229,47 +208,47 @@ export default function VerificationPage() {
                 </label>
 
                 <label className="block">
-                  <span className="text-sm font-medium text-[var(--text-primary)]">
+                  <span className="text-sm font-medium text-content">
                     Guarantor ID
                   </span>
                   <input
                     type="file"
                     accept="image/*,application/pdf"
                     required
-                    className="mt-1.5 text-sm text-[var(--text-secondary)]"
+                    className="mt-1.5 text-sm text-content-secondary"
                     onChange={(e) => setGuarantorId(e.target.files?.[0] ?? null)}
                   />
                 </label>
 
                 <label className="block">
-                  <span className="text-sm font-medium text-[var(--text-primary)]">
+                  <span className="text-sm font-medium text-content">
                     Proof of experience
                   </span>
-                  <span className="mt-0.5 block text-xs text-[var(--text-hint)]">
+                  <span className="mt-0.5 block text-xs text-content-hint">
                     Optional.
                   </span>
                   <input
                     type="file"
                     accept="image/*,application/pdf"
-                    className="mt-1.5 text-sm text-[var(--text-secondary)]"
+                    className="mt-1.5 text-sm text-content-secondary"
                     onChange={(e) => setExperienceProof(e.target.files?.[0] ?? null)}
                   />
                 </label>
               </div>
             )}
 
-            {error && <p className="text-sm text-red-600">{error}</p>}
+            {error && <p className="text-sm text-error">{error}</p>}
 
             <button className="btn-primary w-full px-6 py-3" type="submit" disabled={busy}>
               {busy ? 'Submitting…' : 'Submit for verification'}
             </button>
-            <p className="text-xs text-[var(--text-hint)]">
+            <p className="text-xs text-content-hint">
               Documents upload to private storage. They cannot be replaced once submitted, and
               only you and an admin can read them.
             </p>
           </form>
         )}
       </div>
-    </main>
+    </>
   )
 }

@@ -11,6 +11,7 @@ import {
   type PendingPayment,
 } from '../../../lib/payments'
 import { confirmInspectionPayment } from '../../../lib/inspections'
+import { completeRenewal } from '../../../lib/renewal'
 import { recordRentPayment } from '../../../lib/tenancy'
 
 type Phase = 'working' | 'done' | 'failed'
@@ -125,6 +126,27 @@ function PaymentCallback() {
         }
       }
 
+      if (p?.type === 'renewal') {
+        const sourceId = typeof p.context?.sourceId === 'string' ? p.context.sourceId : null
+        if (!sourceId) {
+          setPhase('failed')
+          setMessage(
+            'Payment succeeded but we lost track of which tenancy it renewed. Contact support with reference ' +
+              reference +
+              '.',
+          )
+          return
+        }
+        // A linked tenancy is promoted into a real rental; an active one is
+        // extended. Different callables — see lib/renewal.ts.
+        const err = await completeRenewal(sourceId, p.context?.isLinked === true, reference)
+        if (err) {
+          setPhase('failed')
+          setMessage(err)
+          return
+        }
+      }
+
       await clearPendingPayment()
       setPhase('done')
       setMessage(
@@ -132,7 +154,9 @@ function PaymentCallback() {
           ? 'Payment confirmed. The exact address has been released to you.'
           : p?.type === 'rent'
             ? 'Rent paid. Your tenancy is now active.'
-            : 'Payment confirmed.',
+            : p?.type === 'renewal'
+              ? 'Renewal complete. Your tenancy has been extended.'
+              : 'Payment confirmed.',
       )
     })()
   }, [ready, user, reference])
@@ -142,17 +166,17 @@ function PaymentCallback() {
       <div className="container max-w-md py-20">
         <div className="card p-8 text-center">
           <p className="text-3xl">{phase === 'done' ? '✓' : phase === 'failed' ? '!' : '…'}</p>
-          <h1 className="mt-3 text-xl font-bold text-[var(--text-primary)]">
+          <h1 className="mt-3 text-xl font-bold text-content">
             {phase === 'done'
               ? 'All set'
               : phase === 'failed'
                 ? 'Something went wrong'
                 : 'One moment'}
           </h1>
-          <p className="mt-2 text-sm text-[var(--text-secondary)]">{message}</p>
+          <p className="mt-2 text-sm text-content-secondary">{message}</p>
 
           {reference && (
-            <p className="mt-4 break-all text-xs text-[var(--text-hint)]">
+            <p className="mt-4 break-all text-xs text-content-hint">
               Reference: {reference}
             </p>
           )}
@@ -177,7 +201,7 @@ export default function PaymentCallbackPage() {
     <Suspense
       fallback={
         <main className="mesh-bg min-h-screen">
-          <div className="container py-20 text-center text-[var(--text-secondary)]">Loading…</div>
+          <div className="container py-20 text-center text-content-secondary">Loading…</div>
         </main>
       }
     >

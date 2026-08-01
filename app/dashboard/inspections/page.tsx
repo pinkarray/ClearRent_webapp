@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { collection, getDocs, orderBy, query, where } from 'firebase/firestore'
 import { useAuth } from '../../../components/AuthProvider'
 import { clientDb } from '../../../lib/firebase-client'
@@ -51,8 +50,7 @@ function formatNaira(n: number): string {
 }
 
 export default function TenantInspectionsPage() {
-  const router = useRouter()
-  const { user, ready } = useAuth()
+  const { user } = useAuth()
   const [rows, setRows] = useState<Row[] | null>(null)
   const [payingId, setPayingId] = useState<string | null>(null)
   const [payError, setPayError] = useState<string | null>(null)
@@ -83,10 +81,6 @@ export default function TenantInspectionsPage() {
       setPayError(err instanceof Error ? err.message : 'Could not start the payment.')
     }
   }
-
-  useEffect(() => {
-    if (ready && !user) router.replace('/login')
-  }, [ready, user, router])
 
   useEffect(() => {
     if (!user) return
@@ -130,33 +124,18 @@ export default function TenantInspectionsPage() {
     })()
   }, [user, reloadKey])
 
-  if (!ready || !user) {
-    return (
-      <main className="mesh-bg min-h-screen">
-        <div className="container py-16 text-[var(--text-secondary)]">Loading…</div>
-      </main>
-    )
-  }
+  if (!user) return null
 
   return (
-    <main className="mesh-bg min-h-screen">
-      <div className="container max-w-3xl py-12">
-        <Link
-          href="/dashboard"
-          className="text-sm font-medium text-[var(--primary)] no-underline hover:underline"
-        >
-          ← Dashboard
-        </Link>
-
-        <h1 className="mt-4 text-3xl font-bold text-[var(--text-primary)]">My inspections</h1>
-
-        {payError && <p className="mt-4 text-sm text-red-600">{payError}</p>}
+    <>
+      <div>
+        {payError && <p className="mb-4 text-sm text-error">{payError}</p>}
 
         {rows === null ? (
-          <p className="mt-6 text-sm text-[var(--text-secondary)]">Loading…</p>
+          <p className="text-sm text-content-secondary">Loading…</p>
         ) : rows.length === 0 ? (
-          <div className="card mt-6 p-8 text-center">
-            <p className="text-[var(--text-secondary)]">No inspection requests yet.</p>
+          <div className="card p-8 text-center">
+            <p className="text-content-secondary">No inspection requests yet.</p>
             <Link
               href="/properties"
               className="btn-primary mt-5 inline-block px-6 py-3 no-underline"
@@ -165,25 +144,25 @@ export default function TenantInspectionsPage() {
             </Link>
           </div>
         ) : (
-          <div className="mt-6 space-y-3">
+          <div className="space-y-3">
             {rows.map((r) => (
               <div key={r.id} className="card p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
                     <Link
                       href={`/properties/${r.propertyId}`}
-                      className="font-semibold text-[var(--text-primary)] no-underline hover:underline"
+                      className="font-semibold text-content no-underline hover:underline"
                     >
                       {r.propertyTitle}
                     </Link>
-                    <p className="text-sm text-[var(--text-secondary)]">{r.propertyAddress}</p>
+                    <p className="text-sm text-content-secondary">{r.propertyAddress}</p>
                   </div>
-                  <span className="shrink-0 rounded-full bg-[var(--surface-secondary)] px-3 py-1 text-xs font-semibold text-[var(--text-secondary)]">
+                  <span className="chip shrink-0">
                     {STATUS_COPY[r.status] ?? r.status}
                   </span>
                 </div>
 
-                <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm text-[var(--text-secondary)]">
+                <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm text-content-secondary">
                   {r.requestedDate && (
                     <span>
                       {r.requestedDate.toLocaleDateString('en-NG', {
@@ -198,8 +177,8 @@ export default function TenantInspectionsPage() {
                 </div>
 
                 {r.status === 'approved' && r.paymentStatus === 'unpaid' && (
-                  <div className="mt-4 border-t border-[var(--divider)] pt-4">
-                    <p className="text-sm text-[var(--text-secondary)]">
+                  <div className="mt-4 border-t border-divider pt-4">
+                    <p className="text-sm text-content-secondary">
                       Approved. Pay {formatNaira(r.totalFee)} to confirm and unlock the exact
                       address.
                     </p>
@@ -214,9 +193,9 @@ export default function TenantInspectionsPage() {
                 )}
 
                 {r.paymentStatus === 'paid' && (
-                  <div className="mt-4 rounded-[var(--radius-md)] bg-[var(--surface-secondary)] p-4">
-                    <p className="text-xs text-[var(--text-secondary)]">Exact address</p>
-                    <p className="mt-0.5 font-medium text-[var(--text-primary)]">
+                  <div className="mt-4 rounded-md bg-surface-secondary p-4">
+                    <p className="text-xs text-content-secondary">Exact address</p>
+                    <p className="mt-0.5 font-medium text-content">
                       {r.propertyAddress}
                     </p>
                   </div>
@@ -230,8 +209,8 @@ export default function TenantInspectionsPage() {
                 />
 
                 {r.status === 'completed' && r.tenantRated && (
-                  <div className="mt-4 border-t border-[var(--divider)] pt-4">
-                    <p className="text-sm text-[var(--text-secondary)]">
+                  <div className="mt-4 border-t border-divider pt-4">
+                    <p className="text-sm text-content-secondary">
                       Like it? Tell the landlord you want to rent it.
                     </p>
                     <button
@@ -242,7 +221,7 @@ export default function TenantInspectionsPage() {
                       {payingId === r.id ? 'Working…' : 'I want to rent this'}
                     </button>
                     {interestId && (
-                      <p className="mt-2 text-sm text-[var(--primary)]">
+                      <p className="mt-2 text-sm text-primary">
                         Sent —{' '}
                         <Link href="/dashboard/tenancy" className="no-underline underline">
                           track it under Tenancy
@@ -257,6 +236,6 @@ export default function TenantInspectionsPage() {
           </div>
         )}
       </div>
-    </main>
+    </>
   )
 }

@@ -232,20 +232,11 @@ export async function getPublishedProperty(id: string): Promise<PublicProperty |
 }
 
 // ── Formatting, mirroring the Flutter model's helpers ──
+// The pure helpers live in `lib/format.ts` so client components can use them
+// without importing this module, which pulls in the Admin SDK. Re-exported here
+// because the server pages already import them from this path.
 
-export function formatNaira(amount: number): string {
-  if (amount >= 1_000_000) return `₦${(amount / 1_000_000).toFixed(1)}M`
-  if (amount >= 1000) return `₦${(amount / 1000).toFixed(0)}K`
-  return `₦${amount.toFixed(0)}`
-}
-
-export function formatNairaFull(amount: number): string {
-  return `₦${amount.toLocaleString('en-NG')}`
-}
-
-export function rentPeriod(frequency: string): string {
-  return frequency === 'yearly' ? '/year' : '/month'
-}
+export { formatNaira, formatNairaFull, rentPeriod } from './format'
 
 /** Rent + agent fee + caution deposit, same definition as `totalPackage`. */
 export function totalPackage(p: PublicProperty): number {

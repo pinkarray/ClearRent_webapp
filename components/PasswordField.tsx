@@ -31,10 +31,10 @@ export function PasswordField({
 
   return (
     <div className="block">
-      <label htmlFor={id} className="text-sm font-medium text-[var(--text-primary)]">
+      <label htmlFor={id} className="text-sm font-medium text-content">
         {label}
       </label>
-      {hint && <span className="mt-0.5 block text-xs text-[var(--text-hint)]">{hint}</span>}
+      {hint && <span className="mt-0.5 block text-xs text-content-hint">{hint}</span>}
 
       <div className="relative mt-1.5">
         <input
@@ -52,7 +52,7 @@ export function PasswordField({
           onClick={() => setVisible((v) => !v)}
           aria-label={visible ? 'Hide password' : 'Show password'}
           aria-pressed={visible}
-          className="absolute right-1 top-1/2 -translate-y-1/2 rounded-[var(--radius-sm)] px-3 py-2 text-[var(--text-secondary)] hover:text-[var(--primary)]"
+          className="absolute right-1 top-1/2 -translate-y-1/2 rounded-sm px-3 py-2 text-content-secondary hover:text-primary"
         >
           {visible ? (
             // Eye with a slash — currently visible, click to hide.

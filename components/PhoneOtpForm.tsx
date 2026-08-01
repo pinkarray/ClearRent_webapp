@@ -67,7 +67,7 @@ export function PhoneOtpForm({
       {!confirmation ? (
         <form onSubmit={handleSendOtp} className="space-y-4">
           <label className="block">
-            <span className="text-sm font-medium text-[var(--text-primary)]">Phone number</span>
+            <span className="text-sm font-medium text-content">Phone number</span>
             <input
               className="input-field mt-1.5 px-4 py-3"
               type="tel"
@@ -85,11 +85,11 @@ export function PhoneOtpForm({
         </form>
       ) : (
         <form onSubmit={handleVerify} className="space-y-4">
-          <p className="text-sm text-[var(--text-secondary)]">
+          <p className="text-sm text-content-secondary">
             We sent a 6-digit code to {phoneToE164(phone)}.
           </p>
           <label className="block">
-            <span className="text-sm font-medium text-[var(--text-primary)]">
+            <span className="text-sm font-medium text-content">
               Verification code
             </span>
             <input
@@ -108,7 +108,7 @@ export function PhoneOtpForm({
           </button>
           <button
             type="button"
-            className="w-full text-sm text-[var(--text-secondary)] underline"
+            className="w-full text-sm text-content-secondary underline"
             onClick={() => {
               resetVerifier()
               setConfirmation(null)

@@ -16,6 +16,14 @@ import {
   Areas and Availability; both write single fields on the agent's own user doc
   and are read together by the inspection scheduler, so they are one page here.
 */
+/**
+ * A comparable snapshot of the three selections. Sorted, because the order the
+ * agent tapped things in is not a change worth saving.
+ */
+function fingerprint(areas: string[], days: string[], slots: string[]): string {
+  return JSON.stringify([[...areas].sort(), [...days].sort(), [...slots].sort()])
+}
+
 export default function CoveragePage() {
   const { user } = useAuth()
   const [options, setOptions] = useState<string[] | null>(null)
@@ -24,8 +32,14 @@ export default function CoveragePage() {
   const [slots, setSlots] = useState<string[]>([])
   const [search, setSearch] = useState('')
   const [busy, setBusy] = useState(false)
-  const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  /**
+   * The selections as they are stored. Save stays disabled until the current
+   * selections differ from this — so the agent can tell at a glance whether
+   * their work is committed, and cannot fire redundant writes by tapping Save
+   * repeatedly.
+   */
+  const [savedState, setSavedState] = useState<string | null>(null)
 
   useEffect(() => {
     if (!user) return
@@ -35,11 +49,13 @@ export default function CoveragePage() {
       setAreas(profile.serviceAreas)
       setDays(profile.availableDays)
       setSlots(profile.availableTimeSlots)
+      setSavedState(
+        fingerprint(profile.serviceAreas, profile.availableDays, profile.availableTimeSlots),
+      )
     })()
   }, [user])
 
   function toggle(list: string[], value: string, set: (v: string[]) => void) {
-    setSaved(false)
     set(list.includes(value) ? list.filter((v) => v !== value) : [...list, value])
   }
 
@@ -63,7 +79,7 @@ export default function CoveragePage() {
       setError(err)
       return
     }
-    setSaved(true)
+    setSavedState(fingerprint(areas, days, slots))
   }
 
   if (!user) return null
@@ -72,6 +88,8 @@ export default function CoveragePage() {
   const visible = search
     ? options.filter((a) => a.toLowerCase().includes(search.toLowerCase()))
     : options
+
+  const dirty = savedState !== null && fingerprint(areas, days, slots) !== savedState
 
   return (
     <div className="space-y-8">
@@ -160,10 +178,13 @@ export default function CoveragePage() {
       </section>
 
       {error && <p className="text-sm text-error">{error}</p>}
-      {saved && <p className="text-sm text-success">Saved.</p>}
 
-      <button className="btn-primary w-full px-6 py-3" disabled={busy} onClick={save}>
-        {busy ? 'Saving…' : 'Save'}
+      <button
+        className="btn-primary w-full px-6 py-3"
+        disabled={busy || !dirty}
+        onClick={save}
+      >
+        {busy ? 'Saving…' : dirty ? 'Save changes' : 'Saved'}
       </button>
     </div>
   )

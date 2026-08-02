@@ -23,6 +23,19 @@ export default function ThreadPage() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const endRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
+
+  /**
+   * Matches the textarea's height to its content, capped by max-h-32 in the
+   * class list. Reset to 'auto' first or the box can only ever grow — a
+   * scrollHeight read against an already-tall element never shrinks.
+   */
+  function grow() {
+    const el = inputRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
+  }
 
   useEffect(() => {
     if (!user) return
@@ -42,9 +55,9 @@ export default function ThreadPage() {
     endRef.current?.scrollIntoView({ block: 'end' })
   }, [messages])
 
-  async function send(e: React.FormEvent) {
+  async function send(e: React.SyntheticEvent) {
     e.preventDefault()
-    if (!user || !text.trim()) return
+    if (!user || !text.trim() || busy) return
     setError(null)
     setBusy(true)
     const err = await sendMessage(
@@ -62,6 +75,9 @@ export default function ThreadPage() {
       return
     }
     setText('')
+    // Collapse back to one line; the height was set inline, so clearing the
+    // value alone would leave the box as tall as the sent message.
+    if (inputRef.current) inputRef.current.style.height = 'auto'
   }
 
   if (!user) return null
@@ -86,8 +102,21 @@ export default function ThreadPage() {
   const canSend = profile?.verificationStatus === 'verified'
 
   return (
-    <div className="flex flex-col">
-      <div className="mb-4">
+    /*
+      A thread is a full-height column, not normal flowing content: the message
+      list takes whatever space is left and the composer sits directly above the
+      bottom tab bar. Previously the list had a fixed min-height and everything
+      after it floated wherever the content happened to end, leaving a band of
+      dead space between the composer and the tab bar.
+
+      dvh rather than vh so the column follows the visual viewport when a mobile
+      keyboard opens — with vh the composer is pushed under the keyboard.
+      The subtracted amounts are AppShell's chrome: mobile is the 3.5rem header
+      plus the 5rem bottom-bar clearance plus 3rem of wrapper padding; desktop
+      has no header or tab bar but does have taller padding and a page title.
+    */
+    <div className="flex h-[calc(100dvh-11.5rem)] flex-col lg:h-[calc(100dvh-9rem)]">
+      <div className="mb-3 shrink-0">
         <p className="font-semibold text-content">{counterparty(conversation, user.uid)}</p>
         <Link
           href={`/properties/${conversation.propertyId}`}
@@ -97,7 +126,7 @@ export default function ThreadPage() {
         </Link>
       </div>
 
-      <div className="card mb-4 max-h-[60vh] min-h-[40vh] space-y-3 overflow-y-auto p-4">
+      <div className="card min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
         {messages.length === 0 ? (
           <p className="py-8 text-center text-sm text-content-hint">
             No messages yet. Say hello.
@@ -146,22 +175,48 @@ export default function ThreadPage() {
         <div ref={endRef} />
       </div>
 
-      {error && <p className="mb-3 text-sm text-error">{error}</p>}
+      {error && <p className="mt-3 shrink-0 text-sm text-error">{error}</p>}
 
       {canSend ? (
-        <form onSubmit={send} className="flex gap-2">
-          <input
-            className="input-field flex-1 px-4 py-3"
+        /*
+          A textarea, not an input. A single-line input scrolls sideways once
+          the text passes its width, so on a phone you lose sight of what you
+          are writing — and every space nudges the scroll position, which is
+          what made typing feel like the words were jumping around. A textarea
+          wraps instead, so the text stays visible, and it grows to a few lines
+          before scrolling.
+        */
+        <form onSubmit={send} className="mt-3 flex shrink-0 items-end gap-2">
+          <textarea
+            ref={inputRef}
+            rows={1}
+            className="input-field max-h-32 flex-1 resize-none px-4 py-3"
             placeholder="Write a message"
+            aria-label="Message"
+            enterKeyHint="send"
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => {
+              setText(e.target.value)
+              grow()
+            }}
+            onKeyDown={(e) => {
+              // Enter sends; Shift+Enter starts a new line.
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                void send(e)
+              }
+            }}
           />
-          <button className="btn-primary px-5 py-3 text-sm" type="submit" disabled={busy}>
+          <button
+            className="btn-primary shrink-0 px-5 py-3 text-sm"
+            type="submit"
+            disabled={busy || !text.trim()}
+          >
             {busy ? 'Sending…' : 'Send'}
           </button>
         </form>
       ) : (
-        <div className="card border-l-4 border-l-secondary p-5">
+        <div className="card mt-3 shrink-0 border-l-4 border-l-secondary p-5">
           <p className="font-semibold text-content">Verify to send messages</p>
           <p className="mt-1 text-sm text-content-secondary">
             You can read this conversation, but sending requires a verified account.

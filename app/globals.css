@@ -320,3 +320,37 @@ body {
 .chip-info    { --chip-bg: var(--info-tint);      --chip-fg: var(--info); }
 
 [data-theme="dark"] .chip-pending { --chip-fg: var(--secondary); }
+/*
+  Keyboard-aware layout.
+
+  ViewportSync publishes the genuinely visible height as --app-vh and flags
+  data-keyboard="open" while the on-screen keyboard is up. Two things follow:
+  the bottom tab bar is pointless while typing and is the main source of wasted
+  space, so it goes; and .thread-shell resizes to what is actually visible
+  rather than to 100dvh, which on iOS does not react to the keyboard at all.
+*/
+[data-keyboard='open'] .mobile-tabbar {
+  display: none;
+}
+
+[data-keyboard='open'] .app-main {
+  padding-bottom: 0;
+}
+
+/* Mobile: subtract the 3.5rem header and 3rem of wrapper padding, plus the
+   5rem tab-bar clearance only while the bar is actually there. */
+.thread-shell {
+  height: calc(var(--app-vh, 100dvh) - 11.5rem);
+}
+
+[data-keyboard='open'] .thread-shell {
+  height: calc(var(--app-vh, 100dvh) - 6.5rem);
+}
+
+/* Desktop has no header or tab bar, but taller padding and a page title. */
+@media (min-width: 1024px) {
+  .thread-shell,
+  [data-keyboard='open'] .thread-shell {
+    height: calc(var(--app-vh, 100dvh) - 9rem);
+  }
+}

@@ -1,7 +1,19 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { ThemeProvider } from '../components/ThemeProvider'
 import { AuthProvider } from '../components/AuthProvider'
+
+/*
+  interactiveWidget tells the browser to shrink the LAYOUT viewport when the
+  on-screen keyboard opens, so 100dvh actually means "what you can see".
+  Without it dvh only tracks browser chrome like the address bar, and a
+  keyboard just covers the bottom of the page.
+*/
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  interactiveWidget: 'resizes-content',
+}
 
 export const metadata: Metadata = {
   title: 'ClearRent — Rent Without Regret',

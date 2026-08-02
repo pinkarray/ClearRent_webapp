@@ -107,15 +107,14 @@ export default function ThreadPage() {
       list takes whatever space is left and the composer sits directly above the
       bottom tab bar. Previously the list had a fixed min-height and everything
       after it floated wherever the content happened to end, leaving a band of
-      dead space between the composer and the tab bar.
+      dead space.
 
-      dvh rather than vh so the column follows the visual viewport when a mobile
-      keyboard opens — with vh the composer is pushed under the keyboard.
-      The subtracted amounts are AppShell's chrome: mobile is the 3.5rem header
-      plus the 5rem bottom-bar clearance plus 3rem of wrapper padding; desktop
-      has no header or tab bar but does have taller padding and a page title.
+      .thread-shell (globals.css) sizes this against --app-vh, the genuinely
+      visible height published by ViewportSync, and shrinks further when the
+      keyboard is up — at which point the tab bar hides itself, so the composer
+      ends up directly above the keyboard.
     */
-    <div className="flex h-[calc(100dvh-11.5rem)] flex-col lg:h-[calc(100dvh-9rem)]">
+    <div className="thread-shell flex flex-col">
       <div className="mb-3 shrink-0">
         <p className="font-semibold text-content">{counterparty(conversation, user.uid)}</p>
         <Link

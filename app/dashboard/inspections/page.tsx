@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { collection, getDocs, orderBy, query, where } from 'firebase/firestore'
+import { collection, onSnapshot, orderBy, query, where } from 'firebase/firestore'
 import { useAuth } from '../../../components/AuthProvider'
 import { clientDb } from '../../../lib/firebase-client'
 import { startPayment } from '../../../lib/payments'
@@ -82,46 +82,51 @@ export default function TenantInspectionsPage() {
     }
   }
 
+  // LIVE, not a one-time read. An inspection is two parties taking turns: the
+  // tenant sits on this page after booking while the handler approves from
+  // somewhere else entirely. With getDocs the tenant kept reading "Waiting for
+  // the handler to approve" long after it had been approved, because nothing
+  // ever re-fetched.
   useEffect(() => {
     if (!user) return
-    ;(async () => {
-      // Rules scope list access to a party on the request, so this query must
-      // filter by tenantId — an unscoped read is rejected.
-      const snap = await getDocs(
-        query(
-          collection(clientDb(), 'inspection_requests'),
-          where('tenantId', '==', user.uid),
-          orderBy('createdAt', 'desc'),
-        ),
-      )
-      setRows(
-        snap.docs.map((d) => {
-          const x = d.data()
-          return {
-            id: d.id,
-            propertyId: (x.propertyId as string) ?? '',
-            propertyTitle: (x.propertyTitle as string) ?? '(property)',
-            propertyAddress: (x.propertyAddress as string) ?? '',
-            requestedDate: x.requestedDate?.toDate?.() ?? null,
-            requestedTimeDisplay: (x.requestedTimeDisplay as string) ?? '',
-            status: (x.status as string) ?? 'pending',
-            paymentStatus: (x.paymentStatus as string) ?? 'not_required',
-            totalFee: (x.totalFee as number) ?? 0,
-            tenantArrived: x.tenantArrived === true,
-            handlerArrived: x.handlerArrived === true,
-            tenantConfirmedMet: x.tenantConfirmedMet === true,
-            handlerConfirmedMet: x.handlerConfirmedMet === true,
-            tenantRated: x.tenantRated === true,
-            // The handler is the assigned agent when there is one, else the
-            // landlord — that is who the tenant rates.
-            handlerId: (x.agentId as string) ?? (x.landlordId as string) ?? '',
-            handlerName:
-              (x.agentName as string) ?? (x.landlordName as string) ?? 'the handler',
-            handlerType: x.agentId ? 'agent' : 'landlord',
-          }
-        }),
-      )
-    })()
+    // Rules scope list access to a party on the request, so this query must
+    // filter by tenantId — an unscoped read is rejected.
+    return onSnapshot(
+      query(
+        collection(clientDb(), 'inspection_requests'),
+        where('tenantId', '==', user.uid),
+        orderBy('createdAt', 'desc'),
+      ),
+      (snap) => {
+        setRows(
+          snap.docs.map((d) => {
+            const x = d.data()
+            return {
+              id: d.id,
+              propertyId: (x.propertyId as string) ?? '',
+              propertyTitle: (x.propertyTitle as string) ?? '(property)',
+              propertyAddress: (x.propertyAddress as string) ?? '',
+              requestedDate: x.requestedDate?.toDate?.() ?? null,
+              requestedTimeDisplay: (x.requestedTimeDisplay as string) ?? '',
+              status: (x.status as string) ?? 'pending',
+              paymentStatus: (x.paymentStatus as string) ?? 'not_required',
+              totalFee: (x.totalFee as number) ?? 0,
+              tenantArrived: x.tenantArrived === true,
+              handlerArrived: x.handlerArrived === true,
+              tenantConfirmedMet: x.tenantConfirmedMet === true,
+              handlerConfirmedMet: x.handlerConfirmedMet === true,
+              tenantRated: x.tenantRated === true,
+              // The handler is the assigned agent when there is one, else the
+              // landlord — that is who the tenant rates.
+              handlerId: (x.agentId as string) ?? (x.landlordId as string) ?? '',
+              handlerName:
+                (x.agentName as string) ?? (x.landlordName as string) ?? 'the handler',
+              handlerType: x.agentId ? 'agent' : 'landlord',
+            }
+          }),
+        )
+      },
+    )
   }, [user, reloadKey])
 
   if (!user) return null

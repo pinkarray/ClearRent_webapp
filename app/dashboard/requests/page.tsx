@@ -1,8 +1,15 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { collection, getDocs, orderBy, query, where } from 'firebase/firestore'
+import {
+  collection,
+  onSnapshot,
+  orderBy,
+  query,
+  where,
+  type QueryDocumentSnapshot,
+} from 'firebase/firestore'
 import { useAuth } from '../../../components/AuthProvider'
 import { clientDb } from '../../../lib/firebase-client'
 import { approveInspection, declineInspection } from '../../../lib/inspections'
@@ -47,25 +54,25 @@ function formatNaira(n: number): string {
  */
 export default function HandlerRequestsPage() {
   const { user, profile } = useAuth()
-  const [rows, setRows] = useState<Row[] | null>(null)
+  const [asLandlord, setAsLandlord] = useState<Row[] | null>(null)
+  const [asAgent, setAsAgent] = useState<Row[] | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const load = useCallback(async () => {
-    if (!user) return
-    const base = collection(clientDb(), 'inspection_requests')
-    const [asLandlord, asAgent] = await Promise.all([
-      getDocs(query(base, where('landlordId', '==', user.uid), orderBy('createdAt', 'desc'))),
-      getDocs(query(base, where('agentId', '==', user.uid), orderBy('createdAt', 'desc'))),
-    ])
-
-    const seen = new Set<string>()
-    const out: Row[] = []
-    for (const d of [...asLandlord.docs, ...asAgent.docs]) {
-      if (seen.has(d.id)) continue
-      seen.add(d.id)
+  /**
+   * Both queries are LIVE. A tenant booking an inspection has to appear here
+   * without the handler reloading — they are the one being waited on, and a
+   * request they never see is a booking that quietly expires.
+   *
+   * Each side is kept separately and merged on render, rather than re-fetching
+   * on every snapshot: Firestore has no OR across fields, so this is two
+   * queries, and the same request can match both when the landlord is also the
+   * assigned agent.
+   */
+  const toRow = useCallback(
+    (d: QueryDocumentSnapshot): Row => {
       const x = d.data()
-      out.push({
+      return {
         id: d.id,
         propertyId: (x.propertyId as string) ?? '',
         propertyTitle: (x.propertyTitle as string) ?? '(property)',
@@ -78,7 +85,7 @@ export default function HandlerRequestsPage() {
         paymentStatus: (x.paymentStatus as string) ?? 'not_required',
         totalFee: (x.totalFee as number) ?? 0,
         agentEarnings: (x.agentEarnings as number) ?? 0,
-        isAgentHandled: x.agentId === user.uid,
+        isAgentHandled: x.agentId === user?.uid,
         tenantArrived: x.tenantArrived === true,
         handlerArrived: x.handlerArrived === true,
         tenantConfirmedMet: x.tenantConfirmedMet === true,
@@ -87,17 +94,38 @@ export default function HandlerRequestsPage() {
         handlerId: (x.agentId as string) ?? (x.landlordId as string) ?? '',
         handlerName: (x.agentName as string) ?? (x.landlordName as string) ?? 'the handler',
         handlerType: x.agentId ? 'agent' : 'landlord',
-      })
-    }
-    setRows(out)
-  }, [user])
+      }
+    },
+    [user],
+  )
 
   useEffect(() => {
     if (!user) return
-    ;(async () => {
-      await load()
-    })()
-  }, [user, load])
+    const base = collection(clientDb(), 'inspection_requests')
+    const unsubs = [
+      onSnapshot(
+        query(base, where('landlordId', '==', user.uid), orderBy('createdAt', 'desc')),
+        (snap) => setAsLandlord(snap.docs.map(toRow)),
+      ),
+      onSnapshot(
+        query(base, where('agentId', '==', user.uid), orderBy('createdAt', 'desc')),
+        (snap) => setAsAgent(snap.docs.map(toRow)),
+      ),
+    ]
+    return () => unsubs.forEach((u) => u())
+  }, [user, toRow])
+
+  // Both lists are ordered newest-first, so a merge that keeps first-seen wins
+  // preserves that order while dropping the duplicate.
+  const rows = useMemo(() => {
+    if (asLandlord === null && asAgent === null) return null
+    const seen = new Set<string>()
+    return [...(asLandlord ?? []), ...(asAgent ?? [])].filter((r) => {
+      if (seen.has(r.id)) return false
+      seen.add(r.id)
+      return true
+    })
+  }, [asLandlord, asAgent])
 
   async function handleApprove(r: Row) {
     setError(null)
@@ -105,7 +133,6 @@ export default function HandlerRequestsPage() {
     const err = await approveInspection(r.id)
     setBusyId(null)
     if (err) setError(err)
-    else await load()
   }
 
   async function handleDecline(r: Row) {
@@ -122,7 +149,6 @@ export default function HandlerRequestsPage() {
     )
     setBusyId(null)
     if (err) setError(err)
-    else await load()
   }
 
   if (!user) return null
@@ -255,7 +281,8 @@ export default function HandlerRequestsPage() {
                         state={r}
                         role="handler"
                         uid={user.uid}
-                        onDone={load}
+                        // Listeners keep the list current.
+                        onDone={() => {}}
                       />
                     </div>
                   </div>

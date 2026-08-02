@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useAuth } from './AuthProvider'
 import { useTheme } from './ThemeProvider'
+import { ViewportSync } from './ViewportSync'
 import { myNotifications } from '../lib/notifications'
 
 /*
@@ -149,6 +150,7 @@ export default function AppShell({
 
   return (
     <div className="app-surface min-h-screen bg-bg">
+      <ViewportSync />
       {/* Desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-border bg-surface lg:flex">
         <Link
@@ -219,8 +221,9 @@ export default function AppShell({
         <ThemeButton theme={theme} setTheme={setTheme} />
       </header>
 
-      {/* pb-20 clears the fixed bottom bar on mobile. */}
-      <main className="pb-20 lg:pb-0 lg:pl-60">
+      {/* pb-20 clears the fixed bottom bar on mobile; dropped while typing,
+          since the bar hides itself then. */}
+      <main className="app-main pb-28 lg:pb-0 lg:pl-60">
         <div className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 lg:py-10">
           {title && (
             <h1 className="mb-6 hidden text-2xl font-bold text-content lg:block">{title}</h1>
@@ -229,24 +232,58 @@ export default function AppShell({
         </div>
       </main>
 
-      {/* Mobile bottom tab bar */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden">
-        {tabs.map((tab) => {
-          const active = isActive(pathname, tab.href)
-          return (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              aria-current={active ? 'page' : undefined}
-              className={`flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-medium no-underline ${
-                active ? 'text-primary' : 'text-content-hint'
-              }`}
-            >
-              <Icon name={tab.icon} className="h-[22px] w-[22px]" />
-              {tab.label}
-            </Link>
-          )
-        })}
+      {/*
+        Mobile navigation — a floating capsule rather than an edge-to-edge bar.
+
+        Only the active tab carries its label, inside a filled pill; the others
+        are icon-only. That is what keeps the bar narrow enough to float and
+        still read clearly, and it means the current section is legible at a
+        glance instead of being a colour difference between four identical
+        stacks.
+
+        The label animates via max-width rather than display, so it can
+        transition — and the icon never shifts, because it is outside the
+        animating span.
+
+        `.mobile-tabbar` is load-bearing: globals.css hides it while the
+        keyboard is up.
+      */}
+      <nav
+        className="mobile-tabbar fixed inset-x-0 z-30 flex justify-center px-4 lg:hidden"
+        style={{ bottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}
+      >
+        {/*
+          Genuinely translucent — at 95% opacity the blur was invisible and
+          content sliding under it looked clipped rather than layered. 75% with
+          a heavy blur is what makes it read as floating above the page.
+        */}
+        <div className="flex items-center gap-0.5 rounded-full border border-border bg-surface/75 p-1.5 shadow-lg backdrop-blur-xl">
+          {tabs.map((tab) => {
+            const active = isActive(pathname, tab.href)
+            return (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                aria-current={active ? 'page' : undefined}
+                title={tab.label}
+                className={`flex items-center gap-1.5 rounded-full py-2.5 text-[13px] font-semibold no-underline transition-all duration-200 ${
+                  active
+                    ? 'bg-primary px-3.5 text-white'
+                    : 'px-3 text-content-secondary active:bg-surface-secondary'
+                }`}
+              >
+                <Icon name={tab.icon} className="h-[21px] w-[21px] shrink-0" />
+                <span
+                  className={`overflow-hidden whitespace-nowrap transition-all duration-200 ${
+                    active ? 'max-w-[7rem] opacity-100' : 'max-w-0 opacity-0'
+                  }`}
+                >
+                  {tab.label}
+                </span>
+              </Link>
+            )
+          })}
+        </div>
       </nav>
     </div>
   )

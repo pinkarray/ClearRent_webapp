@@ -1,15 +1,14 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '../../../components/AuthProvider'
 import { startPayment } from '../../../lib/payments'
 import {
   acceptAgreement,
   acceptRentalInterest,
-  activeRentals,
-  landlordInterests,
   requestMoveOut,
-  tenantInterests,
+  watchActiveRentals,
+  watchInterests,
   type ActiveRental,
   type RentalInterest,
 } from '../../../lib/tenancy'
@@ -39,22 +38,20 @@ export default function TenancyPage() {
 
   const isLandlord = profile?.accountType === 'landlord'
 
-  const load = useCallback(async () => {
-    if (!user) return
-    const [i, r] = await Promise.all([
-      isLandlord ? landlordInterests(user.uid) : tenantInterests(user.uid),
-      activeRentals(isLandlord ? 'landlordId' : 'tenantId', user.uid),
-    ])
-    setInterests(i)
-    setRentals(r)
-  }, [user, isLandlord])
-
+  // LIVE on both collections. This page is the whole tenancy handover, and
+  // every step hands off to the other party: the tenant waits here for the
+  // landlord to accept, the landlord waits for the agreement to be accepted,
+  // and that acceptance is what unlocks rent. A one-time read stranded whoever
+  // was waiting on a screen that never changed.
   useEffect(() => {
     if (!user) return
-    ;(async () => {
-      await load()
-    })()
-  }, [user, load])
+    const field = isLandlord ? 'landlordId' : 'tenantId'
+    const unsubs = [
+      watchInterests(field, user.uid, setInterests),
+      watchActiveRentals(field, user.uid, setRentals),
+    ]
+    return () => unsubs.forEach((u) => u())
+  }, [user, isLandlord])
 
   async function run(id: string, fn: () => Promise<string | null>) {
     setError(null)
@@ -62,7 +59,6 @@ export default function TenancyPage() {
     const err = await fn()
     setBusy(null)
     if (err) setError(err)
-    else await load()
   }
 
   async function payRent(r: ActiveRental) {

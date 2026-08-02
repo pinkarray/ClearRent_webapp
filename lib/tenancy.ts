@@ -3,10 +3,12 @@ import {
   collection,
   doc,
   getDocs,
+  onSnapshot,
   query,
   serverTimestamp,
   updateDoc,
   where,
+  type QueryDocumentSnapshot,
 } from 'firebase/firestore'
 import { getFunctions, httpsCallable } from 'firebase/functions'
 import { clientApp, clientDb, initAppCheck } from './firebase-client'
@@ -72,28 +74,44 @@ export type RentalInterest = {
   paymentAmount: number
 }
 
-async function loadInterests(field: 'tenantId' | 'landlordId', uid: string) {
-  const snap = await getDocs(
-    query(collection(clientDb(), 'rental_interests'), where(field, '==', uid)),
-  )
-  return snap.docs.map((d) => {
-    const x = d.data()
-    return {
-      id: d.id,
-      propertyId: (x.propertyId as string) ?? '',
-      propertyTitle: (x.propertyTitle as string) ?? '(property)',
-      tenantId: (x.tenantId as string) ?? '',
-      tenantName: (x.tenantName as string) ?? 'Tenant',
-      landlordId: (x.landlordId as string) ?? '',
-      status: (x.status as string) ?? 'pending_acceptance',
-      rentAmount: (x.rentAmount as number) ?? 0,
-      paymentAmount: (x.paymentAmount as number) ?? 0,
-    } satisfies RentalInterest
-  })
+function interestsQuery(field: 'tenantId' | 'landlordId', uid: string) {
+  return query(collection(clientDb(), 'rental_interests'), where(field, '==', uid))
 }
 
-export const tenantInterests = (uid: string) => loadInterests('tenantId', uid)
-export const landlordInterests = (uid: string) => loadInterests('landlordId', uid)
+function toInterest(d: QueryDocumentSnapshot): RentalInterest {
+  const x = d.data()
+  return {
+    id: d.id,
+    propertyId: (x.propertyId as string) ?? '',
+    propertyTitle: (x.propertyTitle as string) ?? '(property)',
+    tenantId: (x.tenantId as string) ?? '',
+    tenantName: (x.tenantName as string) ?? 'Tenant',
+    landlordId: (x.landlordId as string) ?? '',
+    status: (x.status as string) ?? 'pending_acceptance',
+    rentAmount: (x.rentAmount as number) ?? 0,
+    paymentAmount: (x.paymentAmount as number) ?? 0,
+  } satisfies RentalInterest
+}
+
+/**
+ * LIVE rental interests.
+ *
+ * Every step of a tenancy is one party waiting on the other — the tenant sits
+ * on this page after expressing interest while the landlord accepts elsewhere,
+ * and acceptance is what unlocks the agreement and then rent. A one-time read
+ * left whoever was waiting looking at a stale screen with no reason to reload.
+ *
+ * Returns the unsubscribe function.
+ */
+export function watchInterests(
+  field: 'tenantId' | 'landlordId',
+  uid: string,
+  onChange: (rows: RentalInterest[]) => void,
+): () => void {
+  return onSnapshot(interestsQuery(field, uid), (snap) =>
+    onChange(snap.docs.map(toInterest)),
+  )
+}
 
 /**
  * The landlord accepts a tenant. Only the lifecycle fields are touched — every
@@ -138,16 +156,9 @@ export type ActiveRental = {
   createdAt: Date | null
 }
 
-export async function activeRentals(
-  field: 'tenantId' | 'landlordId',
-  uid: string,
-): Promise<ActiveRental[]> {
-  const snap = await getDocs(
-    query(collection(clientDb(), 'active_rentals'), where(field, '==', uid)),
-  )
-  return snap.docs.map((d) => {
-    const x = d.data()
-    return {
+function toRental(d: QueryDocumentSnapshot): ActiveRental {
+  const x = d.data()
+  return {
       id: d.id,
       rentalInterestId: (x.rentalInterestId as string) ?? '',
       propertyId: (x.propertyId as string) ?? '',
@@ -169,8 +180,34 @@ export async function activeRentals(
       nextPaymentDue: x.nextPaymentDue?.toDate?.() ?? null,
       agreementUrl: (x.agreementUrl as string) ?? '',
       createdAt: x.createdAt?.toDate?.() ?? null,
-    } satisfies ActiveRental
-  })
+  } satisfies ActiveRental
+}
+
+function rentalsQuery(field: 'tenantId' | 'landlordId', uid: string) {
+  return query(collection(clientDb(), 'active_rentals'), where(field, '==', uid))
+}
+
+/** One-time read, for pages that only ever render a snapshot of history. */
+export async function activeRentals(
+  field: 'tenantId' | 'landlordId',
+  uid: string,
+): Promise<ActiveRental[]> {
+  const snap = await getDocs(rentalsQuery(field, uid))
+  return snap.docs.map(toRental)
+}
+
+/**
+ * LIVE active rentals — the agreement and rent steps both change under whoever
+ * is waiting. Returns the unsubscribe function.
+ */
+export function watchActiveRentals(
+  field: 'tenantId' | 'landlordId',
+  uid: string,
+  onChange: (rows: ActiveRental[]) => void,
+): () => void {
+  return onSnapshot(rentalsQuery(field, uid), (snap) =>
+    onChange(snap.docs.map(toRental)),
+  )
 }
 
 /** Every rental this tenant has had, newest first — the app's "My rentals". */

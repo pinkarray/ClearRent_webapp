@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useAuth } from '../../../../components/AuthProvider'
+import { fingerprint } from '../../../../lib/form-state'
 import {
   READINESS_ITEMS,
   loadListingForEdit,
@@ -33,12 +34,21 @@ export default function EditListingPage() {
   const [error, setError] = useState<string | null>(null)
 
   const [confirmed, setConfirmed] = useState<Record<string, boolean>>({})
+  /**
+   * The form as it is stored. Save stays disabled until something differs, so
+   * "Saved" is visible state rather than a message that scrolls away — and a
+   * landlord cannot fire the same write twice by tapping again.
+   */
+  const [savedState, setSavedState] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     const l = await loadListingForEdit(propertyId)
+    const a = l?.amenities.join(', ') ?? ''
+    const r = l?.rules.join(', ') ?? ''
     setListing(l)
-    setAmenities(l?.amenities.join(', ') ?? '')
-    setRules(l?.rules.join(', ') ?? '')
+    setAmenities(a)
+    setRules(r)
+    setSavedState(fingerprint([l, a, r]))
   }, [propertyId])
 
   useEffect(() => {
@@ -60,8 +70,12 @@ export default function EditListingPage() {
       rules: csv(rules),
     })
     setBusy(false)
-    if (err) setError(err)
-    else setMessage('Changes saved.')
+    if (err) {
+      setError(err)
+      return
+    }
+    setMessage('Changes saved.')
+    setSavedState(fingerprint([listing, amenities, rules]))
   }
 
   async function handleMarkReady() {
@@ -82,6 +96,8 @@ export default function EditListingPage() {
     return <p className="text-sm text-content-secondary">Loading…</p>
   }
 
+  const dirty =
+    savedState !== null && fingerprint([listing, amenities, rules]) !== savedState
   const frozen = listing.currentTenantsCount > 0
   const set = <K extends keyof EditableListing>(k: K, v: EditableListing[K]) =>
     setListing((l) => (l ? { ...l, [k]: v } : l))
@@ -217,8 +233,12 @@ export default function EditListingPage() {
           {error && <p className="text-sm text-red-600">{error}</p>}
           {message && <p className="text-sm text-primary">{message}</p>}
 
-          <button className="btn-primary w-full px-6 py-3" type="submit" disabled={busy}>
-            {busy ? 'Saving…' : 'Save changes'}
+          <button
+            className="btn-primary w-full px-6 py-3"
+            type="submit"
+            disabled={busy || !dirty}
+          >
+            {busy ? 'Saving…' : dirty ? 'Save changes' : 'Saved'}
           </button>
         </form>
 

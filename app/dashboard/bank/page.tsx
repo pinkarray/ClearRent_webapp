@@ -129,12 +129,17 @@ export default function BankDetailsPage() {
                 <p className="text-xs text-content-secondary">Account name</p>
                 <p className="mt-0.5 font-semibold text-content">{accountName}</p>
               </div>
+              {/*
+                Goes quiet once saved. Changing the account number or bank
+                clears `saved` (and the resolved name), so it comes back live
+                the moment there is something new to store.
+              */}
               <button
                 className="btn-primary w-full px-6 py-3"
                 onClick={handleSave}
-                disabled={busy}
+                disabled={busy || saved}
               >
-                {busy ? 'Saving…' : 'Confirm and save'}
+                {busy ? 'Saving…' : saved ? 'Saved' : 'Confirm and save'}
               </button>
             </>
           ) : (

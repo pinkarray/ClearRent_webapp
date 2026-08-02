@@ -15,6 +15,7 @@ import {
   type HandledProperty,
 } from '../../../../lib/agent'
 import { formatNaira } from '../../../../lib/format'
+import { sortedFingerprint } from '../../../../lib/form-state'
 
 /*
   One property this agent handles: vet it, set when it can be shown, or step
@@ -37,6 +38,8 @@ export default function HandledPropertyPage() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
+  /** The schedule as stored, so Save can show whether it is committed. */
+  const [savedSchedule, setSavedSchedule] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     if (!user) return
@@ -48,6 +51,7 @@ export default function HandledPropertyPage() {
     if (p) {
       setDays(p.inspectionDays)
       setSlots(p.inspectionTimeSlots)
+      setSavedSchedule(sortedFingerprint(p.inspectionDays, p.inspectionTimeSlots))
     }
   }, [user, params.id])
 
@@ -81,6 +85,7 @@ export default function HandledPropertyPage() {
       return
     }
     setMessage('Schedule saved.')
+    setSavedSchedule(sortedFingerprint(days, slots))
   }
 
   async function stepBack() {
@@ -124,6 +129,8 @@ export default function HandledPropertyPage() {
     )
   }
 
+  const scheduleDirty =
+    savedSchedule !== null && sortedFingerprint(days, slots) !== savedSchedule
   const blocked = property.ownershipDocStatus !== 'verified'
 
   return (
@@ -225,10 +232,10 @@ export default function HandledPropertyPage() {
 
         <button
           className="btn-ghost mt-4 px-5 py-2.5 text-sm"
-          disabled={busy}
+          disabled={busy || !scheduleDirty}
           onClick={saveSchedule}
         >
-          Save schedule
+          {busy ? 'Saving…' : scheduleDirty ? 'Save schedule' : 'Schedule saved'}
         </button>
       </section>
 

@@ -10,19 +10,13 @@ import {
   saveServiceAreas,
   serviceAreaOptions,
 } from '../../../lib/agent'
+import { sortedFingerprint } from '../../../lib/form-state'
 
 /*
   Coverage: where an agent works and when. The app splits these across Service
   Areas and Availability; both write single fields on the agent's own user doc
   and are read together by the inspection scheduler, so they are one page here.
 */
-/**
- * A comparable snapshot of the three selections. Sorted, because the order the
- * agent tapped things in is not a change worth saving.
- */
-function fingerprint(areas: string[], days: string[], slots: string[]): string {
-  return JSON.stringify([[...areas].sort(), [...days].sort(), [...slots].sort()])
-}
 
 export default function CoveragePage() {
   const { user } = useAuth()
@@ -50,7 +44,7 @@ export default function CoveragePage() {
       setDays(profile.availableDays)
       setSlots(profile.availableTimeSlots)
       setSavedState(
-        fingerprint(profile.serviceAreas, profile.availableDays, profile.availableTimeSlots),
+        sortedFingerprint(profile.serviceAreas, profile.availableDays, profile.availableTimeSlots),
       )
     })()
   }, [user])
@@ -79,7 +73,7 @@ export default function CoveragePage() {
       setError(err)
       return
     }
-    setSavedState(fingerprint(areas, days, slots))
+    setSavedState(sortedFingerprint(areas, days, slots))
   }
 
   if (!user) return null
@@ -89,7 +83,7 @@ export default function CoveragePage() {
     ? options.filter((a) => a.toLowerCase().includes(search.toLowerCase()))
     : options
 
-  const dirty = savedState !== null && fingerprint(areas, days, slots) !== savedState
+  const dirty = savedState !== null && sortedFingerprint(areas, days, slots) !== savedState
 
   return (
     <div className="space-y-8">

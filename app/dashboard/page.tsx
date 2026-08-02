@@ -6,6 +6,7 @@ import { collection, getDocs, query, where } from 'firebase/firestore'
 import AgentHome from '../../components/AgentHome'
 import { useAuth } from '../../components/AuthProvider'
 import { clientDb } from '../../lib/firebase-client'
+import { resolveDocStatuses } from '../../lib/ownership'
 import { saveAccountType, type AccountType } from '../../lib/user-profile'
 
 type OwnListing = {
@@ -16,12 +17,17 @@ type OwnListing = {
   isAvailable: boolean
   readyForInspections: boolean
   ownershipDocStatus: string
+  buildingId: string | null
 }
 
 /**
  * Explains, in the landlord's terms, why a listing is or is not on public
  * browse. The three conditions are the same gate `lib/property.ts` applies
- * server-side — stated once here so the answer never diverges from the truth.
+ * server-side.
+ *
+ * `ownershipDocStatus` here is the EFFECTIVE status, resolved through the
+ * building for grouped units. Checking the raw field reported reviewed units
+ * as "awaiting verification" while the admin correctly showed them approved.
  */
 function listingState(l: OwnListing): { label: string; tone: 'live' | 'pending' } {
   if (l.ownershipDocStatus !== 'verified') {
@@ -44,19 +50,27 @@ export default function DashboardPage() {
       const snap = await getDocs(
         query(collection(clientDb(), 'properties'), where('landlordId', '==', user.uid)),
       )
+      const raw = snap.docs.map((d) => {
+        const x = d.data()
+        return {
+          id: d.id,
+          title: (x.title as string) ?? '(untitled)',
+          city: (x.city as string) ?? '',
+          state: (x.state as string) ?? '',
+          isAvailable: x.isAvailable === true,
+          readyForInspections: x.readyForInspections === true,
+          ownershipDocStatus: (x.ownershipDocStatus as string) ?? 'none',
+          buildingId: (x.buildingId as string) ?? null,
+        }
+      })
+
+      // Grouped units carry 'inherited'; the building holds the reviewed doc.
+      const effective = await resolveDocStatuses(raw, (p) => p.id)
       setListings(
-        snap.docs.map((d) => {
-          const x = d.data()
-          return {
-            id: d.id,
-            title: (x.title as string) ?? '(untitled)',
-            city: (x.city as string) ?? '',
-            state: (x.state as string) ?? '',
-            isAvailable: x.isAvailable === true,
-            readyForInspections: x.readyForInspections === true,
-            ownershipDocStatus: (x.ownershipDocStatus as string) ?? 'none',
-          }
-        }),
+        raw.map((p) => ({
+          ...p,
+          ownershipDocStatus: effective.get(p.id) ?? p.ownershipDocStatus,
+        })),
       )
     })()
   }, [user, profile])

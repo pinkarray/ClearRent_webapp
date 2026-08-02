@@ -10,6 +10,7 @@ import {
 } from 'firebase/firestore'
 import { getFunctions, httpsCallable } from 'firebase/functions'
 import { clientApp, clientDb, initAppCheck } from './firebase-client'
+import { resolveDocStatuses } from './ownership'
 
 /*
   The agent's own side: coverage, availability, the properties they handle, and
@@ -145,7 +146,14 @@ export type HandledProperty = {
   images: string[]
   isAvailable: boolean
   readyForInspections: boolean
+  /**
+   * The EFFECTIVE status, already resolved through the building for grouped
+   * units. Never read the raw field off a property for a gate — 'inherited' is
+   * a marker, not an approval, and a raw check reports reviewed units as
+   * awaiting review.
+   */
   ownershipDocStatus: string
+  buildingId: string | null
   inspectionDays: string[]
   inspectionTimeSlots: string[]
 }
@@ -169,9 +177,24 @@ function toHandled(id: string, x: Record<string, unknown>): HandledProperty {
     isAvailable: x.isAvailable === true,
     readyForInspections: x.readyForInspections === true,
     ownershipDocStatus: (x.ownershipDocStatus as string) ?? 'none',
+    buildingId: (x.buildingId as string) ?? null,
     inspectionDays: list(x.inspectionDays),
     inspectionTimeSlots: list(x.inspectionTimeSlots),
   }
+}
+
+/**
+ * Replaces each raw ownershipDocStatus with the effective one, so no caller has
+ * to remember to resolve it. Done here rather than in the UI because every
+ * screen that showed it got it wrong independently.
+ */
+async function withEffectiveStatus(rows: HandledProperty[]): Promise<HandledProperty[]> {
+  if (rows.length === 0) return rows
+  const effective = await resolveDocStatuses(rows, (p) => p.id)
+  return rows.map((p) => ({
+    ...p,
+    ownershipDocStatus: effective.get(p.id) ?? p.ownershipDocStatus,
+  }))
 }
 
 /** Properties this agent is assigned to handle. */
@@ -179,7 +202,7 @@ export async function handledProperties(uid: string): Promise<HandledProperty[]>
   const snap = await getDocs(
     query(collection(clientDb(), 'properties'), where('assignedAgentId', '==', uid)),
   )
-  return snap.docs.map((d) => toHandled(d.id, d.data()))
+  return withEffectiveStatus(snap.docs.map((d) => toHandled(d.id, d.data())))
 }
 
 /**
@@ -230,7 +253,7 @@ export async function discoverProperties(): Promise<HandledProperty[]> {
       out.push(toHandled(d.id, x))
     }
   }
-  return out
+  return withEffectiveStatus(out)
 }
 
 /** The checklist an agent must affirm before a property becomes bookable. */

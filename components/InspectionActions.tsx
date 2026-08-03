@@ -12,6 +12,8 @@ export type InspectionState = {
   id: string
   status: string
   paymentStatus: string
+  /** The scheduled slot. Arrival/completion only open on this calendar day. */
+  requestedDate: Date | null
   tenantArrived: boolean
   handlerArrived: boolean
   tenantConfirmedMet: boolean
@@ -21,6 +23,16 @@ export type InspectionState = {
   handlerId: string
   handlerName: string
   handlerType: 'agent' | 'landlord'
+}
+
+/** Same calendar day in the viewer's timezone. Mirrors the app's _isToday. */
+function isToday(d: Date): boolean {
+  const n = new Date()
+  return (
+    d.getFullYear() === n.getFullYear() &&
+    d.getMonth() === n.getMonth() &&
+    d.getDate() === n.getDate()
+  )
 }
 
 /**
@@ -65,16 +77,35 @@ export function InspectionActions({
   const bothArrived = state.tenantArrived && state.handlerArrived
   const bothConfirmed = state.tenantConfirmedMet && state.handlerConfirmedMet
 
-  // Nothing to do until it is approved and (when chargeable) paid.
-  const live =
+  // Nothing to do until it is approved and (when chargeable) paid — and not
+  // before the day itself. Without the date check a Sunday visitor could mark
+  // arrived, confirm met and complete a Monday inspection, which is how a
+  // visit that never happened ends up on the record backing the handler's
+  // payout. The app has always gated this (_isToday); web had not.
+  const settled =
     state.status === 'approved' &&
     (state.paymentStatus === 'paid' || state.paymentStatus === 'not_required')
 
-  if (!live && state.status !== 'completed') return null
+  const onTheDay = state.requestedDate !== null && isToday(state.requestedDate)
+  const live = settled && onTheDay
+  const waiting = settled && !onTheDay
+
+  if (!live && !waiting && state.status !== 'completed') return null
 
   return (
     <div className="mt-4 border-t border-divider pt-4">
       {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
+
+      {waiting && (
+        <p className="text-sm text-content-secondary">
+          {state.requestedDate
+            ? `Arrival and completion open on ${state.requestedDate.toLocaleDateString(
+                'en-NG',
+                { weekday: 'long', day: 'numeric', month: 'long' },
+              )}.`
+            : 'This inspection has no scheduled date on file — contact support.'}
+        </p>
+      )}
 
       {live && (
         <>

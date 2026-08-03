@@ -67,10 +67,10 @@ export default function Waitlist() {
                 fontFamily: 'Outfit', fontWeight: 800, fontSize: 28,
                 color: 'var(--text-primary)', marginBottom: 12,
               }}>
-                You're on the list!
+                You&apos;re on the list!
               </h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: 16, lineHeight: 1.7 }}>
-                We'll notify you as soon as ClearRent opens in your area. Tell a friend — the more verified
+                We&apos;ll notify you as soon as ClearRent opens in your area. Tell a friend — the more verified
                 users, the better the platform for everyone.
               </p>
             </div>

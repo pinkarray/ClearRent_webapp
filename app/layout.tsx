@@ -41,6 +41,23 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {/*
+          Runs before first paint so the saved theme is already on <html>.
+          Without it the page paints with the SYSTEM theme and only corrects
+          after hydration, so anyone whose choice differs from their OS sees a
+          flash of the wrong one. The suppressHydrationWarning above exists for
+          precisely this attribute — the script was the missing half.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){try{var t=localStorage.getItem('clearrent-theme')||'system';" +
+              "var d=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);" +
+              "document.documentElement.setAttribute('data-theme',d?'dark':'light')}catch(e){}})()",
+          }}
+        />
+      </head>
       <body>
         <ThemeProvider>
           <AuthProvider>

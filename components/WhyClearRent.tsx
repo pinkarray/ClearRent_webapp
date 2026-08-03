@@ -78,7 +78,7 @@ export default function WhyClearRent() {
               Trust built into every step
             </h2>
             <p style={{ fontSize: 17, color: 'var(--text-secondary)', maxWidth: 480, margin: '0 auto', lineHeight: 1.7 }}>
-              We didn't just build an app. We rebuilt the rental process from the ground up
+              We didn&apos;t just build an app. We rebuilt the rental process from the ground up
               for the Nigerian market.
             </p>
           </div>

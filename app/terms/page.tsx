@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { TermsContent } from '@/components/LegalContent'
 
 export default function TermsPage() {
@@ -25,7 +26,7 @@ export default function TermsPage() {
           alignItems: 'center',
           justifyContent: 'space-between',
         }}>
-          <a
+          <Link
             href="/"
             style={{
               display: 'flex',
@@ -43,7 +44,7 @@ export default function TermsPage() {
               style={{ width: 32, height: 32, objectFit: 'contain' }}
             />
             <span style={{ color: 'var(--secondary)' }}>Clear</span><span style={{ color: 'var(--primary)' }}>Rent</span>
-          </a>
+          </Link>
           <span style={{
             fontSize: 11,
             color: 'var(--text-hint)',
@@ -89,9 +90,9 @@ export default function TermsPage() {
           © {new Date().getFullYear()} ClearRent · Verealty Technologies Ltd. All rights reserved.
         </p>
         <div style={{ marginTop: 8, display: 'flex', justifyContent: 'center', gap: 16 }}>
-          <a href="/privacy" style={{ fontSize: 12, color: 'var(--primary)', textDecoration: 'none' }}>Privacy Policy</a>
-          <a href="/terms" style={{ fontSize: 12, color: 'var(--primary)', textDecoration: 'none' }}>Terms of Service</a>
-          <a href="/" style={{ fontSize: 12, color: 'var(--primary)', textDecoration: 'none' }}>Home</a>
+          <Link href="/privacy" style={{ fontSize: 12, color: 'var(--primary)', textDecoration: 'none' }}>Privacy Policy</Link>
+          <Link href="/terms" style={{ fontSize: 12, color: 'var(--primary)', textDecoration: 'none' }}>Terms of Service</Link>
+          <Link href="/" style={{ fontSize: 12, color: 'var(--primary)', textDecoration: 'none' }}>Home</Link>
         </div>
       </footer>
     </div>

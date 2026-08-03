@@ -51,7 +51,7 @@ export default function Footer() {
                 </span>
               </div>
               <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7, maxWidth: 220 }}>
-                Nigeria's verification-first rental platform. Rent without regret.
+                Nigeria&apos;s verification-first rental platform. Rent without regret.
               </p>
               <p style={{ fontSize: 12, color: 'var(--text-hint)', marginTop: 8 }}>
                 A product of Verealty Technologies Ltd. 🇳🇬

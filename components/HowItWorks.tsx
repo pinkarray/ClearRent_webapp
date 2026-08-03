@@ -49,7 +49,7 @@ export default function HowItWorks() {
             Built for everyone in the deal
           </h2>
           <p style={{ fontSize: 17, color: 'var(--text-secondary)', maxWidth: 520, margin: '0 auto', lineHeight: 1.7 }}>
-            Whether you're renting out, moving in, or building a real estate business —
+            Whether you&apos;re renting out, moving in, or building a real estate business —
             ClearRent gives you the tools to do it right.
           </p>
         </div>

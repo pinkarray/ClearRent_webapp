@@ -1,10 +1,12 @@
 import {
   addDoc,
   collection,
+  doc,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
+  updateDoc,
   where,
   type QueryDocumentSnapshot,
 } from 'firebase/firestore'
@@ -145,4 +147,49 @@ export function watchTenantIssues(
   return onSnapshot(tenantIssuesQuery(tenantId), (snap) =>
     onChange(snap.docs.map(toIssue)),
   )
+}
+
+/**
+ * The tenant closes the loop after the landlord says it is fixed.
+ *
+ * An issue does NOT go straight to resolved on the landlord's word — it lands
+ * on 'pending_confirmation' and waits for the person who actually lives with
+ * the problem. `issuePendingConfirmationReminders` nags from the server if
+ * they go quiet. Web had no action for this step, so a tenant could see
+ * "pending confirmation" and had no way to confirm anything.
+ */
+export async function confirmIssueResolved(issueId: string): Promise<string | null> {
+  try {
+    await updateDoc(doc(clientDb(), 'issues', issueId), {
+      status: 'resolved',
+      resolvedAt: serverTimestamp(),
+      tenantConfirmedAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
+    return null
+  } catch {
+    return 'Could not confirm that fix.'
+  }
+}
+
+/**
+ * The other answer: it is not actually fixed. Sends it back to the landlord's
+ * In Progress list with the tenant's reason attached, rather than leaving them
+ * to guess why the confirmation never came.
+ */
+export async function disputeIssueResolution(
+  issueId: string,
+  reason: string,
+): Promise<string | null> {
+  if (!reason.trim()) return 'Say what is still wrong.'
+  try {
+    await updateDoc(doc(clientDb(), 'issues', issueId), {
+      status: 'in_progress',
+      tenantDisputeReason: reason.trim(),
+      updatedAt: serverTimestamp(),
+    })
+    return null
+  } catch {
+    return 'Could not send that back.'
+  }
 }

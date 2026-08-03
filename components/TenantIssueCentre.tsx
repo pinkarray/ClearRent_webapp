@@ -5,6 +5,8 @@ import { useAuth } from './AuthProvider'
 import {
   ISSUE_CATEGORIES,
   ISSUE_PRIORITIES,
+  confirmIssueResolved,
+  disputeIssueResolution,
   reportIssue,
   watchTenantIssues,
   type Issue,
@@ -33,6 +35,7 @@ export default function TenantIssueCentre() {
   const [rentals, setRentals] = useState<ActiveRental[]>([])
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [busyIssue, setBusyIssue] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const [rentalId, setRentalId] = useState('')
@@ -68,6 +71,25 @@ export default function TenantIssueCentre() {
     if (!uid) return
     return watchTenantIssues(uid, setIssues)
   }, [uid])
+
+  async function confirmFix(issueId: string) {
+    setError(null)
+    setBusyIssue(issueId)
+    const err = await confirmIssueResolved(issueId)
+    setBusyIssue(null)
+    if (err) setError(err)
+    // The listener moves the card to resolved.
+  }
+
+  async function rejectFix(issueId: string) {
+    const reason = window.prompt("What's still wrong?")
+    if (!reason?.trim()) return
+    setError(null)
+    setBusyIssue(issueId)
+    const err = await disputeIssueResolution(issueId, reason)
+    setBusyIssue(null)
+    if (err) setError(err)
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -240,9 +262,41 @@ export default function TenantIssueCentre() {
                       {i.propertyTitle} · {i.category} · {formatDate(i.createdAt)}
                     </p>
                   </div>
-                  <span className={`chip shrink-0 ${statusTone(i.status)}`}>{i.status}</span>
+                  <span className={`chip shrink-0 ${statusTone(i.status)}`}>
+                    {i.status.replace(/_/g, ' ')}
+                  </span>
                 </div>
                 <p className="mt-3 text-sm text-content-secondary">{i.description}</p>
+
+                {/*
+                  The landlord saying it is fixed does not close it — it lands
+                  here and waits for the person who lives with the problem.
+                  Without these two buttons the tenant could see "pending
+                  confirmation" and had no way to answer either way.
+                */}
+                {i.status === 'pending_confirmation' && (
+                  <div className="mt-4 border-t border-divider pt-4">
+                    <p className="text-sm text-content">
+                      Your landlord marked this fixed. Is it sorted?
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-3">
+                      <button
+                        className="btn-primary px-5 py-2.5 text-sm"
+                        disabled={busyIssue === i.id}
+                        onClick={() => void confirmFix(i.id)}
+                      >
+                        {busyIssue === i.id ? 'Saving…' : 'Yes, it is fixed'}
+                      </button>
+                      <button
+                        className="btn-ghost px-5 py-2.5 text-sm"
+                        disabled={busyIssue === i.id}
+                        onClick={() => void rejectFix(i.id)}
+                      >
+                        Not fixed
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>

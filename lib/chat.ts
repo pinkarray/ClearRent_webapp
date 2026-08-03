@@ -77,13 +77,39 @@ function toConversation(id: string, x: Record<string, unknown>, uid: string): Co
   }
 }
 
-export async function myConversations(uid: string): Promise<Conversation[]> {
-  const snap = await getDocs(
-    query(collection(clientDb(), 'conversations'), where('participants', 'array-contains', uid)),
+function myConversationsQuery(uid: string) {
+  return query(
+    collection(clientDb(), 'conversations'),
+    where('participants', 'array-contains', uid),
   )
-  return snap.docs
-    .map((d) => toConversation(d.id, d.data(), uid))
-    .sort((a, b) => (b.lastMessageTime?.getTime() ?? 0) - (a.lastMessageTime?.getTime() ?? 0))
+}
+
+/**
+ * Sorted newest-first in memory rather than by `orderBy`, because pairing
+ * array-contains with an orderBy needs a composite index.
+ */
+function sortConversations(rows: Conversation[]): Conversation[] {
+  return rows.sort(
+    (a, b) => (b.lastMessageTime?.getTime() ?? 0) - (a.lastMessageTime?.getTime() ?? 0),
+  )
+}
+
+/**
+ * The inbox, live.
+ *
+ * The thread itself was already realtime, but the list around it was not — so
+ * a conversation someone else started, and every unread count, only appeared
+ * if you happened to navigate. Both are things the OTHER party changes.
+ *
+ * Returns the unsubscribe function.
+ */
+export function watchMyConversations(
+  uid: string,
+  onChange: (rows: Conversation[]) => void,
+): () => void {
+  return onSnapshot(myConversationsQuery(uid), (snap) =>
+    onChange(sortConversations(snap.docs.map((d) => toConversation(d.id, d.data(), uid)))),
+  )
 }
 
 export async function getConversation(id: string, uid: string): Promise<Conversation | null> {

@@ -1,11 +1,12 @@
 import {
   addDoc,
   collection,
-  getDocs,
+  onSnapshot,
   orderBy,
   query,
   serverTimestamp,
   where,
+  type QueryDocumentSnapshot,
 } from 'firebase/firestore'
 import { clientDb } from './firebase-client'
 
@@ -105,26 +106,43 @@ export async function reportIssue(input: ReportIssueInput): Promise<string | nul
   }
 }
 
-export async function tenantIssues(tenantId: string): Promise<Issue[]> {
-  const snap = await getDocs(
-    query(
-      collection(clientDb(), 'issues'),
-      where('tenantId', '==', tenantId),
-      orderBy('createdAt', 'desc'),
-    ),
+function tenantIssuesQuery(tenantId: string) {
+  return query(
+    collection(clientDb(), 'issues'),
+    where('tenantId', '==', tenantId),
+    orderBy('createdAt', 'desc'),
   )
-  return snap.docs.map((d) => {
-    const x = d.data()
-    return {
-      id: d.id,
-      propertyId: (x.propertyId as string) ?? '',
-      propertyTitle: (x.propertyTitle as string) ?? '(property)',
-      title: (x.title as string) ?? '',
-      description: (x.description as string) ?? '',
-      category: (x.category as string) ?? 'other',
-      priority: (x.priority as string) ?? 'medium',
-      status: (x.status as string) ?? 'open',
-      createdAt: x.createdAt?.toDate?.() ?? null,
-    }
-  })
+}
+
+function toIssue(d: QueryDocumentSnapshot): Issue {
+  const x = d.data()
+  return {
+    id: d.id,
+    propertyId: (x.propertyId as string) ?? '',
+    propertyTitle: (x.propertyTitle as string) ?? '(property)',
+    title: (x.title as string) ?? '',
+    description: (x.description as string) ?? '',
+    category: (x.category as string) ?? 'other',
+    priority: (x.priority as string) ?? 'medium',
+    status: (x.status as string) ?? 'open',
+    createdAt: x.createdAt?.toDate?.() ?? null,
+  }
+}
+
+/**
+ * The tenant's own issues, live.
+ *
+ * The landlord resolves an issue from their own queue, so the tenant who
+ * reported it is exactly the party with no reason to reload — a one-time read
+ * left them staring at "open" long after it was fixed.
+ *
+ * Returns the unsubscribe function.
+ */
+export function watchTenantIssues(
+  tenantId: string,
+  onChange: (rows: Issue[]) => void,
+): () => void {
+  return onSnapshot(tenantIssuesQuery(tenantId), (snap) =>
+    onChange(snap.docs.map(toIssue)),
+  )
 }

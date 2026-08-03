@@ -3,17 +3,18 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '../../../components/AuthProvider'
-import { counterparty, myConversations, type Conversation } from '../../../lib/chat'
+import { counterparty, watchMyConversations, type Conversation } from '../../../lib/chat'
 import { timeAgo } from '../../../lib/format'
 
 export default function MessagesPage() {
   const { user } = useAuth()
   const [rows, setRows] = useState<Conversation[] | null>(null)
+  const uid = user?.uid
 
   useEffect(() => {
-    if (!user) return
-    ;(async () => setRows(await myConversations(user.uid)))()
-  }, [user])
+    if (!uid) return
+    return watchMyConversations(uid, setRows)
+  }, [uid])
 
   if (!user) return null
 

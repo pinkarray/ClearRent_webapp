@@ -3,6 +3,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  onSnapshot,
   query,
   serverTimestamp,
   updateDoc,
@@ -197,12 +198,39 @@ async function withEffectiveStatus(rows: HandledProperty[]): Promise<HandledProp
   }))
 }
 
+function handledQuery(uid: string) {
+  return query(collection(clientDb(), 'properties'), where('assignedAgentId', '==', uid))
+}
+
 /** Properties this agent is assigned to handle. */
 export async function handledProperties(uid: string): Promise<HandledProperty[]> {
-  const snap = await getDocs(
-    query(collection(clientDb(), 'properties'), where('assignedAgentId', '==', uid)),
-  )
+  const snap = await getDocs(handledQuery(uid))
   return withEffectiveStatus(snap.docs.map((d) => toHandled(d.id, d.data())))
+}
+
+/**
+ * Live version of [handledProperties].
+ *
+ * Only the landlord can assign an agent (`property_service.dart:945`), so an
+ * agent watching this list is by definition waiting on someone else — a
+ * one-time read meant a new assignment never appeared.
+ *
+ * Each snapshot needs an async status resolution, so responses are sequenced:
+ * a slow earlier one must not land after a newer one and undo it.
+ *
+ * Returns the unsubscribe function.
+ */
+export function watchHandledProperties(
+  uid: string,
+  onChange: (rows: HandledProperty[]) => void,
+): () => void {
+  let seq = 0
+  return onSnapshot(handledQuery(uid), async (snap) => {
+    const mine = ++seq
+    const rows = await withEffectiveStatus(snap.docs.map((d) => toHandled(d.id, d.data())))
+    if (mine !== seq) return
+    onChange(rows)
+  })
 }
 
 /**

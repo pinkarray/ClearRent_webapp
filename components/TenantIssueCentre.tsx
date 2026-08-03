@@ -1,12 +1,12 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from './AuthProvider'
 import {
   ISSUE_CATEGORIES,
   ISSUE_PRIORITIES,
   reportIssue,
-  tenantIssues,
+  watchTenantIssues,
   type Issue,
 } from '../lib/issues'
 import { activeRentals, type ActiveRental } from '../lib/tenancy'
@@ -41,24 +41,33 @@ export default function TenantIssueCentre() {
   const [category, setCategory] = useState<string>(ISSUE_CATEGORIES[0].value)
   const [priority, setPriority] = useState<string>('medium')
 
-  const load = useCallback(async () => {
-    if (!user) return
-    const [i, r] = await Promise.all([
-      tenantIssues(user.uid),
-      activeRentals('tenantId', user.uid),
-    ])
-    setIssues(i)
-    setRentals(r)
-    // An issue must name a property, so default to the only one when there is
-    // exactly one — the common case.
-    if (r.length === 1) setRentalId(r[0].id)
-  }, [user])
+  const uid = user?.uid
 
+  // Rentals only change through this tenant's own tenancy actions, so a
+  // one-time read is enough.
   useEffect(() => {
+    if (!uid) return
+    let cancelled = false
     ;(async () => {
-      await load()
+      const r = await activeRentals('tenantId', uid)
+      if (cancelled) return
+      setRentals(r)
+      // An issue must name a property, so default to the only one when there
+      // is exactly one — the common case.
+      if (r.length === 1) setRentalId(r[0].id)
     })()
-  }, [load])
+    return () => {
+      cancelled = true
+    }
+  }, [uid])
+
+  // Live: the landlord resolves an issue from their own queue, so the tenant
+  // who reported it has no reason to reload and would otherwise keep seeing
+  // "open" long after it was fixed.
+  useEffect(() => {
+    if (!uid) return
+    return watchTenantIssues(uid, setIssues)
+  }, [uid])
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -90,7 +99,7 @@ export default function TenantIssueCentre() {
     setTitle('')
     setDescription('')
     setOpen(false)
-    await load()
+    // The listener above delivers the new issue; no reload needed.
   }
 
   if (!user) return null

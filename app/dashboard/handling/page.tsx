@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '../../../components/AuthProvider'
-import { handledProperties, type HandledProperty } from '../../../lib/agent'
+import { watchHandledProperties, type HandledProperty } from '../../../lib/agent'
 import { formatNaira, rentPeriod } from '../../../lib/format'
 
 /** Why a property this agent handles is, or is not, bookable. */
@@ -19,11 +19,14 @@ function state(p: HandledProperty): { label: string; tone: string } {
 export default function HandlingPage() {
   const { user } = useAuth()
   const [rows, setRows] = useState<HandledProperty[] | null>(null)
+  const uid = user?.uid
 
+  // Live: only the landlord can assign an agent, so a new assignment is
+  // exactly the thing this page would otherwise never learn about.
   useEffect(() => {
-    if (!user) return
-    ;(async () => setRows(await handledProperties(user.uid)))()
-  }, [user])
+    if (!uid) return
+    return watchHandledProperties(uid, setRows)
+  }, [uid])
 
   if (!user) return null
 

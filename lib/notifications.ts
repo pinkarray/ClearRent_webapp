@@ -2,10 +2,12 @@ import {
   collection,
   doc,
   getDocs,
+  onSnapshot,
   query,
   serverTimestamp,
   updateDoc,
   where,
+  type QuerySnapshot,
 } from 'firebase/firestore'
 import { clientDb } from './firebase-client'
 
@@ -31,13 +33,14 @@ export type AppNotification = {
   createdAt: Date | null
 }
 
-export async function myNotifications(uid: string): Promise<AppNotification[]> {
-  // Filter by userId only and sort in memory — the composite index for a
-  // server-side orderBy alongside this where() is not provisioned, and a
-  // missing index throws rather than degrading.
-  const snap = await getDocs(
-    query(collection(clientDb(), 'notifications'), where('userId', '==', uid)),
-  )
+// Filter by userId only and sort in memory — the composite index for a
+// server-side orderBy alongside this where() is not provisioned, and a
+// missing index throws rather than degrading.
+function myNotificationsQuery(uid: string) {
+  return query(collection(clientDb(), 'notifications'), where('userId', '==', uid))
+}
+
+function toNotifications(snap: QuerySnapshot): AppNotification[] {
   const rows = snap.docs.map((d) => {
     const x = d.data()
     const payload = (x.payload as Record<string, string> | undefined) ?? {}
@@ -52,6 +55,26 @@ export async function myNotifications(uid: string): Promise<AppNotification[]> {
     }
   })
   return rows.sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0))
+}
+
+export async function myNotifications(uid: string): Promise<AppNotification[]> {
+  return toNotifications(await getDocs(myNotificationsQuery(uid)))
+}
+
+/**
+ * Live notifications, for the shell's unread badge.
+ *
+ * Every notification is written by a Cloud Function reacting to what someone
+ * else did, so the badge is by definition never something this user's own
+ * navigation should have to discover.
+ *
+ * Returns the unsubscribe function.
+ */
+export function watchMyNotifications(
+  uid: string,
+  onChange: (rows: AppNotification[]) => void,
+): () => void {
+  return onSnapshot(myNotificationsQuery(uid), (snap) => onChange(toNotifications(snap)))
 }
 
 export async function markRead(id: string): Promise<void> {

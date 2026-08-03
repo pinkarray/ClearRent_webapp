@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from './AuthProvider'
-import { agentProfile, handledProperties, type AgentProfile } from '../lib/agent'
+import { agentProfile, watchHandledProperties, type AgentProfile } from '../lib/agent'
 
 /*
   The agent's dashboard: what they handle, what still needs vetting, and how
@@ -17,22 +17,34 @@ export default function AgentHome({ verified }: { verified: boolean }) {
   const [profile, setProfile] = useState<AgentProfile | null>(null)
   const [counts, setCounts] = useState<{ handling: number; unvetted: number } | null>(null)
 
+  const uid = user?.uid
+
+  // The agent's own profile changes only by their own action.
   useEffect(() => {
-    if (!user) return
+    if (!uid) return
+    let cancelled = false
     ;(async () => {
-      const [p, properties] = await Promise.all([
-        agentProfile(user.uid),
-        handledProperties(user.uid),
-      ])
-      setProfile(p)
+      const p = await agentProfile(uid)
+      if (!cancelled) setProfile(p)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [uid])
+
+  // Live: the landlord does the assigning, so both counts move without this
+  // agent touching anything.
+  useEffect(() => {
+    if (!uid) return
+    return watchHandledProperties(uid, (properties) =>
       setCounts({
         handling: properties.length,
         unvetted: properties.filter(
           (x) => x.ownershipDocStatus === 'verified' && !x.readyForInspections,
         ).length,
-      })
-    })()
-  }, [user])
+      }),
+    )
+  }, [uid])
 
   return (
     <>

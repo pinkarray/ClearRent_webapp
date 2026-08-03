@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from './AuthProvider'
 import { useTheme } from './ThemeProvider'
 import { ViewportSync } from './ViewportSync'
-import { myNotifications } from '../lib/notifications'
+import { watchMyNotifications } from '../lib/notifications'
 
 /*
   The signed-in chrome. Before this existed every product route was a bare
@@ -108,20 +108,21 @@ export default function AppShell({
   const { user, profile, ready, signOut } = useAuth()
   const { theme, setTheme } = useTheme()
   const [unread, setUnread] = useState(0)
+  const uid = user?.uid
 
   useEffect(() => {
     if (ready && !user) router.replace('/login')
   }, [ready, user, router])
 
-  // Read once per shell mount rather than a live listener — the badge is a
-  // nudge, not something that needs to tick during a session.
+  // Live. Every notification is written by a Cloud Function reacting to what
+  // the other party did, so re-reading only on navigation meant the badge
+  // stayed stale for as long as you sat on one page.
   useEffect(() => {
-    if (!user) return
-    ;(async () => {
-      const rows = await myNotifications(user.uid)
-      setUnread(rows.filter((r) => !r.read).length)
-    })()
-  }, [user, pathname])
+    if (!uid) return
+    return watchMyNotifications(uid, (rows) =>
+      setUnread(rows.filter((r) => !r.read).length),
+    )
+  }, [uid])
 
   if (!ready || !user) {
     return (

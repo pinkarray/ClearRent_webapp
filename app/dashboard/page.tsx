@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { collection, getDocs, query, where } from 'firebase/firestore'
+import { collection, onSnapshot, query, where } from 'firebase/firestore'
 import AgentHome from '../../components/AgentHome'
 import { useAuth } from '../../components/AuthProvider'
 import { clientDb } from '../../lib/firebase-client'
@@ -43,41 +43,50 @@ export default function DashboardPage() {
   const { user, profile, refreshProfile } = useAuth()
   const [listings, setListings] = useState<OwnListing[] | null>(null)
   const [savingType, setSavingType] = useState(false)
+  const uid = user?.uid
+  const accountType = profile?.accountType
 
+  // Live: an admin verifies the ownership document from the staff dashboard,
+  // so the flip to "Live on public browse" is never something the landlord's
+  // own navigation would surface.
   useEffect(() => {
-    if (!user || profile?.accountType !== 'landlord') return
-    ;(async () => {
-      const snap = await getDocs(
-        query(collection(clientDb(), 'properties'), where('landlordId', '==', user.uid)),
-      )
-      const raw = snap.docs.map((d) => {
-        const x = d.data()
-        return {
-          id: d.id,
-          title: (x.title as string) ?? '(untitled)',
-          city: (x.city as string) ?? '',
-          state: (x.state as string) ?? '',
-          isAvailable: x.isAvailable === true,
-          readyForInspections: x.readyForInspections === true,
-          ownershipDocStatus: (x.ownershipDocStatus as string) ?? 'none',
-          buildingId: (x.buildingId as string) ?? null,
-        }
-      })
+    if (!uid || accountType !== 'landlord') return
 
-      // Grouped units carry 'inherited'; the building holds the reviewed doc.
-      const effective = await resolveDocStatuses(raw, (p) => p.id)
-      setListings(
-        raw.map((p) => ({
-          ...p,
-          ownershipDocStatus: effective.get(p.id) ?? p.ownershipDocStatus,
-        })),
-      )
-    })()
-  }, [user, profile])
+    // Each snapshot needs an async status resolution, so a slow earlier
+    // response could otherwise land after a newer one and undo it.
+    let seq = 0
+    return onSnapshot(
+      query(collection(clientDb(), 'properties'), where('landlordId', '==', uid)),
+      async (snap) => {
+        const mine = ++seq
+        const raw = snap.docs.map((d) => {
+          const x = d.data()
+          return {
+            id: d.id,
+            title: (x.title as string) ?? '(untitled)',
+            city: (x.city as string) ?? '',
+            state: (x.state as string) ?? '',
+            isAvailable: x.isAvailable === true,
+            readyForInspections: x.readyForInspections === true,
+            ownershipDocStatus: (x.ownershipDocStatus as string) ?? 'none',
+            buildingId: (x.buildingId as string) ?? null,
+          }
+        })
+
+        // Grouped units carry 'inherited'; the building holds the reviewed doc.
+        const effective = await resolveDocStatuses(raw, (p) => p.id)
+        if (mine !== seq) return
+        setListings(
+          raw.map((p) => ({
+            ...p,
+            ownershipDocStatus: effective.get(p.id) ?? p.ownershipDocStatus,
+          })),
+        )
+      },
+    )
+  }, [uid, accountType])
 
   if (!user) return null
-
-  const accountType = profile?.accountType
 
   return (
     <div className="space-y-6">

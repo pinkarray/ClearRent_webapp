@@ -1,13 +1,18 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { getStorage, ref, uploadBytes } from 'firebase/storage'
 import { useAuth } from './AuthProvider'
 import { clientApp } from '../lib/firebase-client'
 import { agreementUrl } from '../lib/documents'
 import { formatDate } from '../lib/format'
-import { attachAgreement, landlordRentals, type ActiveRental } from '../lib/tenancy'
+import {
+  attachAgreement,
+  confirmMoveOut,
+  watchActiveRentals,
+  type ActiveRental,
+} from '../lib/tenancy'
 
 function formatNaira(n: number): string {
   return `₦${n.toLocaleString('en-NG')}`
@@ -33,17 +38,25 @@ export default function LandlordRentals() {
   const [rows, setRows] = useState<ActiveRental[] | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [deduction, setDeduction] = useState<
+    Record<string, { amount?: string; reason?: string }>
+  >({})
 
-  const load = useCallback(async () => {
-    if (!user) return
-    setRows(await landlordRentals(user.uid))
-  }, [user])
+  const uid = user?.uid
 
+  // Live: every step shown here is the TENANT's move — accepting the
+  // agreement, disputing it, paying rent, giving move-out notice. A one-time
+  // read meant the landlord sat on a stale card for all of them.
   useEffect(() => {
-    ;(async () => {
-      await load()
-    })()
-  }, [load])
+    if (!uid) return
+    return watchActiveRentals('landlordId', uid, (rentals) =>
+      setRows(
+        [...rentals].sort(
+          (a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0),
+        ),
+      ),
+    )
+  }, [uid])
 
   async function upload(rentalId: string, file: File) {
     if (!user) return
@@ -60,12 +73,24 @@ export default function LandlordRentals() {
         setError(err)
         return
       }
-      await load()
+      // The listener delivers the updated card.
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed.')
     } finally {
       setBusyId(null)
     }
+  }
+
+  async function confirmHandover(rentalId: string) {
+    setError(null)
+    setBusyId(rentalId)
+    const d = deduction[rentalId] ?? {}
+    const err = await confirmMoveOut(rentalId, {
+      cautionDeductionAmount: d.amount ? Number(d.amount) : 0,
+      cautionDeductionReason: d.reason,
+    })
+    setBusyId(null)
+    if (err) setError(err)
   }
 
   async function open(rentalId: string) {
@@ -159,11 +184,80 @@ export default function LandlordRentals() {
               </div>
 
               {r.agreementStatus === 'disputed' && (
-                <p className="mt-3 text-sm text-error">
-                  The tenant raised concerns with this agreement. Upload a corrected version.
-                </p>
+                <div className="mt-3">
+                  <p className="text-sm text-error">
+                    The tenant raised concerns with this agreement. Upload a corrected version.
+                  </p>
+                  {r.tenantDisputeReason && (
+                    <p className="mt-1 text-sm text-content-secondary">
+                      “{r.tenantDisputeReason}”
+                    </p>
+                  )}
+                </div>
               )}
             </div>
+
+            {/*
+              Move-out handover. The tenant has given notice; confirming ends
+              the tenancy and frees the unit. If the landlord never acts, the
+              auto-confirm sweep does this server-side — so this is a shortcut,
+              not a veto, which is why there is no "reject" here.
+            */}
+            {r.status === 'moveout_pending' && (
+              <div className="mt-4 border-t border-divider pt-4">
+                <p className="text-sm font-medium text-content">Move-out requested</p>
+                <p className="mt-1 text-sm text-content-secondary">
+                  Confirm once you have taken back the keys. If you do nothing this
+                  confirms itself after the notice period.
+                </p>
+
+                {r.cautionDeposit > 0 && (
+                  <div className="mt-3">
+                    <p className="text-sm text-content-secondary">
+                      Caution deposit on record: {formatNaira(r.cautionDeposit)}. It is
+                      returned in full unless you declare a deduction — ClearRent never
+                      holds this money, so this is a record, not a transfer.
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-3">
+                      <input
+                        type="number"
+                        min={0}
+                        max={r.cautionDeposit}
+                        placeholder="Withhold (₦0)"
+                        className="input-field w-40 px-3 py-2 text-sm"
+                        value={deduction[r.id]?.amount ?? ''}
+                        onChange={(e) =>
+                          setDeduction((d) => ({
+                            ...d,
+                            [r.id]: { ...d[r.id], amount: e.target.value },
+                          }))
+                        }
+                      />
+                      <input
+                        type="text"
+                        placeholder="Reason (required if withholding)"
+                        className="input-field min-w-0 flex-1 px-3 py-2 text-sm"
+                        value={deduction[r.id]?.reason ?? ''}
+                        onChange={(e) =>
+                          setDeduction((d) => ({
+                            ...d,
+                            [r.id]: { ...d[r.id], reason: e.target.value },
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  className="btn-primary mt-3 px-5 py-2.5 text-sm"
+                  disabled={busyId === r.id}
+                  onClick={() => void confirmHandover(r.id)}
+                >
+                  {busyId === r.id ? 'Confirming…' : 'Confirm move-out'}
+                </button>
+              </div>
+            )}
 
             <div className="mt-4 flex flex-wrap gap-3">
               <Link

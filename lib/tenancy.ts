@@ -2,6 +2,7 @@ import {
   Timestamp,
   collection,
   doc,
+  getDoc,
   getDocs,
   onSnapshot,
   query,
@@ -153,6 +154,10 @@ export type ActiveRental = {
   leaseEndDate: Date | null
   nextPaymentDue: Date | null
   agreementUrl: string
+  /** Why the tenant sent the agreement back, when agreementStatus is disputed. */
+  tenantDisputeReason: string | null
+  /** Snapshotted at acceptance, so a later listing edit cannot change it. */
+  cautionDeposit: number
   createdAt: Date | null
 }
 
@@ -179,6 +184,8 @@ function toRental(d: QueryDocumentSnapshot): ActiveRental {
       leaseEndDate: x.leaseEndDate?.toDate?.() ?? null,
       nextPaymentDue: x.nextPaymentDue?.toDate?.() ?? null,
       agreementUrl: (x.agreementUrl as string) ?? '',
+      tenantDisputeReason: (x.tenantDisputeReason as string) ?? null,
+      cautionDeposit: (x.cautionDeposit as number) ?? 0,
       createdAt: x.createdAt?.toDate?.() ?? null,
   } satisfies ActiveRental
 }
@@ -312,7 +319,13 @@ export async function requestMoveOut(
 ): Promise<string | null> {
   try {
     await updateDoc(doc(clientDb(), 'active_rentals', rentalId), {
-      status: 'moveOutRequested',
+      // 'moveout_pending' is the canonical value, not a camelCase variant:
+      // moveoutAutoConfirmSweep queries `status == 'moveout_pending'` and the
+      // app's ActiveRentalStatus parses that exact string. Web previously wrote
+      // 'moveOutRequested', which nothing recognised — so a move-out started on
+      // web could neither be confirmed by the landlord nor auto-confirmed, and
+      // the tenancy simply hung.
+      status: 'moveout_pending',
       moveOutRequestedAt: serverTimestamp(),
       moveOutIntendedDate: Timestamp.fromDate(intendedDate),
       endReason: reason,
@@ -321,5 +334,73 @@ export async function requestMoveOut(
     return null
   } catch {
     return 'Could not submit your move-out notice.'
+  }
+}
+
+/**
+ * The landlord confirms handover, which ends the tenancy and frees the unit.
+ * Only valid from 'moveout_pending'; the auto-confirm sweep makes the same
+ * transition server-side if the landlord never acts, so this is a shortcut,
+ * not a veto.
+ *
+ * A deduction of 0 means the deposit is returned in full — the default.
+ * Anything withheld must carry a reason: the tenant gets their money back
+ * unless the landlord says otherwise, on the record. ClearRent never holds
+ * this money, so these fields are a declaration and an audit trail, not a
+ * transfer. The amount is clamped to the deposit actually on the rental.
+ */
+export async function confirmMoveOut(
+  rentalId: string,
+  opts: { cautionDeductionAmount?: number; cautionDeductionReason?: string } = {},
+): Promise<string | null> {
+  try {
+    const snap = await getDoc(doc(clientDb(), 'active_rentals', rentalId))
+    if (!snap.exists()) return 'That rental no longer exists.'
+    const data = snap.data()
+    if (data.status !== 'moveout_pending') {
+      return 'This tenancy is not awaiting a move-out confirmation.'
+    }
+
+    const deposit = Number(data.cautionDeposit ?? 0)
+    const requested = Math.max(0, opts.cautionDeductionAmount ?? 0)
+    const deducted = Math.min(requested, deposit)
+    if (deducted > 0 && !opts.cautionDeductionReason?.trim()) {
+      return 'Give a reason for withholding part of the deposit.'
+    }
+
+    await updateDoc(doc(clientDb(), 'active_rentals', rentalId), {
+      status: 'ended_by_tenant',
+      endedAt: serverTimestamp(),
+      cautionDeductionAmount: deducted,
+      cautionDeductionReason: deducted > 0 ? opts.cautionDeductionReason?.trim() : null,
+      cautionDeclaredAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
+    return null
+  } catch {
+    return 'Could not confirm the move-out.'
+  }
+}
+
+/**
+ * The tenant raises a concern instead of accepting. This is the other half of
+ * [acceptAgreement] — without it a tenant who disagrees with the agreement has
+ * only two options, accept it or stall, and the landlord is never told why.
+ * The landlord re-uploads a revised copy, which returns it to 'pending_review'.
+ */
+export async function disputeAgreement(
+  rentalId: string,
+  reason: string,
+): Promise<string | null> {
+  if (!reason.trim()) return 'Say what needs changing.'
+  try {
+    await updateDoc(doc(clientDb(), 'active_rentals', rentalId), {
+      agreementStatus: 'disputed',
+      tenantDisputeReason: reason.trim(),
+      updatedAt: serverTimestamp(),
+    })
+    return null
+  } catch {
+    return 'Could not send your response.'
   }
 }

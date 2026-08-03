@@ -6,6 +6,7 @@ import { startPayment } from '../../../lib/payments'
 import {
   acceptAgreement,
   acceptRentalInterest,
+  disputeAgreement,
   requestMoveOut,
   watchActiveRentals,
   watchInterests,
@@ -88,6 +89,12 @@ export default function TenancyPage() {
     await run(r.id, () => requestMoveOut(r.id, parsed, reason))
   }
 
+  async function dispute(r: ActiveRental) {
+    const reason = window.prompt('What needs changing in the agreement?')
+    if (!reason?.trim()) return
+    await run(r.id, () => disputeAgreement(r.id, reason))
+  }
+
   if (!user) return null
 
   return (
@@ -167,12 +174,27 @@ export default function TenancyPage() {
                     {r.agreementStatus !== 'finalized' && (
                       <button
                         className="btn-primary px-5 py-2.5 text-sm"
-                        disabled={busy === r.id}
+                        disabled={busy === r.id || !r.agreementUrl}
                         onClick={() => run(r.id, () => acceptAgreement(r.id))}
                       >
                         Accept agreement
                       </button>
                     )}
+
+                    {/* The other half of accepting: without it a tenant who
+                        disagrees can only stall, and the landlord is never
+                        told why. Sends it back for a corrected upload. */}
+                    {r.agreementStatus !== 'finalized' &&
+                      r.agreementStatus !== 'disputed' &&
+                      r.agreementUrl && (
+                        <button
+                          className="btn-ghost px-5 py-2.5 text-sm"
+                          disabled={busy === r.id}
+                          onClick={() => void dispute(r)}
+                        >
+                          Raise a concern
+                        </button>
+                      )}
 
                     {r.agreementStatus === 'finalized' && r.rentPaymentStatus !== 'paid' && (
                       <button
@@ -198,8 +220,15 @@ export default function TenancyPage() {
 
                 {!isLandlord && r.agreementStatus !== 'finalized' && (
                   <p className="mt-3 text-xs text-content-hint">
-                    Accepting the agreement finalizes it — that is what unlocks rent payment.
-                    There is no separate landlord step.
+                    {r.agreementUrl
+                      ? 'Accepting the agreement finalizes it — that is what unlocks rent payment. There is no separate landlord step.'
+                      : 'Waiting for your landlord to upload the tenancy agreement. You can accept it here once they do, and that unlocks rent payment.'}
+                  </p>
+                )}
+
+                {!isLandlord && r.agreementStatus === 'disputed' && (
+                  <p className="mt-2 text-xs text-content-hint">
+                    Sent back to your landlord. They will upload a corrected version.
                   </p>
                 )}
               </div>

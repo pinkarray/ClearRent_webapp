@@ -269,6 +269,75 @@ export async function getOrCreatePitchConversation(
   }
 }
 
+/**
+ * The tenant ↔ landlord thread about a specific property, mirroring
+ * `conversation_service.dart:190`.
+ *
+ * Deduped on the (propertyId, landlordId, tenantId) tuple. The lookup queries
+ * by the CALLER's own participation rather than by that tuple directly,
+ * because the tightened list rule only accepts owner-scoped shapes — the
+ * caller's own conversation set is small, so filtering in memory is cheap and
+ * needs no composite index.
+ *
+ * Note this carries NO conversationType: the app's property conversations
+ * leave it unset, and setting one here would make the two surfaces stop
+ * deduping against each other and open parallel threads for one tenancy.
+ */
+export async function getOrCreatePropertyConversation(input: {
+  propertyId: string
+  propertyTitle: string
+  propertyImage?: string
+  landlordId: string
+  landlordName: string
+  tenantId: string
+  tenantName: string
+}): Promise<{ id: string } | { error: string }> {
+  const { propertyId, landlordId, tenantId } = input
+  if (!landlordId || !tenantId) return { error: 'Missing a party on this tenancy.' }
+
+  try {
+    const mine = await getDocs(
+      query(
+        collection(clientDb(), 'conversations'),
+        where('participants', 'array-contains', tenantId),
+      ),
+    )
+    const match = mine.docs.find((d) => {
+      const x = d.data()
+      return (
+        x.propertyId === propertyId &&
+        x.landlordId === landlordId &&
+        x.tenantId === tenantId
+      )
+    })
+    if (match) return { id: match.id }
+
+    const ref = await addDoc(collection(clientDb(), 'conversations'), {
+      propertyId,
+      propertyTitle: input.propertyTitle,
+      propertyImage: input.propertyImage ?? '',
+      landlordId,
+      landlordName: input.landlordName,
+      tenantId,
+      tenantName: input.tenantName,
+      agentId: '',
+      agentName: '',
+      participants: [landlordId, tenantId],
+      lastMessage: '',
+      lastMessageTime: Timestamp.now(),
+      lastMessageSenderId: '',
+      unreadCounts: { [landlordId]: 0, [tenantId]: 0 },
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    })
+    return { id: ref.id }
+  } catch (err) {
+    return {
+      error: err instanceof Error ? err.message : 'Could not open that conversation.',
+    }
+  }
+}
+
 /** Who the other side is, for the inbox row and the thread header. */
 export function counterparty(c: Conversation, uid: string): string {
   // A pitch thread has no tenant — it is the agent and the landlord.

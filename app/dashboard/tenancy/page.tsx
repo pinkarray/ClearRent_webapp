@@ -1,7 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '../../../components/AuthProvider'
+import { getOrCreatePropertyConversation } from '../../../lib/chat'
+import { agreementUrl } from '../../../lib/documents'
 import { startPayment } from '../../../lib/payments'
 import {
   acceptAgreement,
@@ -32,6 +35,7 @@ function formatNaira(n: number): string {
  */
 export default function TenancyPage() {
   const { user, profile } = useAuth()
+  const router = useRouter()
   const [interests, setInterests] = useState<RentalInterest[] | null>(null)
   const [rentals, setRentals] = useState<ActiveRental[] | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
@@ -93,6 +97,38 @@ export default function TenancyPage() {
     const reason = window.prompt('What needs changing in the agreement?')
     if (!reason?.trim()) return
     await run(r.id, () => disputeAgreement(r.id, reason))
+  }
+
+  async function messageLandlord(r: ActiveRental) {
+    if (!user) return
+    setError(null)
+    setBusy(r.id)
+    const res = await getOrCreatePropertyConversation({
+      propertyId: r.propertyId,
+      propertyTitle: r.propertyTitle,
+      landlordId: r.landlordId,
+      landlordName: r.landlordName || 'Landlord',
+      tenantId: user.uid,
+      tenantName: profile?.fullName ?? 'Tenant',
+    })
+    setBusy(null)
+    if ('error' in res) {
+      setError(res.error)
+      return
+    }
+    router.push(`/dashboard/messages/${res.id}`)
+  }
+
+  async function openAgreement(rentalId: string) {
+    setError(null)
+    setBusy(rentalId)
+    const res = await agreementUrl('active_rentals', rentalId)
+    setBusy(null)
+    if ('error' in res) {
+      setError(res.error)
+      return
+    }
+    window.open(res.url, '_blank', 'noopener')
   }
 
   if (!user) return null
@@ -171,6 +207,20 @@ export default function TenancyPage() {
 
                 {!isLandlord && (
                   <div className="mt-4 flex flex-wrap gap-3">
+                    {/* Read it before you sign it. The file is private, so it
+                        is fetched through getSignedAgreementUrl rather than
+                        linked — and asking someone to accept a document they
+                        cannot open is not a real choice. */}
+                    {r.agreementUrl && (
+                      <button
+                        className="btn-ghost px-5 py-2.5 text-sm"
+                        disabled={busy === r.id}
+                        onClick={() => void openAgreement(r.id)}
+                      >
+                        {busy === r.id ? 'Opening…' : 'View agreement'}
+                      </button>
+                    )}
+
                     {r.agreementStatus !== 'finalized' && (
                       <button
                         className="btn-primary px-5 py-2.5 text-sm"
@@ -215,6 +265,17 @@ export default function TenancyPage() {
                         Give move-out notice
                       </button>
                     )}
+
+                    {/* Not gated on the agreement: the most likely moment to
+                        need your landlord is when something about the
+                        paperwork is wrong or missing. */}
+                    <button
+                      className="btn-ghost px-5 py-2.5 text-sm"
+                      disabled={busy === r.id}
+                      onClick={() => void messageLandlord(r)}
+                    >
+                      Message landlord
+                    </button>
                   </div>
                 )}
 

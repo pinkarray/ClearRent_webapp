@@ -56,9 +56,14 @@ function Icon({ name, className }: { name: keyof typeof icons; className?: strin
 
 function tabsFor(accountType: string | undefined): Tab[] {
   if (accountType === 'landlord') {
+    // Rentals is where the tenancy agreement is uploaded and where a move-out
+    // is confirmed — the landlord's half of everything after an inspection.
+    // It was reachable only via a Home link, so anyone starting from the nav
+    // hunted for it.
     return [
       { href: '/dashboard', label: 'Home', icon: 'home' },
       { href: '/dashboard/requests', label: 'Requests', icon: 'inbox' },
+      { href: '/dashboard/rentals', label: 'Rentals', icon: 'building' },
       { href: '/dashboard/messages', label: 'Messages', icon: 'chat' },
       { href: '/dashboard/profile', label: 'Profile', icon: 'user' },
     ]
@@ -78,9 +83,12 @@ function tabsFor(accountType: string | undefined): Tab[] {
     ]
   }
   if (accountType === 'agent') {
-    // Mirrors the app's agent tabs: their work, their leads, messages, profile.
+    // Mirrors the app's agent tabs, plus Requests — approving and running
+    // inspections IS the agent's job and the only place they earn, yet it
+    // sat behind a Home link while Properties had a tab.
     return [
       { href: '/dashboard', label: 'Home', icon: 'home' },
+      { href: '/dashboard/requests', label: 'Requests', icon: 'inbox' },
       { href: '/dashboard/handling', label: 'Properties', icon: 'building' },
       { href: '/dashboard/messages', label: 'Messages', icon: 'chat' },
       { href: '/dashboard/profile', label: 'Profile', icon: 'user' },

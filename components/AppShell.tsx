@@ -64,9 +64,15 @@ function tabsFor(accountType: string | undefined): Tab[] {
     ]
   }
   if (accountType === 'tenant') {
+    // Tenancy earns a slot because it is where the agreement, the rent
+    // payment and move-out all live — the whole second half of the journey.
+    // Without it those were reachable only by typing the URL, since the
+    // capsule is the only navigation on mobile. Inactive tabs render
+    // icon-only, so a fifth costs ~45px.
     return [
       { href: '/dashboard', label: 'Home', icon: 'home' },
-      { href: '/dashboard/saved', label: 'Saved', icon: 'heart' },
+      { href: '/dashboard/inspections', label: 'Inspections', icon: 'inbox' },
+      { href: '/dashboard/tenancy', label: 'Tenancy', icon: 'building' },
       { href: '/dashboard/messages', label: 'Messages', icon: 'chat' },
       { href: '/dashboard/profile', label: 'Profile', icon: 'user' },
     ]

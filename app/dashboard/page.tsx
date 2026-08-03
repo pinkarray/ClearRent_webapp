@@ -327,8 +327,17 @@ export default function DashboardPage() {
 
           <section className="card p-6">
             <h3 className="text-lg font-semibold text-content">Your tenancy</h3>
-            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <p className="mt-1 text-sm text-content-secondary">
+              Agreement, rent and move-out all live under Tenancy.
+            </p>
+            {/*
+              Tenancy was missing here, which made it unreachable: it is not in
+              the tenant's bottom nav either, so the agreement, the pay-rent
+              button and move-out could only be found by typing the URL.
+            */}
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {[
+                { href: '/dashboard/tenancy', label: 'Tenancy, agreement & rent' },
                 { href: '/dashboard/rentals', label: 'My rentals' },
                 { href: '/dashboard/documents', label: 'Documents' },
                 { href: '/dashboard/issues', label: 'Report an issue' },

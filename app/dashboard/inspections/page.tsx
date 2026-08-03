@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { collection, onSnapshot, orderBy, query, where } from 'firebase/firestore'
 import { useAuth } from '../../../components/AuthProvider'
 import { clientDb } from '../../../lib/firebase-client'
@@ -51,6 +52,7 @@ function formatNaira(n: number): string {
 
 export default function TenantInspectionsPage() {
   const { user } = useAuth()
+  const router = useRouter()
   const [rows, setRows] = useState<Row[] | null>(null)
   const [payingId, setPayingId] = useState<string | null>(null)
   const [payError, setPayError] = useState<string | null>(null)
@@ -62,8 +64,15 @@ export default function TenantInspectionsPage() {
     setPayingId(r.id)
     const res = await createRentalInterest(r.id)
     setPayingId(null)
-    if ('error' in res) setPayError(res.error)
-    else setInterestId(res.interestId)
+    if ('error' in res) {
+      setPayError(res.error)
+      return
+    }
+    setInterestId(res.interestId)
+    // Take them where the next step actually happens. Telling someone to "go
+    // to Tenancy" only works if they know where that is — and Tenancy is not
+    // in the tenant's bottom nav.
+    router.push('/dashboard/tenancy')
   }
 
   async function handlePay(r: Row) {

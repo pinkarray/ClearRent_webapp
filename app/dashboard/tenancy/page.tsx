@@ -1,7 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import AgreementUpload from '../../../components/AgreementUpload'
 import { useAuth } from '../../../components/AuthProvider'
 import { getOrCreatePropertyConversation } from '../../../lib/chat'
 import { agreementUrl } from '../../../lib/documents'
@@ -145,9 +147,20 @@ export default function TenancyPage() {
           <p className="mt-3 text-sm text-content-secondary">Loading…</p>
         ) : interests.length === 0 ? (
           <div className="card mt-3 p-6 text-center text-sm text-content-secondary">
-            {isLandlord
-              ? 'No tenants have expressed interest yet.'
-              : 'Once you complete and rate an inspection, you can express interest from My inspections.'}
+            {isLandlord ? (
+              'No tenants have expressed interest yet.'
+            ) : (
+              <>
+                Once you have completed and rated an inspection, you tell the landlord you
+                want to rent it — from{' '}
+                {/* Was a bare mention of "My inspections", which is only useful
+                    if you already know where that is. */}
+                <Link href="/dashboard/inspections" className="text-primary no-underline underline">
+                  My inspections
+                </Link>
+                .
+              </>
+            )}
           </div>
         ) : (
           <div className="mt-3 space-y-3">
@@ -173,6 +186,17 @@ export default function TenancyPage() {
                   >
                     {busy === i.id ? 'Working…' : 'Accept this tenant'}
                   </button>
+                )}
+
+                {/* Accepting used to end here, with the card simply flipping to
+                    "Accepted" — and the next thing the landlord owes lives in
+                    the section below, which they had no reason to look at. */}
+                {isLandlord && i.status === 'accepted' && (
+                  <p className="mt-3 text-sm text-content-secondary">
+                    Accepted. Next: upload the tenancy agreement under{' '}
+                    <strong className="text-content">Active rentals</strong> below — your
+                    tenant cannot pay rent until they have accepted it.
+                  </p>
                 )}
               </div>
             ))}
@@ -204,6 +228,15 @@ export default function TenancyPage() {
                     {r.status}
                   </span>
                 </div>
+
+                {/* The landlord's half of the tenancy, inline. This is the
+                    step a live run lost: the accept happens on this page, so
+                    the upload belongs on it too rather than only on Rentals. */}
+                {isLandlord && (
+                  <div className="mt-4 border-t border-divider pt-4">
+                    <AgreementUpload rental={r} />
+                  </div>
+                )}
 
                 {!isLandlord && (
                   <div className="mt-4 flex flex-wrap gap-3">

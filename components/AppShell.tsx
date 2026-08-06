@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useAuth } from './AuthProvider'
+import NextStep from './NextStep'
 import { useTheme } from './ThemeProvider'
 import { ViewportSync } from './ViewportSync'
 import { watchMyNotifications } from '../lib/notifications'
@@ -243,6 +244,9 @@ export default function AppShell({
           {title && (
             <h1 className="mb-6 hidden text-2xl font-bold text-content lg:block">{title}</h1>
           )}
+          {/* Above the page content on every route, because the step you owe is
+              rarely on the screen you happen to be standing on. */}
+          <NextStep />
           {children}
         </div>
       </main>

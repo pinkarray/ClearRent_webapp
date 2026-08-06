@@ -2,27 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { getStorage, ref, uploadBytes } from 'firebase/storage'
+import AgreementUpload from './AgreementUpload'
 import { useAuth } from './AuthProvider'
-import { clientApp } from '../lib/firebase-client'
-import { agreementUrl } from '../lib/documents'
 import { formatDate } from '../lib/format'
-import {
-  attachAgreement,
-  confirmMoveOut,
-  watchActiveRentals,
-  type ActiveRental,
-} from '../lib/tenancy'
+import { confirmMoveOut, watchActiveRentals, type ActiveRental } from '../lib/tenancy'
 
 function formatNaira(n: number): string {
   return `₦${n.toLocaleString('en-NG')}`
-}
-
-function agreementTone(status: string): string {
-  if (status === 'finalized') return 'chip-success'
-  if (status === 'disputed') return 'chip-error'
-  if (status === 'pending_review' || status === 'accepted') return 'chip-info'
-  return 'chip-pending'
 }
 
 /*
@@ -58,29 +44,6 @@ export default function LandlordRentals() {
     )
   }, [uid])
 
-  async function upload(rentalId: string, file: File) {
-    if (!user) return
-    setError(null)
-    setBusyId(rentalId)
-    try {
-      // Same path shape the app writes (`property_service.dart:112`); storage
-      // rules only permit a write under the uploader's own uid.
-      const ext = file.name.includes('.') ? file.name.split('.').pop() : 'pdf'
-      const path = `agreements/${user.uid}/agreement_${Date.now()}.${ext}`
-      await uploadBytes(ref(getStorage(clientApp()), path), file)
-      const err = await attachAgreement(rentalId, path)
-      if (err) {
-        setError(err)
-        return
-      }
-      // The listener delivers the updated card.
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed.')
-    } finally {
-      setBusyId(null)
-    }
-  }
-
   async function confirmHandover(rentalId: string) {
     setError(null)
     setBusyId(rentalId)
@@ -91,18 +54,6 @@ export default function LandlordRentals() {
     })
     setBusyId(null)
     if (err) setError(err)
-  }
-
-  async function open(rentalId: string) {
-    setError(null)
-    setBusyId(rentalId)
-    const res = await agreementUrl('active_rentals', rentalId)
-    setBusyId(null)
-    if ('error' in res) {
-      setError(res.error)
-      return
-    }
-    window.open(res.url, '_blank', 'noopener,noreferrer')
   }
 
   if (!user) return null
@@ -116,8 +67,13 @@ export default function LandlordRentals() {
       ) : rows.length === 0 ? (
         <div className="card p-8 text-center">
           <p className="text-content-secondary">No tenants yet.</p>
+          {/* It appears on ACCEPTANCE, not on payment — rental_interest_ops
+              creates it there. The old copy told landlords to wait for a
+              payment that cannot happen until they have uploaded an agreement
+              from this very page. */}
           <p className="mt-1 text-sm text-content-hint">
-            A rental appears here once you accept a tenant and they pay.
+            A rental appears here as soon as you accept a tenant — that is where you upload
+            the tenancy agreement.
           </p>
         </div>
       ) : (
@@ -142,59 +98,7 @@ export default function LandlordRentals() {
             </div>
 
             <div className="mt-4 border-t border-divider pt-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium text-content">Tenancy agreement</p>
-                  <span className={`chip mt-1 ${agreementTone(r.agreementStatus)}`}>
-                    {r.agreementStatus.replace(/_/g, ' ')}
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap gap-3">
-                  {r.agreementUrl && (
-                    <button
-                      className="btn-ghost px-4 py-2 text-sm"
-                      disabled={busyId === r.id}
-                      onClick={() => open(r.id)}
-                    >
-                      {busyId === r.id ? 'Opening…' : 'Open'}
-                    </button>
-                  )}
-
-                  {/* Re-upload stays available: a corrected document is the
-                      normal fix when a tenant disputes the terms. */}
-                  <label className="btn-primary cursor-pointer px-4 py-2 text-sm">
-                    {busyId === r.id
-                      ? 'Uploading…'
-                      : r.agreementUrl
-                        ? 'Replace'
-                        : 'Upload agreement'}
-                    <input
-                      type="file"
-                      accept="application/pdf,image/*"
-                      className="hidden"
-                      disabled={busyId === r.id}
-                      onChange={(e) => {
-                        const f = e.target.files?.[0]
-                        if (f) void upload(r.id, f)
-                      }}
-                    />
-                  </label>
-                </div>
-              </div>
-
-              {r.agreementStatus === 'disputed' && (
-                <div className="mt-3">
-                  <p className="text-sm text-error">
-                    The tenant raised concerns with this agreement. Upload a corrected version.
-                  </p>
-                  {r.tenantDisputeReason && (
-                    <p className="mt-1 text-sm text-content-secondary">
-                      “{r.tenantDisputeReason}”
-                    </p>
-                  )}
-                </div>
-              )}
+              <AgreementUpload rental={r} />
             </div>
 
             {/*

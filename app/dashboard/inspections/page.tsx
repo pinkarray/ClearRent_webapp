@@ -8,7 +8,7 @@ import { useAuth } from '../../../components/AuthProvider'
 import { clientDb } from '../../../lib/firebase-client'
 import { startPayment } from '../../../lib/payments'
 import { InspectionActions } from '../../../components/InspectionActions'
-import { createRentalInterest } from '../../../lib/tenancy'
+import { createRentalInterest, watchInterests } from '../../../lib/tenancy'
 
 type Row = {
   id: string
@@ -58,6 +58,21 @@ export default function TenantInspectionsPage() {
   const [payError, setPayError] = useState<string | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
   const [interestId, setInterestId] = useState<string | null>(null)
+  // Properties this tenant has ALREADY claimed. Without it the card kept
+  // offering "I want to rent this" for a place they had already rented —
+  // createRentalInterest is idempotent so it was not a double-charge, but being
+  // asked to start a tenancy you are already in reads as the app not knowing
+  // who you are.
+  const [claimed, setClaimed] = useState<Set<string>>(new Set())
+
+  // Live, so the CTA disappears the instant the interest is filed rather than
+  // on the next navigation.
+  useEffect(() => {
+    if (!user) return
+    return watchInterests('tenantId', user.uid, (rows) =>
+      setClaimed(new Set(rows.map((i) => i.propertyId))),
+    )
+  }, [user])
 
   async function expressInterest(r: Row) {
     setPayError(null)
@@ -222,10 +237,30 @@ export default function TenantInspectionsPage() {
                   onDone={() => setReloadKey((k) => k + 1)}
                 />
 
-                {r.status === 'completed' && r.tenantRated && (
+                {/* The step nobody found. It is not a footnote on a finished
+                    inspection — it is how a tenancy starts, and nothing else
+                    on the platform moves until the tenant does it. Given its
+                    own tinted block for that reason. */}
+                {/* Already told them — the tenancy is under way, so point at it
+                    instead of asking the same question again. */}
+                {r.status === 'completed' && claimed.has(r.propertyId) && (
                   <div className="mt-4 border-t border-divider pt-4">
                     <p className="text-sm text-content-secondary">
-                      Like it? Tell the landlord you want to rent it.
+                      You told the landlord you want to rent this.{' '}
+                      <Link href="/dashboard/tenancy" className="text-primary no-underline underline">
+                        Track it under Tenancy
+                      </Link>
+                      .
+                    </p>
+                  </div>
+                )}
+
+                {r.status === 'completed' && r.tenantRated && !claimed.has(r.propertyId) && (
+                  <div className="mt-4 rounded-md bg-primary-tint p-4">
+                    <p className="font-semibold text-content">Next step — want to rent it?</p>
+                    <p className="mt-0.5 text-sm text-content-secondary">
+                      Telling the landlord is what starts the tenancy. They cannot offer you
+                      the place until you do, and nothing is charged now.
                     </p>
                     <button
                       className="btn-primary mt-3 px-5 py-2.5 text-sm"

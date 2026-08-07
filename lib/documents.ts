@@ -9,7 +9,55 @@ export type PaymentRecord = {
   status: string
   reference: string
   propertyTitle: string
+  userEmail: string
   createdAt: Date | null
+}
+
+/**
+ * A settled payment.
+ *
+ * The stored value is `completed` — written by `paystack_service.dart:306` and
+ * by every server-side path in `admin_money_ops` / `index.ts`. This page used
+ * to test for `success`, which nothing writes, so every payment rendered as
+ * pending no matter how long ago it cleared.
+ */
+export function isPaid(status: string): boolean {
+  return status === 'completed'
+}
+
+/** Display label for a payment `type`, matching `documents_screen.dart`. */
+export function paymentTypeLabel(type: string): string {
+  switch (type) {
+    case 'verification':
+      return 'Verification fee'
+    case 'inspection':
+      return 'Inspection fee'
+    case 'listing':
+      return 'Listing fee'
+    case 'rent':
+      return 'Rent payment'
+    case 'rent_payout':
+      return 'Rent payout'
+    default:
+      return 'Payment'
+  }
+}
+
+/**
+ * What an `agreementStatus` means to the tenant. Same wording as the app's
+ * `_agreementStatusLabel`, so the two surfaces describe one state identically.
+ */
+export function agreementStatusLabel(status: string): string {
+  switch (status) {
+    case 'accepted':
+      return 'You accepted — awaiting landlord finalization'
+    case 'disputed':
+      return 'You raised concerns — awaiting landlord response'
+    case 'finalized':
+      return 'Finalized — agreement is in effect'
+    default:
+      return 'Uploaded — awaiting your review'
+  }
 }
 
 /**
@@ -34,6 +82,7 @@ export async function tenantPayments(uid: string): Promise<PaymentRecord[]> {
       status: (x.status as string) ?? 'unknown',
       reference: (x.reference as string) ?? '',
       propertyTitle: (x.propertyTitle as string) ?? '',
+      userEmail: (x.userEmail as string) ?? '',
       createdAt: x.createdAt?.toDate?.() ?? null,
     }
   })

@@ -323,11 +323,14 @@ body {
 /*
   Keyboard-aware layout.
 
-  ViewportSync publishes the genuinely visible height as --app-vh and flags
-  data-keyboard="open" while the on-screen keyboard is up. Two things follow:
-  the bottom tab bar is pointless while typing and is the main source of wasted
-  space, so it goes; and .thread-shell resizes to what is actually visible
-  rather than to 100dvh, which on iOS does not react to the keyboard at all.
+  ViewportSync flags data-keyboard="open" on <html> while the on-screen
+  keyboard is up. The floating nav is pointless while typing and is the main
+  source of wasted space, so it goes, and its clearance goes with it.
+
+  Element heights are NOT computed here. They were, by subtracting AppShell's
+  chrome in rem, and that broke as soon as the chrome moved — pb-20 became
+  pb-28 and a variable-height banner appeared above the page content. Anything
+  needing to fill the screen uses useFillViewport, which measures instead.
 */
 [data-keyboard='open'] .mobile-tabbar {
   display: none;
@@ -335,22 +338,4 @@ body {
 
 [data-keyboard='open'] .app-main {
   padding-bottom: 0;
-}
-
-/* Mobile: subtract the 3.5rem header and 3rem of wrapper padding, plus the
-   5rem tab-bar clearance only while the bar is actually there. */
-.thread-shell {
-  height: calc(var(--app-vh, 100dvh) - 11.5rem);
-}
-
-[data-keyboard='open'] .thread-shell {
-  height: calc(var(--app-vh, 100dvh) - 6.5rem);
-}
-
-/* Desktop has no header or tab bar, but taller padding and a page title. */
-@media (min-width: 1024px) {
-  .thread-shell,
-  [data-keyboard='open'] .thread-shell {
-    height: calc(var(--app-vh, 100dvh) - 9rem);
-  }
 }

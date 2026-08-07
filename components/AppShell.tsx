@@ -237,8 +237,8 @@ export default function AppShell({
         <ThemeButton theme={theme} setTheme={setTheme} />
       </header>
 
-      {/* pb-20 clears the fixed bottom bar on mobile; dropped while typing,
-          since the bar hides itself then. */}
+      {/* pb-28 clears the floating capsule nav on mobile; dropped while typing,
+          since the nav hides itself then. */}
       <main className="app-main pb-28 lg:pb-0 lg:pl-60">
         <div className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 lg:py-10">
           {title && (

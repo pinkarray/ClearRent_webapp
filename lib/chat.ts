@@ -53,6 +53,13 @@ export type Message = {
   text: string
   imageUrl: string | null
   timestamp: Date | null
+  /** Set once the author rewrote it; null means never edited. */
+  editedAt: Date | null
+  /** Soft delete — the doc survives with its text blanked. */
+  deleted: boolean
+  /** User ids the author @-mentioned. */
+  mentions: string[]
+  isRead: boolean
 }
 
 function toConversation(id: string, x: Record<string, unknown>, uid: string): Conversation {
@@ -143,6 +150,12 @@ export function watchMessages(
             text: (x.text as string) ?? '',
             imageUrl: (x.imageUrl as string) ?? null,
             timestamp: (x.timestamp as Timestamp | undefined)?.toDate?.() ?? null,
+            editedAt: (x.editedAt as Timestamp | undefined)?.toDate?.() ?? null,
+            deleted: x.deleted === true,
+            mentions: Array.isArray(x.mentions)
+              ? x.mentions.filter((m): m is string => typeof m === 'string')
+              : [],
+            isRead: x.isRead === true,
           }
         }),
       )
@@ -150,11 +163,107 @@ export function watchMessages(
   )
 }
 
+/**
+ * Receipt everything the other side sent, so their second tick turns.
+ *
+ * The app's `markConversationAsRead` did this and web did not, which is half
+ * of why a read message stayed on one tick: the reader's screen showed it, but
+ * nothing ever wrote the flag back. Called on every stream frame, not just on
+ * open, so a message that lands while the thread is already on screen is
+ * receipted too.
+ *
+ * Best-effort — a failed receipt is never worth surfacing to the reader.
+ */
+export async function markMessagesRead(
+  conversationId: string,
+  uid: string,
+  messages: Message[],
+): Promise<void> {
+  const unread = messages.filter((m) => !m.isRead && m.senderId !== uid)
+  if (unread.length === 0) return
+
+  await Promise.all(
+    unread.map((m) =>
+      updateDoc(
+        doc(clientDb(), 'conversations', conversationId, 'messages', m.id),
+        { isRead: true },
+      ).catch(() => {}),
+    ),
+  )
+}
+
+/**
+ * Rewrite the text of a message the caller sent.
+ *
+ * The rules accept only `text` / `editedAt` / `mentions` from the author
+ * (`firestore.rules`, `isAuthorEdit`), so adding any other field here fails
+ * the whole write rather than being ignored.
+ */
+export async function editMessage(
+  conversationId: string,
+  messageId: string,
+  text: string,
+  mentions: string[] = [],
+): Promise<string | null> {
+  const trimmed = text.trim()
+  if (!trimmed) return 'A message cannot be empty.'
+  try {
+    await updateDoc(
+      doc(clientDb(), 'conversations', conversationId, 'messages', messageId),
+      { text: trimmed, editedAt: Timestamp.now(), mentions },
+    )
+    return null
+  } catch (err) {
+    return err instanceof Error ? err.message : 'Could not edit that message.'
+  }
+}
+
+/**
+ * Soft-delete a message the caller sent. The text must be blanked — the rules
+ * require it, because a `deleted` flag over intact text leaves the message
+ * readable to anything reading the document directly.
+ */
+export async function deleteMessage(
+  conversationId: string,
+  messageId: string,
+): Promise<string | null> {
+  try {
+    await updateDoc(
+      doc(clientDb(), 'conversations', conversationId, 'messages', messageId),
+      { text: '', deleted: true, deletedAt: Timestamp.now(), mentions: [] },
+    )
+    return null
+  } catch (err) {
+    return err instanceof Error ? err.message : 'Could not delete that message.'
+  }
+}
+
+/**
+ * Keep the inbox preview honest after an edit or delete — without it the list
+ * would still show the text the author just replaced or removed.
+ *
+ * Deliberately does NOT touch `lastMessageTime` or the unread counts: editing
+ * is not a new message and must not re-badge the thread for the other party.
+ */
+export async function patchConversationPreview(
+  conversationId: string,
+  preview: string,
+): Promise<void> {
+  try {
+    await updateDoc(doc(clientDb(), 'conversations', conversationId), {
+      lastMessage: preview,
+    })
+  } catch {
+    // A stale preview is not worth surfacing.
+  }
+}
+
 /** Returns null on success, or a message to show the sender. */
 export async function sendMessage(
   conversationId: string,
   sender: { uid: string; name: string; role: string },
   text: string,
+  mentions: string[] = [],
 ): Promise<string | null> {
   const trimmed = text.trim()
   if (!trimmed) return null
@@ -169,6 +278,7 @@ export async function sendMessage(
       text: trimmed,
       timestamp: Timestamp.now(),
       isRead: false,
+      ...(mentions.length > 0 ? { mentions } : {}),
     })
 
     // The inbox reads these, and the app writes them on every send. Skipping it
@@ -336,6 +446,87 @@ export async function getOrCreatePropertyConversation(input: {
       error: err instanceof Error ? err.message : 'Could not open that conversation.',
     }
   }
+}
+
+/**
+ * Someone on the thread who can be @-mentioned.
+ *
+ * `handle` is a single token — the parser reads the word after '@' and full
+ * names contain spaces — so it is the person's first name, falling back to
+ * their role. Mirrors `_MentionTarget` in `chat_screen.dart`; the two must
+ * agree or a mention typed on one surface won't highlight on the other.
+ */
+export type MentionTarget = {
+  uid: string
+  handle: string
+  fullName: string
+  role: string
+}
+
+export function mentionTargets(c: Conversation, uid: string): MentionTarget[] {
+  const raw = [
+    { uid: c.landlordId, name: c.landlordName, role: 'Landlord' },
+    { uid: c.tenantId, name: c.tenantName, role: 'Tenant' },
+    { uid: c.agentId, name: c.agentName, role: 'Agent' },
+  ].filter((e) => e.uid && e.uid !== uid)
+
+  const firstName = (name: string) =>
+    (name.trim().split(/\s+/)[0] ?? '').replace(/\W/g, '')
+
+  const handles = raw.map((e) => firstName(e.name) || e.role)
+
+  return raw.map((e, i) => ({
+    uid: e.uid,
+    // Two people sharing a first name would otherwise answer to one handle.
+    handle:
+      handles.filter((h) => h === handles[i]).length > 1
+        ? e.name.replace(/\W/g, '')
+        : handles[i],
+    fullName: e.name || e.role,
+    role: e.role,
+  }))
+}
+
+/** Escape a handle for use inside a RegExp. */
+function escapeRe(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+/**
+ * Which handles actually survive in the text being sent. Resolved from the
+ * final string rather than from what was clicked, so a mention the user typed
+ * over or deleted doesn't ship a phantom uid.
+ */
+export function resolveMentions(text: string, targets: MentionTarget[]): string[] {
+  return targets
+    .filter((t) => new RegExp(`@${escapeRe(t.handle)}\\b`, 'i').test(text))
+    .map((t) => t.uid)
+}
+
+/**
+ * Split message text into plain and mentioned runs for rendering.
+ *
+ * Derived from the text against the thread's CURRENT members rather than from
+ * the stored `mentions` ids, so an old message still reads correctly and no
+ * stale span gets highlighted.
+ */
+export function splitMentions(
+  text: string,
+  targets: MentionTarget[],
+): { text: string; mention: boolean }[] {
+  if (targets.length === 0 || !text.includes('@')) return [{ text, mention: false }]
+
+  const pattern = new RegExp(`@(${targets.map((t) => escapeRe(t.handle)).join('|')})\\b`, 'gi')
+  const parts: { text: string; mention: boolean }[] = []
+  let cursor = 0
+  for (const m of text.matchAll(pattern)) {
+    const start = m.index ?? 0
+    if (start > cursor) parts.push({ text: text.slice(cursor, start), mention: false })
+    parts.push({ text: m[0], mention: true })
+    cursor = start + m[0].length
+  }
+  if (cursor < text.length) parts.push({ text: text.slice(cursor), mention: false })
+  return parts
 }
 
 /** Who the other side is, for the inbox row and the thread header. */

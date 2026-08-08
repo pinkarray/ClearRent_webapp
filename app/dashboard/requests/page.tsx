@@ -37,6 +37,7 @@ type Row = {
   handlerId: string
   handlerName: string
   handlerType: 'agent' | 'landlord'
+  handlerIsResident?: boolean
 }
 
 const OPEN_STATUSES = ['pending', 'pendingVerification', 'declinedByAgent']
@@ -94,6 +95,7 @@ export default function HandlerRequestsPage() {
         handlerId: (x.agentId as string) ?? (x.landlordId as string) ?? '',
         handlerName: (x.agentName as string) ?? (x.landlordName as string) ?? 'the handler',
         handlerType: x.agentId ? 'agent' : 'landlord',
+        handlerIsResident: x.landlordLivesInProperty === true,
       }
     },
     [user],

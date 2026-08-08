@@ -28,6 +28,7 @@ type Row = {
   handlerId: string
   handlerName: string
   handlerType: 'agent' | 'landlord'
+  handlerIsResident?: boolean
 }
 
 /**
@@ -146,6 +147,7 @@ export default function TenantInspectionsPage() {
               handlerName:
                 (x.agentName as string) ?? (x.landlordName as string) ?? 'the handler',
               handlerType: x.agentId ? 'agent' : 'landlord',
+              handlerIsResident: x.landlordLivesInProperty === true,
             }
           }),
         )

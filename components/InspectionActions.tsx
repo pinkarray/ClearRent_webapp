@@ -23,6 +23,13 @@ export type InspectionState = {
   handlerId: string
   handlerName: string
   handlerType: 'agent' | 'landlord'
+  /**
+   * The landlord lives in the unit AND is handling it themselves, so they are
+   * already there. "I've arrived" reads as nonsense to them — see
+   * `handlerIsResident` in `inspection_request_model.dart`, which this
+   * mirrors. An assigned agent still travels, whoever lives there.
+   */
+  handlerIsResident?: boolean
 }
 
 /** Same calendar day in the viewer's timezone. Mirrors the app's _isToday. */
@@ -71,6 +78,10 @@ export function InspectionActions({
   }
 
   const mine = role === 'tenant'
+  // Only meaningful when the landlord handles it themselves; an assigned agent
+  // travels regardless of who lives there.
+  const resident = state.handlerIsResident === true &&
+    state.handlerType === 'landlord'
   const iArrived = mine ? state.tenantArrived : state.handlerArrived
   const theyArrived = mine ? state.handlerArrived : state.tenantArrived
   const iConfirmed = mine ? state.tenantConfirmedMet : state.handlerConfirmedMet
@@ -120,15 +131,19 @@ export function InspectionActions({
                 disabled={busy}
                 onClick={() => run(() => markArrived(state.id, role))}
               >
-                I&apos;ve arrived
+                {resident && !mine ? "I'm at home and ready" : "I've arrived"}
               </button>
             ) : (
-              <span className="text-sm text-content-secondary">✓ You arrived</span>
+              <span className="text-sm text-content-secondary">
+                {resident && !mine ? '✓ You are ready' : '✓ You arrived'}
+              </span>
             )}
 
             <span className="text-sm text-content-secondary">
               {theyArrived
-                ? `✓ ${mine ? 'Handler' : 'Tenant'} arrived`
+                ? mine && resident
+                  ? '✓ Landlord is at the property and ready'
+                  : `✓ ${mine ? 'Handler' : 'Tenant'} arrived`
                 : `Waiting for the ${mine ? 'handler' : 'tenant'}`}
             </span>
           </div>

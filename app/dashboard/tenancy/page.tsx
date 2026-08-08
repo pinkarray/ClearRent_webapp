@@ -12,6 +12,7 @@ import {
   acceptAgreement,
   acceptRentalInterest,
   disputeAgreement,
+  flagRentChange,
   requestMoveOut,
   watchActiveRentals,
   watchInterests,
@@ -259,7 +260,8 @@ export default function TenancyPage() {
                     {/* Accepting means uploading a copy you have SIGNED. A tap
                         alone left the document untouched, so the only record a
                         tenant agreed was a row in our own database — which a
-                        tenant could deny. The landlord counter-signs after. */}
+                        tenant could deny. The landlord signed before sending,
+                        so the returned copy carries both signatures. */}
                     {r.agreementStatus !== 'finalized' &&
                       r.agreementStatus !== 'accepted' && (
                         <button
@@ -271,11 +273,46 @@ export default function TenancyPage() {
                         </button>
                       )}
 
-                    {r.agreementStatus === 'accepted' && (
-                      <span className="chip chip-pending self-center">
-                        Signed — awaiting landlord counter-signature
-                      </span>
-                    )}
+                    {/* Showing the rent on record turns the check into reading
+                        one number instead of auditing a document. Without it
+                        the flag exists but almost never fires. */}
+                    {r.agreementRevisionTermsOnly &&
+                      r.agreementStatus !== 'finalized' && (
+                        <p className="w-full rounded-md border-l-4 border-l-secondary bg-surface-secondary p-3 text-sm text-content">
+                          Your landlord says this revision changes the terms only,
+                          and that your rent stays at{' '}
+                          <strong>
+                            {formatNaira(
+                              r.agreementRevisionDeclaredRent || r.rentAmount,
+                            )}
+                          </strong>
+                          . Check the document before you sign — if it says
+                          anything different, flag it instead.
+                        </p>
+                      )}
+
+                    {/* Contradicting the landlord's declaration is its own
+                        action, not buried in "Raise a concern": it asserts a
+                        checkable claim about the rent, blocks signing, and
+                        raises a critical admin alert with both sides on it. */}
+                    {r.agreementRevisionTermsOnly &&
+                      r.agreementStatus !== 'finalized' &&
+                      r.agreementStatus !== 'disputed' && (
+                        <button
+                          className="btn-ghost px-5 py-2.5 text-sm text-error"
+                          disabled={busy === r.id}
+                          onClick={() =>
+                            run(r.id, () =>
+                              flagRentChange(
+                                r.id,
+                                prompt('What does the document say?') ?? '',
+                              ),
+                            )
+                          }
+                        >
+                          This changes my rent
+                        </button>
+                      )}
 
                     {/* The other half of accepting: without it a tenant who
                         disagrees can only stall, and the landlord is never
@@ -358,14 +395,14 @@ export default function TenancyPage() {
               To accept, sign the agreement and upload the signed copy:
             </p>
             <ol className="mt-3 list-decimal space-y-1 pl-5 text-sm text-content-secondary">
-              <li>Download and read the agreement</li>
+              <li>Download and read it — your landlord has already signed it</li>
               <li>Print and sign it, or sign on your device</li>
               <li>Photograph or scan the signed pages</li>
-              <li>Upload it here — that is your acceptance</li>
+              <li>Upload it here — that completes the agreement</li>
             </ol>
             <p className="mt-3 text-xs text-content-hint">
-              Your landlord then counter-signs. For court-admissible proof, get the
-              agreement stamped at LIRS/SIRS.
+              The copy you send back carries both signatures. For court-admissible
+              proof, get the agreement stamped at LIRS/SIRS.
             </p>
 
             <label className="btn-primary mt-5 block w-full cursor-pointer px-5 py-3 text-center text-sm">

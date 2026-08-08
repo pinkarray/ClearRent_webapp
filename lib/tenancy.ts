@@ -143,6 +143,14 @@ export type ActiveRental = {
   agreementStatus: string
   rentPaymentStatus: string
   rentAmount: number
+  /**
+   * The landlord declared a mid-tenancy revision changes terms only, not the
+   * rent. Shown to the tenant beside the declared figure so checking it is
+   * reading one number rather than auditing a document — and contradicting it
+   * raises an admin alert (`agreement_rent_mismatch`).
+   */
+  agreementRevisionTermsOnly: boolean
+  agreementRevisionDeclaredRent: number
   // Lease detail. Written by rental_interest_ops on first tenancy and by
   // renewal_ops:484 on promotion; both surfaces read the same names.
   propertyAddress: string
@@ -175,6 +183,9 @@ function toRental(d: QueryDocumentSnapshot): ActiveRental {
       agreementStatus: (x.agreementStatus as string) ?? 'pending',
       rentPaymentStatus: (x.rentPaymentStatus as string) ?? 'unpaid',
       rentAmount: (x.rentAmount as number) ?? 0,
+      agreementRevisionTermsOnly: x.agreementRevisionTermsOnly === true,
+      agreementRevisionDeclaredRent:
+        (x.agreementRevisionDeclaredRent as number) ?? 0,
       propertyAddress: (x.propertyAddress as string) ?? '',
       landlordName: (x.landlordName as string) ?? '',
       landlordPhone: (x.landlordPhone as string) ?? null,
@@ -266,10 +277,13 @@ export async function attachAgreement(
  * in ClearRent's own database, which a tenant could simply deny. The signed
  * document is the acceptance now.
  *
- * Stops at 'accepted', NOT 'finalized': the landlord counter-signs and uploads
- * the fully-executed copy, and only that finalizes. Note this changes web's old
- * behaviour, where accepting finalized outright — the app and web now run the
- * same two-signature flow, and rent still unlocks only at 'finalized'.
+ * The landlord signs their agreement ONCE, against the property, before any
+ * tenant exists. So the copy a tenant downloads already carries the landlord's
+ * signature, and the copy they upload back carries BOTH — that single document
+ * is the fully-executed agreement, which is why this finalizes outright. There
+ * is deliberately no counter-sign round trip: it would have the landlord print
+ * and re-upload the same document only to add a signature they could have
+ * added once.
  *
  * Uploads under the tenant's own uid, which Storage already permits. The
  * landlord reads it back via getSignedAgreementUrl (`which: 'tenantSigned'`),
@@ -290,8 +304,13 @@ export async function acceptAgreement(
     await updateDoc(doc(clientDb(), 'active_rentals', rentalId), {
       tenantSignedUrl: path,
       tenantSignedAt: serverTimestamp(),
-      agreementStatus: 'accepted',
+      // Same upload, second role: both signatures are on this one document,
+      // so it is also the agreement of record.
+      executedAgreementUrl: path,
+      executedAt: serverTimestamp(),
+      agreementStatus: 'finalized',
       tenantAcceptedAt: serverTimestamp(),
+      landlordFinalizedAt: serverTimestamp(),
       tenantDisputeReason: null,
       updatedAt: serverTimestamp(),
     })
@@ -422,5 +441,33 @@ export async function disputeAgreement(
     return null
   } catch {
     return 'Could not send your response.'
+  }
+}
+
+/**
+ * The tenant contradicts the landlord's "terms only" declaration.
+ *
+ * Deliberately distinct from [disputeAgreement]: this asserts a specific,
+ * checkable claim about the rent. It parks the agreement as disputed — which
+ * is what stops it being signable — and the onAgreementReady trigger turns
+ * `tenantFlaggedRentChange` into a critical admin alert carrying both the
+ * landlord's declaration and this claim.
+ */
+export async function flagRentChange(
+  rentalId: string,
+  reason: string,
+): Promise<string | null> {
+  try {
+    await updateDoc(doc(clientDb(), 'active_rentals', rentalId), {
+      agreementStatus: 'disputed',
+      tenantFlaggedRentChange: true,
+      tenantDisputeReason:
+        reason.trim() ||
+        'This revision changes my rent, but it was sent as a terms-only change.',
+      updatedAt: serverTimestamp(),
+    })
+    return null
+  } catch {
+    return 'Could not flag this. Please try again.'
   }
 }

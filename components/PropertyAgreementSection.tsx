@@ -88,8 +88,9 @@ export function PropertyAgreementSection({
     <div className="card mt-6 p-6">
       <h2 className="font-semibold text-content">Tenancy agreement</h2>
       <p className="mt-1 text-sm text-content-secondary">
-        Attach the agreement for this property now, and everyone you accept gets it
-        automatically — no waiting for a tenant before you upload.
+        Sign your agreement and upload it here. Everyone you accept gets that signed
+        copy automatically, prints it, signs it and sends it back — so the returned
+        document carries both signatures and you never sign twice.
       </p>
 
       {agreement === 'loading' ? (
@@ -106,10 +107,10 @@ export function PropertyAgreementSection({
             }`}
           >
             {!has
-              ? 'No agreement on file yet.'
+              ? 'No signed agreement on file yet.'
               : stale
                 ? 'Rent has changed since this was uploaded, so it will NOT be sent automatically. Replace it with one showing the new rent.'
-                : 'On file — goes to the next tenant you accept.'}
+                : 'On file — the next tenant you accept gets this to sign and return.'}
           </div>
 
           {error && <p className="mt-3 text-sm text-error">{error}</p>}
@@ -121,7 +122,11 @@ export function PropertyAgreementSection({
               disabled={busy}
               onClick={() => fileRef.current?.click()}
             >
-              {busy ? 'Uploading…' : has ? 'Replace agreement' : 'Upload agreement'}
+              {busy
+                ? 'Uploading…'
+                : has
+                  ? 'Replace agreement'
+                  : 'Upload signed agreement'}
             </button>
             {has && (
               <button

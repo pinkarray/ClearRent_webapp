@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useAuth } from '../../../../components/AuthProvider'
+import { PropertyAgreementSection } from '../../../../components/PropertyAgreementSection'
 import { fingerprint } from '../../../../lib/form-state'
 import {
   READINESS_ITEMS,
@@ -241,6 +242,14 @@ export default function EditListingPage() {
             {busy ? 'Saving…' : dirty ? 'Save changes' : 'Saved'}
           </button>
         </form>
+
+        {user && (
+          <PropertyAgreementSection
+            propertyId={propertyId}
+            uid={user.uid}
+            rent={listing.rent}
+          />
+        )}
 
         <div className="card mt-6 p-6">
           <h2 className="font-semibold text-content">Ready for inspections</h2>

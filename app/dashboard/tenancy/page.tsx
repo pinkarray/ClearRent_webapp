@@ -42,6 +42,8 @@ export default function TenancyPage() {
   const [rentals, setRentals] = useState<ActiveRental[] | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  /** Rental id whose signed copy we are collecting, or null. */
+  const [signingFor, setSigningFor] = useState<string | null>(null)
 
   const isLandlord = profile?.accountType === 'landlord'
 
@@ -254,14 +256,25 @@ export default function TenancyPage() {
                       </button>
                     )}
 
-                    {r.agreementStatus !== 'finalized' && (
-                      <button
-                        className="btn-primary px-5 py-2.5 text-sm"
-                        disabled={busy === r.id || !r.agreementUrl}
-                        onClick={() => run(r.id, () => acceptAgreement(r.id))}
-                      >
-                        Accept agreement
-                      </button>
+                    {/* Accepting means uploading a copy you have SIGNED. A tap
+                        alone left the document untouched, so the only record a
+                        tenant agreed was a row in our own database — which a
+                        tenant could deny. The landlord counter-signs after. */}
+                    {r.agreementStatus !== 'finalized' &&
+                      r.agreementStatus !== 'accepted' && (
+                        <button
+                          className="btn-primary px-5 py-2.5 text-sm"
+                          disabled={busy === r.id || !r.agreementUrl}
+                          onClick={() => setSigningFor(r.id)}
+                        >
+                          Sign &amp; accept
+                        </button>
+                      )}
+
+                    {r.agreementStatus === 'accepted' && (
+                      <span className="chip chip-pending self-center">
+                        Signed — awaiting landlord counter-signature
+                      </span>
                     )}
 
                     {/* The other half of accepting: without it a tenant who
@@ -330,6 +343,59 @@ export default function TenancyPage() {
           </div>
         )}
       </div>
+
+      {signingFor && user && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Sign and accept"
+          onClick={() => setSigningFor(null)}
+        >
+          <div className="card w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <p className="font-semibold text-content">Sign &amp; accept</p>
+            <p className="mt-2 text-sm text-content-secondary">
+              To accept, sign the agreement and upload the signed copy:
+            </p>
+            <ol className="mt-3 list-decimal space-y-1 pl-5 text-sm text-content-secondary">
+              <li>Download and read the agreement</li>
+              <li>Print and sign it, or sign on your device</li>
+              <li>Photograph or scan the signed pages</li>
+              <li>Upload it here — that is your acceptance</li>
+            </ol>
+            <p className="mt-3 text-xs text-content-hint">
+              Your landlord then counter-signs. For court-admissible proof, get the
+              agreement stamped at LIRS/SIRS.
+            </p>
+
+            <label className="btn-primary mt-5 block w-full cursor-pointer px-5 py-3 text-center text-sm">
+              {busy === signingFor ? 'Uploading…' : 'Choose signed copy'}
+              <input
+                type="file"
+                accept="application/pdf,image/*"
+                className="hidden"
+                disabled={busy === signingFor}
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  e.target.value = ''
+                  if (!file) return
+                  const id = signingFor
+                  void run(id, () => acceptAgreement(id, user.uid, file)).then(() =>
+                    setSigningFor(null),
+                  )
+                }}
+              />
+            </label>
+            <button
+              type="button"
+              className="btn-ghost mt-2 w-full px-5 py-2.5 text-sm"
+              onClick={() => setSigningFor(null)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </>
   )
 }

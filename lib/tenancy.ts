@@ -12,6 +12,7 @@ import {
   type QueryDocumentSnapshot,
 } from 'firebase/firestore'
 import { getFunctions, httpsCallable } from 'firebase/functions'
+import { getStorage, ref, uploadBytes } from 'firebase/storage'
 import { clientApp, clientDb, initAppCheck } from './firebase-client'
 
 /**
@@ -258,26 +259,45 @@ export async function attachAgreement(
 }
 
 /**
- * The tenant accepts the tenancy agreement, which FINALIZES it — there is no
- * separate landlord finalize step, deliberately, so a quiet landlord cannot
- * strand an accepted tenant. This is also what unlocks rent payment:
- * `recordRentPayment` rejects anything whose agreementStatus is not
- * 'finalized'.
+ * The tenant accepts by uploading a copy they have SIGNED.
+ *
+ * Acceptance used to be a tap that wrote a status and a timestamp, leaving the
+ * agreement itself untouched — so the only evidence a tenant agreed was a row
+ * in ClearRent's own database, which a tenant could simply deny. The signed
+ * document is the acceptance now.
+ *
+ * Stops at 'accepted', NOT 'finalized': the landlord counter-signs and uploads
+ * the fully-executed copy, and only that finalizes. Note this changes web's old
+ * behaviour, where accepting finalized outright — the app and web now run the
+ * same two-signature flow, and rent still unlocks only at 'finalized'.
+ *
+ * Uploads under the tenant's own uid, which Storage already permits. The
+ * landlord reads it back via getSignedAgreementUrl (`which: 'tenantSigned'`),
+ * which checks tenancy membership — a storage rule cannot.
  *
  * Only allowlisted fields may be written; an extra one rejects the whole write.
  */
-export async function acceptAgreement(rentalId: string): Promise<string | null> {
+export async function acceptAgreement(
+  rentalId: string,
+  uid: string,
+  signedFile: File,
+): Promise<string | null> {
   try {
+    const ext = signedFile.name.includes('.') ? signedFile.name.split('.').pop() : 'pdf'
+    const path = `agreements/${uid}/agreement_${Date.now()}.${ext}`
+    await uploadBytes(ref(getStorage(clientApp()), path), signedFile)
+
     await updateDoc(doc(clientDb(), 'active_rentals', rentalId), {
-      agreementStatus: 'finalized',
+      tenantSignedUrl: path,
+      tenantSignedAt: serverTimestamp(),
+      agreementStatus: 'accepted',
       tenantAcceptedAt: serverTimestamp(),
-      landlordFinalizedAt: serverTimestamp(),
       tenantDisputeReason: null,
       updatedAt: serverTimestamp(),
     })
     return null
-  } catch {
-    return 'Could not accept the agreement.'
+  } catch (err) {
+    return err instanceof Error ? err.message : 'Could not accept the agreement.'
   }
 }
 

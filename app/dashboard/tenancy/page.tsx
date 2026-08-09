@@ -63,6 +63,15 @@ export default function TenancyPage() {
     return () => unsubs.forEach((u) => u())
   }, [user, isLandlord])
 
+  /** The rental an accepted interest produced. `onRentalInterestAccepted`
+   *  creates it under the interest's own id, and also records the id in
+   *  rentalInterestId — either match identifies it. */
+  function rentalFor(interestId: string): ActiveRental | undefined {
+    return (rentals ?? []).find(
+      (r) => r.id === interestId || r.rentalInterestId === interestId,
+    )
+  }
+
   async function run(id: string, fn: () => Promise<string | null>) {
     setError(null)
     setBusy(id)
@@ -193,12 +202,26 @@ export default function TenancyPage() {
 
                 {/* Accepting used to end here, with the card simply flipping to
                     "Accepted" — and the next thing the landlord owes lives in
-                    the section below, which they had no reason to look at. */}
+                    the section below, which they had no reason to look at.
+
+                    A property that carries a signed agreement template no longer
+                    needs anything uploaded: onRentalInterestAccepted copies it
+                    onto the rental at acceptance. Telling the landlord to upload
+                    one anyway sent them looking for work already done. */}
                 {isLandlord && i.status === 'accepted' && (
                   <p className="mt-3 text-sm text-content-secondary">
-                    Accepted. Next: upload the tenancy agreement under{' '}
-                    <strong className="text-content">Active rentals</strong> below — your
-                    tenant cannot pay rent until they have accepted it.
+                    {rentalFor(i.id)?.agreementUrl ? (
+                      <>
+                        Accepted, and your agreement was attached automatically.
+                        Next: your tenant signs it — rent unlocks the moment they do.
+                      </>
+                    ) : (
+                      <>
+                        Accepted. Next: upload the tenancy agreement under{' '}
+                        <strong className="text-content">Active rentals</strong> below — your
+                        tenant cannot pay rent until they have accepted it.
+                      </>
+                    )}
                   </p>
                 )}
               </div>

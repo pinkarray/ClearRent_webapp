@@ -59,6 +59,14 @@ export type EditableListing = {
    * disables those fields rather than letting the write fail opaquely.
    */
   currentTenantsCount: number
+  /**
+   * Whether the property is already vetted and bookable. The assigned agent can
+   * set this too, so the landlord's page must read it rather than assume — it
+   * previously always showed the checklist, hiding the agent's vetting from the
+   * landlord and asking them to redo work that was already done.
+   */
+  readyForInspections: boolean
+  readinessCheckedBy: string
 }
 
 export async function loadListingForEdit(propertyId: string): Promise<EditableListing | null> {
@@ -76,6 +84,8 @@ export async function loadListingForEdit(propertyId: string): Promise<EditableLi
     amenities: Array.isArray(d.amenities) ? (d.amenities as string[]) : [],
     rules: Array.isArray(d.rules) ? (d.rules as string[]) : [],
     currentTenantsCount: (d.currentTenantsCount as number) ?? 0,
+    readyForInspections: d.readyForInspections === true,
+    readinessCheckedBy: (d.readinessCheckedBy as string) ?? '',
   }
 }
 

@@ -253,34 +253,46 @@ export default function EditListingPage() {
 
         <div className="card mt-6 p-6">
           <h2 className="font-semibold text-content">Ready for inspections</h2>
-          <p className="mt-1 text-sm text-content-secondary">
-            A listing is only bookable once you have vetted it. Confirm every item.
-          </p>
-          <div className="mt-4 space-y-2">
-            {READINESS_ITEMS.map((item) => (
-              <label
-                key={item.key}
-                className="flex items-start gap-2 text-sm text-content"
+          {listing.readyForInspections ? (
+            <p className="mt-1 text-sm text-content-secondary">
+              This property is vetted and bookable
+              {listing.readinessCheckedBy && listing.readinessCheckedBy !== user.uid
+                ? ' — your assigned agent confirmed it.'
+                : '.'}{' '}
+              Tenants can request inspections now.
+            </p>
+          ) : (
+            <>
+              <p className="mt-1 text-sm text-content-secondary">
+                A listing is only bookable once you have vetted it. Confirm every item.
+              </p>
+              <div className="mt-4 space-y-2">
+                {READINESS_ITEMS.map((item) => (
+                  <label
+                    key={item.key}
+                    className="flex items-start gap-2 text-sm text-content"
+                  >
+                    <input
+                      type="checkbox"
+                      className="mt-1"
+                      checked={confirmed[item.key] === true}
+                      onChange={(e) =>
+                        setConfirmed((c) => ({ ...c, [item.key]: e.target.checked }))
+                      }
+                    />
+                    {item.label}
+                  </label>
+                ))}
+              </div>
+              <button
+                className="btn-ghost mt-5 w-full px-6 py-3"
+                onClick={handleMarkReady}
+                disabled={busy}
               >
-                <input
-                  type="checkbox"
-                  className="mt-1"
-                  checked={confirmed[item.key] === true}
-                  onChange={(e) =>
-                    setConfirmed((c) => ({ ...c, [item.key]: e.target.checked }))
-                  }
-                />
-                {item.label}
-              </label>
-            ))}
-          </div>
-          <button
-            className="btn-ghost mt-5 w-full px-6 py-3"
-            onClick={handleMarkReady}
-            disabled={busy}
-          >
-            Mark ready for inspections
-          </button>
+                Mark ready for inspections
+              </button>
+            </>
+          )}
         </div>
       </div>
     </>

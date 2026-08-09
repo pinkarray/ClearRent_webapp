@@ -50,6 +50,24 @@ const TIME_SLOT_START_HOUR: Record<string, number> = {
   evening: 18,
 }
 
+/**
+ * How far ahead a slot must start to still be bookable.
+ *
+ * Mirrors `InspectionService.bookingLeadTime` in the app and `LEAD_TIME_MS` in
+ * `inspection_slots_ops.ts`. Web previously used a flat 24 hours, which made
+ * today unbookable here while both the app and the server still allowed it.
+ */
+export const BOOKING_LEAD_MS = 2 * 60 * 60 * 1000
+
+/** Whether [slot] on [dateISO] ('YYYY-MM-DD') still starts beyond the lead time. */
+export function isSlotStillBookable(dateISO: string, slot: string): boolean {
+  const hour = TIME_SLOT_START_HOUR[slot]
+  // Unknown slot: a data problem, not a timing one. Leave it to the caller.
+  if (hour === undefined) return true
+  const [y, m, d] = dateISO.split('-').map(Number)
+  return new Date(y, m - 1, d, hour).getTime() > Date.now() + BOOKING_LEAD_MS
+}
+
 function composeScheduledDateTime(date: Date, slot: string): Date {
   const hour = TIME_SLOT_START_HOUR[slot]
   const d = new Date(date.getFullYear(), date.getMonth(), date.getDate())

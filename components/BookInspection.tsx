@@ -8,9 +8,18 @@ import {
   TIME_SLOT_DISPLAY,
   TIME_SLOT_LABEL,
   createInspectionRequest,
+  isSlotStillBookable,
   loadBookableProperty,
   type BookableProperty,
 } from '../lib/inspections'
+
+/** Local calendar day as 'YYYY-MM-DD'. `toISOString` is UTC and, at WAT+1,
+ *  reports yesterday for any time before 01:00. */
+function toLocalISO(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
+    d.getDate(),
+  ).padStart(2, '0')}`
+}
 
 function formatNaira(n: number): string {
   return `₦${n.toLocaleString('en-NG')}`
@@ -42,8 +51,14 @@ export function BookInspection({ propertyId }: { propertyId: string }) {
   useEffect(() => {
     if (!user) return
     ;(async () => {
-      setMinDate(new Date(Date.now() + 86400000).toISOString().slice(0, 10))
-      setProperty(await loadBookableProperty(propertyId))
+      const p = await loadBookableProperty(propertyId)
+      setProperty(p)
+      // Today survives only while one of the property's slots is still beyond
+      // the lead time, otherwise the calendar would offer a day whose every
+      // slot the time picker then rejects. Mirrors the app's getAvailableDates.
+      const today = toLocalISO(new Date())
+      const openToday = p?.inspectionTimeSlots.some((s) => isSlotStillBookable(today, s))
+      setMinDate(openToday ? today : toLocalISO(new Date(Date.now() + 86400000)))
     })()
   }, [user, propertyId])
 
@@ -140,7 +155,11 @@ export function BookInspection({ propertyId }: { propertyId: string }) {
   }
 
   const allowedDays = property.inspectionDays
-  const slots = property.inspectionTimeSlots
+  // On today, a slot that has already started (or is inside the lead time) is
+  // not offered. Any future date leaves the list untouched.
+  const slots = date
+    ? property.inspectionTimeSlots.filter((s) => isSlotStillBookable(date, s))
+    : property.inspectionTimeSlots
 
   // The calendar only offers days the handler shows on, so a selected date is
   // valid by construction — this is just for the confirmation line.
@@ -193,7 +212,11 @@ export function BookInspection({ propertyId }: { propertyId: string }) {
           {minDate && (
             <Calendar
               value={date}
-              onChange={setDate}
+              onChange={(iso) => {
+                setDate(iso)
+                // Moving to today can invalidate an already-picked slot.
+                if (slot && !isSlotStillBookable(iso, slot)) setSlot('')
+              }}
               minISO={minDate}
               allowedDayNames={allowedDays}
             />

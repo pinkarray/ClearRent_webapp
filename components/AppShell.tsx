@@ -7,6 +7,7 @@ import { useAuth } from './AuthProvider'
 import NextStep from './NextStep'
 import { useTheme } from './ThemeProvider'
 import { ViewportSync } from './ViewportSync'
+import { watchMyConversations } from '../lib/chat'
 import { watchMyNotifications } from '../lib/notifications'
 
 /*
@@ -123,6 +124,7 @@ export default function AppShell({
   const { user, profile, ready, signOut } = useAuth()
   const { theme, setTheme } = useTheme()
   const [unread, setUnread] = useState(0)
+  const [msgUnread, setMsgUnread] = useState(0)
   const uid = user?.uid
 
   useEffect(() => {
@@ -136,6 +138,16 @@ export default function AppShell({
     if (!uid) return
     return watchMyNotifications(uid, (rows) =>
       setUnread(rows.filter((r) => !r.read).length),
+    )
+  }, [uid])
+
+  // Unread messages badge the Messages tab. The bell only ever counted
+  // notifications, so an incoming message lit nothing in the navigation and
+  // was invisible until you opened the inbox yourself.
+  useEffect(() => {
+    if (!uid) return
+    return watchMyConversations(uid, (rows) =>
+      setMsgUnread(rows.reduce((n, c) => n + c.unread, 0)),
     )
   }, [uid])
 
@@ -194,7 +206,14 @@ export default function AppShell({
                     : 'text-content-secondary hover:bg-surface-secondary hover:text-content'
                 }`}
               >
-                <Icon name={tab.icon} className="h-5 w-5 shrink-0" />
+                <span className="relative flex shrink-0">
+                  <Icon name={tab.icon} className="h-5 w-5 shrink-0" />
+                  {tab.icon === 'chat' && msgUnread > 0 && (
+                    <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-error px-1 text-[10px] font-semibold text-white">
+                      {msgUnread > 9 ? '9+' : msgUnread}
+                    </span>
+                  )}
+                </span>
                 {tab.label}
               </Link>
             )
@@ -291,7 +310,17 @@ export default function AppShell({
                     : 'px-3 text-content-secondary active:bg-surface-secondary'
                 }`}
               >
-                <Icon name={tab.icon} className="h-[21px] w-[21px] shrink-0" />
+                <span className="relative flex shrink-0">
+                  <Icon name={tab.icon} className="h-[21px] w-[21px] shrink-0" />
+                  {tab.icon === 'chat' && msgUnread > 0 && (
+                    <span
+                      className={`absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-error ${
+                        active ? 'ring-2 ring-primary' : ''
+                      }`}
+                      aria-hidden="true"
+                    />
+                  )}
+                </span>
                 <span
                   className={`overflow-hidden whitespace-nowrap transition-all duration-200 ${
                     active ? 'max-w-[7rem] opacity-100' : 'max-w-0 opacity-0'

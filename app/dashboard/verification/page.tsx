@@ -2,7 +2,12 @@
 
 import { useState } from 'react'
 import { useAuth } from '../../../components/AuthProvider'
-import { SECOND_DOCUMENT, submitVerification } from '../../../lib/verification'
+import {
+  SECOND_DOCUMENT,
+  VERIFICATION_FEES,
+  submitVerification,
+} from '../../../lib/verification'
+import { startPayment } from '../../../lib/payments'
 import type { AccountType } from '../../../lib/user-profile'
 
 const STATUS_COPY: Record<string, { title: string; body: string; tone: 'ok' | 'wait' | 'bad' }> = {
@@ -24,7 +29,9 @@ const STATUS_COPY: Record<string, { title: string; body: string; tone: 'ok' | 'w
 }
 
 export default function VerificationPage() {
-  const { user, profile, refreshProfile } = useAuth()
+  // No refreshProfile: submitting now hands the browser to Paystack, and the
+  // callback page is what moves the account to 'pending' on the way back.
+  const { user, profile } = useAuth()
 
   const [nin, setNin] = useState('')
   const [ninSlip, setNinSlip] = useState<File | null>(null)
@@ -36,7 +43,6 @@ export default function VerificationPage() {
   const [guarantorAddress, setGuarantorAddress] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [done, setDone] = useState(false)
 
   const accountType = profile?.accountType as AccountType | undefined
 
@@ -45,7 +51,7 @@ export default function VerificationPage() {
     if (!user || !ninSlip || !secondDocument || !accountType) return
     setError(null)
     setBusy(true)
-    const err = await submitVerification(user.uid, {
+    const result = await submitVerification(user.uid, {
       accountType,
       nin,
       ninSlip,
@@ -61,13 +67,31 @@ export default function VerificationPage() {
             }
           : undefined,
     })
-    setBusy(false)
-    if (err) {
-      setError(err)
+    if ('error' in result) {
+      setBusy(false)
+      setError(result.error)
       return
     }
-    setDone(true)
-    await refreshProfile()
+
+    // Documents are stored; the application is parked at 'awaiting_payment'
+    // and no reviewer sees it until this charge clears. The amount is
+    // display-only — the server prices verification from the account type.
+    try {
+      await startPayment(
+        'verification',
+        VERIFICATION_FEES[accountType],
+        '/dashboard/verification',
+        { requestId: result.requestId },
+      )
+      // startPayment navigates to Paystack; nothing after this runs.
+    } catch (err) {
+      setBusy(false)
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Your documents were saved but we could not start the payment. Try again.',
+      )
+    }
   }
 
   if (!user) return null
@@ -98,15 +122,6 @@ export default function VerificationPage() {
           >
             <p className="font-semibold text-content">{copy.title}</p>
             <p className="mt-1 text-sm text-content-secondary">{copy.body}</p>
-          </div>
-        )}
-
-        {done && status !== 'verified' && (
-          <div className="card mt-6 border-l-4 border-l-primary p-5">
-            <p className="font-semibold text-content">Submitted</p>
-            <p className="mt-1 text-sm text-content-secondary">
-              Your NIN is encrypted and your documents are queued for admin review.
-            </p>
           </div>
         )}
 
@@ -240,7 +255,7 @@ export default function VerificationPage() {
             {error && <p className="text-sm text-error">{error}</p>}
 
             <button className="btn-primary w-full px-6 py-3" type="submit" disabled={busy}>
-              {busy ? 'Submitting…' : 'Submit for verification'}
+              {busy ? 'Submitting…' : `Pay ₦${(accountType ? VERIFICATION_FEES[accountType] : 0).toLocaleString('en-NG')} and submit`}
             </button>
             <p className="text-xs text-content-hint">
               Documents upload to private storage. They cannot be replaced once submitted, and

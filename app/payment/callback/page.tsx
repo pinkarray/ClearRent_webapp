@@ -11,6 +11,7 @@ import {
   type PendingPayment,
 } from '../../../lib/payments'
 import { confirmInspectionPayment } from '../../../lib/inspections'
+import { finalizeVerificationPayment } from '../../../lib/verification'
 import { completeRenewal } from '../../../lib/renewal'
 import { recordRentPayment } from '../../../lib/tenancy'
 
@@ -147,6 +148,28 @@ function PaymentCallback() {
         }
       }
 
+      if (p?.type === 'verification') {
+        const requestId =
+          typeof p.context?.requestId === 'string' ? p.context.requestId : null
+        if (!requestId) {
+          setPhase('failed')
+          setMessage(
+            'Payment succeeded but we lost track of your application. Contact support with reference ' +
+              reference +
+              '.',
+          )
+          return
+        }
+        // The documents were uploaded before the redirect; this is what puts
+        // them in front of a reviewer and moves the account to 'pending'.
+        const err = await finalizeVerificationPayment(user.uid, requestId, reference)
+        if (err) {
+          setPhase('failed')
+          setMessage(err)
+          return
+        }
+      }
+
       await clearPendingPayment()
       setPhase('done')
       setMessage(
@@ -156,7 +179,9 @@ function PaymentCallback() {
             ? 'Rent paid. Your tenancy is now active.'
             : p?.type === 'renewal'
               ? 'Renewal complete. Your tenancy has been extended.'
-              : 'Payment confirmed.',
+              : p?.type === 'verification'
+                ? 'Payment confirmed. Your verification is now with our team.'
+                : 'Payment confirmed.',
       )
     })()
   }, [ready, user, reference])

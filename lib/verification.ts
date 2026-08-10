@@ -117,29 +117,52 @@ export type VerificationInput = {
 }
 
 /**
- * Submits a first-time verification for any role: encrypts the NIN, uploads the
- * role's documents, flips `verificationStatus` to 'pending' and queues an admin
- * review.
+ * Verification fees, for DISPLAY only.
  *
- * The verification fee was removed from pricing, so unlike the app's older flow
- * this carries no payment reference.
+ * `resolveServerAmount` in the backend prices verification from the user's
+ * accountType and charges that regardless of what the client sends, so these
+ * numbers can only ever be wrong on screen, never wrong on the invoice. Kept in
+ * step with `DEFAULT_PRICING.verification` in `functions/src/pricing.ts`.
+ */
+export const VERIFICATION_FEES: Record<AccountType, number> = {
+  tenant: 3000,
+  agent: 7000,
+  landlord: 12000,
+}
+
+/**
+ * Uploads a first-time verification and queues it AWAITING PAYMENT.
+ *
+ * Web used to write `status: 'pending'` here and stop, on the belief — stated
+ * in this function's own comment — that the verification fee had been removed.
+ * It had not: the fee is still priced server-side per role, so every web
+ * signup was verified for free while the app charged for the same thing.
+ *
+ * Payment cannot happen before this, because paying redirects to Paystack and
+ * back through a different origin — the chosen `File` objects would not
+ * survive the trip. So the documents are stored first and the request is
+ * parked at `awaiting_payment`, which the admin queue (`status == 'pending'`)
+ * deliberately does not show. `finalizeVerificationPayment` promotes it once
+ * the money lands.
+ *
+ * Returns the new request id, or a message to show.
  */
 export async function submitVerification(
   uid: string,
   input: VerificationInput,
-): Promise<string | null> {
+): Promise<{ requestId: string } | { error: string }> {
   const spec = SECOND_DOCUMENT[input.accountType]
 
   if (input.accountType === 'agent') {
-    if (!input.guarantorId) return 'Agents must upload a guarantor ID.'
-    if (!input.guarantor) return 'Agents must provide guarantor details.'
+    if (!input.guarantorId) return { error: 'Agents must upload a guarantor ID.' }
+    if (!input.guarantor) return { error: 'Agents must provide guarantor details.' }
     if (!phoneToE164(input.guarantor.phone)) {
-      return 'Enter a valid Nigerian phone number for your guarantor.'
+      return { error: 'Enter a valid Nigerian phone number for your guarantor.' }
     }
   }
 
   const ninError = await submitNin(input.nin)
-  if (ninError) return ninError
+  if (ninError) return { error: ninError }
 
   try {
     const ninUrl = await uploadDocument(uid, 'nin', input.ninSlip)
@@ -153,7 +176,9 @@ export async function submitVerification(
     const request: Record<string, unknown> = {
       userId: uid,
       userType: input.accountType,
-      status: 'pending',
+      // NOT 'pending': the admin queue reads that, and an unpaid application
+      // must not reach a reviewer. Promoted on the payment callback.
+      status: 'awaiting_payment',
       ninUrl,
       [spec.requestKey]: secondUrl,
       submittedAt: serverTimestamp(),
@@ -186,19 +211,59 @@ export async function submitVerification(
       })
     }
 
+    // Documents are stored now so they survive the redirect to Paystack, but
+    // verificationStatus stays untouched: nothing about this application is
+    // real until it is paid for, and flipping the user to 'pending' here is
+    // what let a web signup look verified-in-progress without paying.
+    await updateDoc(doc(clientDb(), 'users', uid), {
+      verificationDocs,
+      updatedAt: serverTimestamp(),
+    })
+
+    const ref = await addDoc(collection(clientDb(), 'verification_requests'), request)
+    return { requestId: ref.id }
+  } catch (err) {
+    return {
+      error:
+        err instanceof Error ? err.message : 'Could not submit your verification.',
+    }
+  }
+}
+
+/**
+ * Promotes a paid verification into the admin review queue.
+ *
+ * Called from the payment callback once Paystack confirms. Splitting it from
+ * the upload is what makes the fee unavoidable: the documents exist, but no
+ * reviewer sees them and `verificationStatus` never moves until the charge
+ * clears.
+ */
+export async function finalizeVerificationPayment(
+  uid: string,
+  requestId: string,
+  reference: string,
+): Promise<string | null> {
+  try {
+    await updateDoc(doc(clientDb(), 'verification_requests', requestId), {
+      status: 'pending',
+      paymentReference: reference,
+      paymentStatus: 'paid',
+      paidAt: serverTimestamp(),
+    })
     await updateDoc(doc(clientDb(), 'users', uid), {
       verificationStatus: 'pending',
       // Renewals carry no new NIN — lets admin tell an annual renewal from a
       // first-time application in the review queue.
       isRenewal: false,
       verificationSubmittedAt: serverTimestamp(),
-      verificationDocs,
+      verificationPaymentReference: reference,
+      verificationPaymentStatus: 'paid',
       updatedAt: serverTimestamp(),
     })
-
-    await addDoc(collection(clientDb(), 'verification_requests'), request)
     return null
   } catch (err) {
-    return err instanceof Error ? err.message : 'Could not submit your verification.'
+    return err instanceof Error
+      ? err.message
+      : 'Payment went through but we could not queue your review. Contact support.'
   }
 }

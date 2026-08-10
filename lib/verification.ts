@@ -117,17 +117,25 @@ export type VerificationInput = {
 }
 
 /**
- * Verification fees, for DISPLAY only.
+ * FIRST-TIME verification fees, for DISPLAY only.
  *
  * `resolveServerAmount` in the backend prices verification from the user's
  * accountType and charges that regardless of what the client sends, so these
  * numbers can only ever be wrong on screen, never wrong on the invoice. Kept in
  * step with `DEFAULT_PRICING.verification` in `functions/src/pricing.ts`.
+ *
+ * Initial only, deliberately: web submits first-time applications exclusively
+ * (`isRenewal: false` below), and annual renewal lives in the app. The server
+ * charges the cheaper renewal price to anyone who has been verified before —
+ * it decides from `verifiedAt`, not from anything sent from here — so a
+ * returning user reaching this page would be quoted high and billed correctly.
+ * The mismatch is logged by initializePayment. Renewal on web needs this to
+ * become an {initial, renewal} pair, matching the app's RoleFee.
  */
 export const VERIFICATION_FEES: Record<AccountType, number> = {
-  tenant: 3000,
-  agent: 7000,
-  landlord: 12000,
+  tenant: 5000,
+  agent: 10000,
+  landlord: 15000,
 }
 
 /**
@@ -239,31 +247,41 @@ export async function submitVerification(
  * clears.
  */
 export async function finalizeVerificationPayment(
-  uid: string,
+  _uid: string,
   requestId: string,
   reference: string,
 ): Promise<string | null> {
+  // Was two client updateDoc calls, which could never have worked:
+  // `verification_requests` is `allow update: if isAdmin()`, so every web
+  // payment was taken and then denied at this exact line, leaving the
+  // application stuck at 'awaiting_payment' — a state the admin queue hides.
+  // It has to be server-side regardless: a client that could promote its own
+  // request could skip the fee entirely, which is what 'awaiting_payment'
+  // exists to stop. The callable re-verifies the charge with Paystack.
+  initAppCheck()
   try {
-    await updateDoc(doc(clientDb(), 'verification_requests', requestId), {
-      status: 'pending',
-      paymentReference: reference,
-      paymentStatus: 'paid',
-      paidAt: serverTimestamp(),
-    })
-    await updateDoc(doc(clientDb(), 'users', uid), {
-      verificationStatus: 'pending',
-      // Renewals carry no new NIN — lets admin tell an annual renewal from a
-      // first-time application in the review queue.
-      isRenewal: false,
-      verificationSubmittedAt: serverTimestamp(),
-      verificationPaymentReference: reference,
-      verificationPaymentStatus: 'paid',
-      updatedAt: serverTimestamp(),
-    })
+    const fn = httpsCallable<
+      { requestId: string; reference: string },
+      { ok: boolean; alreadyDone: boolean }
+    >(getFunctions(clientApp(), 'us-central1'), 'finalizeWebVerification')
+    await fn({ requestId, reference })
     return null
   } catch (err) {
-    return err instanceof Error
-      ? err.message
-      : 'Payment went through but we could not queue your review. Contact support.'
+    const code = (err as { code?: string })?.code ?? ''
+    if (code === 'functions/unauthenticated') {
+      return 'You were charged, but the request was rejected (sign-in or App Check). Reload and reopen this page — nothing is lost.'
+    }
+    if (code === 'functions/failed-precondition') {
+      return (
+        (err as { message?: string })?.message ??
+        'We could not confirm that payment. Contact support with reference ' + reference + '.'
+      )
+    }
+    return (
+      (err as { message?: string })?.message ??
+      'Payment went through but we could not queue your review. Contact support with reference ' +
+        reference +
+        '.'
+    )
   }
 }

@@ -39,6 +39,7 @@ export default function SignupPage() {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [occupation, setOccupation] = useState('')
   const [employer, setEmployer] = useState('')
   const [incomeRange, setIncomeRange] = useState('')
@@ -57,6 +58,14 @@ export default function SignupPage() {
     e.preventDefault()
     if (!user || !accountType) return
     setError(null)
+    // A mistyped password is not recoverable from this screen: the account is
+    // already created against the phone, and this password is the only way to
+    // sign in by email afterwards. Catch it here rather than at the next
+    // sign-in, weeks later, with no idea what was typed.
+    if (password !== confirmPassword) {
+      setError('Those passwords do not match.')
+      return
+    }
     setBusy(true)
     try {
       // Must happen before the profile write: payments read the email off the
@@ -189,10 +198,15 @@ export default function SignupPage() {
                 <span className="mt-0.5 block text-xs text-content-hint">
                   Receipts and payments use this address.
                 </span>
+                {/* `username`, not `email`: this address IS the sign-in
+                    identifier, and browsers use a username field next to a
+                    new-password field to recognise a REGISTRATION form. That
+                    recognition is what makes them offer to generate and save a
+                    strong password — with `email` alone many simply don't. */}
                 <input
                   className="input-field mt-1.5 px-4 py-3"
                   type="email"
-                  autoComplete="email"
+                  autoComplete="username"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -207,6 +221,20 @@ export default function SignupPage() {
                 value={password}
                 onChange={setPassword}
               />
+
+              <PasswordField
+                label="Confirm password"
+                hint="Type it again so a slip on the keyboard doesn't lock you out."
+                autoComplete="new-password"
+                minLength={6}
+                value={confirmPassword}
+                onChange={setConfirmPassword}
+              />
+              {confirmPassword.length > 0 && password !== confirmPassword && (
+                <p className="text-xs text-red-500">
+                  These do not match yet.
+                </p>
+              )}
 
               {accountType === 'tenant' && (
                 <>

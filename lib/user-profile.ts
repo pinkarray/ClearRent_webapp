@@ -126,15 +126,18 @@ export async function saveUserProfile(uid: string, input: ProfileInput): Promise
     if (input.serviceAreas?.length) data.serviceAreas = input.serviceAreas
     // Agents start unverified — an admin verifies them later.
     data.isVerified = false
-    data.rating = 0.0
     data.totalInspections = 0
-    data.totalRatings = 0
   }
 
-  if (input.accountType === 'landlord') {
-    data.rating = 0.0
-    data.totalRatings = 0
-  }
+  // NO rating / totalRatings seeded here, for agents or landlords.
+  //
+  // Rules reserve those fields to the rating Cloud Function, and the
+  // owner-update clause refuses ANY write that touches them. `saveAccountType`
+  // already created users/{uid} before this runs, so this merge is an UPDATE,
+  // not a create — which made the whole profile save fail and left landlords
+  // and agents unable to finish signing up at all. Tenants were unaffected
+  // only because they seed neither field. Every reader defaults a missing
+  // rating to 0. Same fix as auth_service.dart in the app.
 
   if (input.accountType === 'tenant') {
     if (input.occupation) data.occupation = input.occupation

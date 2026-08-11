@@ -113,5 +113,8 @@ export const BANKS: { code: string; name: string }[] = [
   { code: '999992', name: 'OPay' },
   { code: '999991', name: 'PalmPay' },
   { code: '50211', name: 'Kuda Bank' },
-  { code: '090267', name: 'Moniepoint MFB' },
+  // 50515, not 090267. Paystack keys fintechs/MFBs by its own 5-digit code;
+  // 090267 is Kuda's CBN/NIP code, so /bank/resolve answered
+  // "Unknown bank code: 090267" and the account could never be verified.
+  { code: '50515', name: 'Moniepoint MFB' },
 ]

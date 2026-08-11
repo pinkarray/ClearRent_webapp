@@ -2,7 +2,8 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { onAuthStateChanged, signOut as fbSignOut, type User } from 'firebase/auth'
-import { clientAuth, initAppCheck, isClientConfigured } from '../lib/firebase-client'
+import { doc, onSnapshot } from 'firebase/firestore'
+import { clientAuth, clientDb, initAppCheck, isClientConfigured } from '../lib/firebase-client'
 import { getUserProfile, type UserProfile } from '../lib/user-profile'
 import { disablePush } from '../lib/push'
 
@@ -39,11 +40,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Before any Firebase traffic, so gated callables have a token to send.
     initAppCheck()
-    return onAuthStateChanged(clientAuth(), async (u) => {
+
+    // LIVE, not a one-shot read.
+    //
+    // This was `getUserProfile` once per sign-in, so the profile a page saw
+    // was whatever was true when the tab loaded. Anything the SERVER changed
+    // afterwards was invisible until a full reload — and the case that bit
+    // was verification: finalizeWebVerification sets verificationStatus to
+    // 'pending', the cached profile still said nothing, so the verification
+    // page fell back to 'none', re-rendered the empty form, and invited a
+    // second NIN submission and a SECOND payment for an application that was
+    // already paid for and queued.
+    //
+    // Every page reading `profile` benefits — verification status, account
+    // type, bank-details flag — so this is fixed here rather than per screen.
+    let unsubProfile: (() => void) | null = null
+    const unsubAuth = onAuthStateChanged(clientAuth(), (u) => {
       setUser(u)
-      setProfile(u ? await getUserProfile(u.uid) : null)
-      setReady(true)
+      unsubProfile?.()
+      unsubProfile = null
+      if (!u) {
+        setProfile(null)
+        setReady(true)
+        return
+      }
+      unsubProfile = onSnapshot(
+        doc(clientDb(), 'users', u.uid),
+        (snap) => {
+          setProfile(
+            snap.exists()
+              ? ({ uid: u.uid, ...(snap.data() as Omit<UserProfile, 'uid'>) })
+              : null,
+          )
+          setReady(true)
+        },
+        (err) => {
+          // Never leave the app stuck on a loading gate because the stream
+          // dropped; pages handle a null profile already.
+          console.error('Profile stream failed', err)
+          setReady(true)
+        },
+      )
     })
+
+    return () => {
+      unsubProfile?.()
+      unsubAuth()
+    }
   }, [])
 
   const value = useMemo<AuthState>(

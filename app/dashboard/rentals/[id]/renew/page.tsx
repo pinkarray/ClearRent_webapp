@@ -26,7 +26,7 @@ type Source = {
   `renewal_payment_screen.dart`.
 
   The tenant is charged rent + the deal-completion fee. The amount shown is
-  computed here for display only — `resolveServerAmount` (pricing.ts:221)
+  computed here for display only - `resolveServerAmount` (pricing.ts:221)
   recomputes `rentAmount + dealFee` from the source document and rejects the
   payment if the caller is not that document's tenant.
 

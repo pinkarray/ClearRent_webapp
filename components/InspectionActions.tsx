@@ -114,7 +114,7 @@ export function InspectionActions({
                 'en-NG',
                 { weekday: 'long', day: 'numeric', month: 'long' },
               )}.`
-            : 'This inspection has no scheduled date on file — contact support.'}
+            : 'This inspection has no scheduled date on file - contact support.'}
         </p>
       )}
 
@@ -182,7 +182,7 @@ export function InspectionActions({
             Rate {state.handlerName}
           </p>
           <p className="mt-0.5 text-xs text-content-hint">
-            Required before you can express interest in renting — it is what confirms the visit
+            Required before you can express interest in renting - it is what confirms the visit
             happened.
           </p>
 

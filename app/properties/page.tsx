@@ -4,7 +4,7 @@ import { PropertyCard } from '../../components/PropertyCard'
 import { getPublishedProperties, type PropertyFilters } from '../../lib/property'
 
 export const metadata: Metadata = {
-  title: 'Verified properties for rent in Nigeria — ClearRent',
+  title: 'Verified properties for rent in Nigeria - ClearRent',
   description:
     'Browse verified rental listings on ClearRent. Every property shown here has passed ownership-document verification and is ready for inspection.',
 }

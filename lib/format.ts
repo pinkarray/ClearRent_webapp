@@ -20,7 +20,7 @@ export function rentPeriod(frequency: string): string {
 }
 
 export function formatDate(d: Date | null): string {
-  if (!d) return '—'
+  if (!d) return '-'
   return d.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 

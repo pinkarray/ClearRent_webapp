@@ -7,7 +7,7 @@ import PublicHeader from '../../components/PublicHeader'
   components.
 
   Browse is the one product surface outside AppShell, so it was also the one
-  place a signed-in user could stand and be told nothing — and it is squarely on
+  place a signed-in user could stand and be told nothing - and it is squarely on
   the demo path, since "go and look at the listings again" is the most natural
   thing to do while waiting on the other party. NextStep renders nothing for
   signed-out visitors, so the public page stays public.

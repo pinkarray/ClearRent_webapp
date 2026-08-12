@@ -269,7 +269,7 @@ export default function TenantIssueCentre() {
                 <p className="mt-3 text-sm text-content-secondary">{i.description}</p>
 
                 {/*
-                  The landlord saying it is fixed does not close it — it lands
+                  The landlord saying it is fixed does not close it - it lands
                   here and waits for the person who lives with the problem.
                   Without these two buttons the tenant could see "pending
                   confirmation" and had no way to answer either way.

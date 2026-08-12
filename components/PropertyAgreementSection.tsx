@@ -89,7 +89,7 @@ export function PropertyAgreementSection({
       <h2 className="font-semibold text-content">Tenancy agreement</h2>
       <p className="mt-1 text-sm text-content-secondary">
         Sign your agreement and upload it here. Everyone you accept gets that signed
-        copy automatically, prints it, signs it and sends it back — so the returned
+        copy automatically, prints it, signs it and sends it back - so the returned
         document carries both signatures and you never sign twice.
       </p>
 
@@ -110,7 +110,7 @@ export function PropertyAgreementSection({
               ? 'No signed agreement on file yet.'
               : stale
                 ? 'Rent has changed since this was uploaded, so it will NOT be sent automatically. Replace it with one showing the new rent.'
-                : 'On file — the next tenant you accept gets this to sign and return.'}
+                : 'On file - the next tenant you accept gets this to sign and return.'}
           </div>
 
           {error && <p className="mt-3 text-sm text-error">{error}</p>}

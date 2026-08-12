@@ -13,7 +13,7 @@ import type { MetadataRoute } from 'next'
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'ClearRent — verified rentals in Nigeria',
+    name: 'ClearRent - verified rentals in Nigeria',
     short_name: 'ClearRent',
     description:
       'Browse verified rental listings, book inspections and manage your tenancy.',

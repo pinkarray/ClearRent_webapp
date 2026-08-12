@@ -220,7 +220,7 @@ export default function ThreadPage() {
       space.
 
       useFillViewport measures where this element actually starts rather than
-      subtracting AppShell's chrome by hand — which broke once already when the
+      subtracting AppShell's chrome by hand - which broke once already when the
       nav became a floating capsule and a NextStep banner appeared above the
       page content.
     */
@@ -338,7 +338,7 @@ export default function ThreadPage() {
         /*
           A textarea, not an input. A single-line input scrolls sideways once
           the text passes its width, so on a phone you lose sight of what you
-          are writing — and every space nudges the scroll position, which is
+          are writing - and every space nudges the scroll position, which is
           what made typing feel like the words were jumping around. A textarea
           wraps instead, so the text stays visible, and it grows to a few lines
           before scrolling.

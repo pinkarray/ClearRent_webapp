@@ -76,7 +76,7 @@ export function initAppCheck(): void {
 
   const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY
   if (!siteKey) {
-    console.warn('App Check: NEXT_PUBLIC_RECAPTCHA_SITE_KEY is not set — gated callables will fail.')
+    console.warn('App Check: NEXT_PUBLIC_RECAPTCHA_SITE_KEY is not set - gated callables will fail.')
     return
   }
 

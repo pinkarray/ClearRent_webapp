@@ -4,7 +4,7 @@ const features = [
   {
     icon: '🔐',
     title: 'NIN-Based Identity Verification',
-    desc: 'Every user — landlord, tenant, or agent — is verified against their National Identification Number before they can interact with anyone.',
+    desc: 'Every user - landlord, tenant, or agent - is verified against their National Identification Number before they can interact with anyone.',
   },
   {
     icon: '🧾',
@@ -14,7 +14,7 @@ const features = [
   {
     icon: '📞',
     title: 'Direct Landlord Communication',
-    desc: 'Chat directly with property owners. Agents are optional — you\'re never forced through a middleman who inflates your costs.',
+    desc: 'Chat directly with property owners. Agents are optional - you\'re never forced through a middleman who inflates your costs.',
   },
   {
     icon: '📋',
@@ -42,17 +42,17 @@ const agentAdvantages = [
   {
     icon: '🎯',
     title: 'Tenant Matching Engine',
-    desc: 'Our algorithm scores tenants 0–100 against each property based on budget fit, income range, preferred areas, and workplace proximity. You\'re always pitching the right person.',
+    desc: 'Our algorithm scores tenants 0-100 against each property based on budget fit, income range, preferred areas, and workplace proximity. You\'re always pitching the right person.',
   },
   {
     icon: '💬',
     title: 'Direct Landlord Pitching',
-    desc: 'Send a pitch to any landlord with an unassigned property. No gatekeepers, no agency politics — just you and the opportunity.',
+    desc: 'Send a pitch to any landlord with an unassigned property. No gatekeepers, no agency politics - just you and the opportunity.',
   },
   {
     icon: '💰',
     title: 'Transparent Commission',
-    desc: 'Your fee is agreed upfront and shown to tenants as part of the total package. No awkward negotiations — you get paid on-platform after the deal closes.',
+    desc: 'Your fee is agreed upfront and shown to tenants as part of the total package. No awkward negotiations - you get paid on-platform after the deal closes.',
   },
 ]
 
@@ -123,7 +123,7 @@ export default function WhyClearRent() {
             gap: 64,
             alignItems: 'center',
           }}>
-            {/* Left — copy */}
+            {/* Left - copy */}
             <div>
               <span className="verified-badge" style={{ marginBottom: 20, display: 'inline-flex' }}>
                 👔 For Agents
@@ -143,7 +143,7 @@ export default function WhyClearRent() {
                 </span>
               </h2>
               <p style={{ fontSize: 16, color: 'var(--text-secondary)', lineHeight: 1.8, marginBottom: 28 }}>
-                ClearRent gives verified agents something the market never had — a structured pipeline.
+                ClearRent gives verified agents something the market never had - a structured pipeline.
                 Discover properties that need you, pitch landlords directly, then use our matching engine
                 to find tenants who fit perfectly. Every deal tracked. Every commission paid on-platform.
               </p>
@@ -173,7 +173,7 @@ export default function WhyClearRent() {
                         {item.step}
                       </span>
                       <span style={{ fontSize: 14, color: 'var(--text-secondary)', marginLeft: 8 }}>
-                        — {item.label}
+                        - {item.label}
                       </span>
                     </div>
                   </div>
@@ -193,7 +193,7 @@ export default function WhyClearRent() {
               </p>
             </div>
 
-            {/* Right — advantage cards */}
+            {/* Right - advantage cards */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {agentAdvantages.map((a) => (
                 <div key={a.title} className="card" style={{

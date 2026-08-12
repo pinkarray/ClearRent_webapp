@@ -21,9 +21,9 @@ const ACCOUNT_TYPES: { id: AccountType; label: string; blurb: string }[] = [
 
 const INCOME_RANGES = [
   { id: 'below_100k', label: 'Below ₦100K' },
-  { id: '100k_200k', label: '₦100K – ₦200K' },
-  { id: '200k_500k', label: '₦200K – ₦500K' },
-  { id: '500k_1m', label: '₦500K – ₦1M' },
+  { id: '100k_200k', label: '₦100K - ₦200K' },
+  { id: '200k_500k', label: '₦200K - ₦500K' },
+  { id: '500k_1m', label: '₦500K - ₦1M' },
   { id: 'above_1m', label: 'Above ₦1M' },
 ]
 
@@ -202,7 +202,7 @@ export default function SignupPage() {
                     identifier, and browsers use a username field next to a
                     new-password field to recognise a REGISTRATION form. That
                     recognition is what makes them offer to generate and save a
-                    strong password — with `email` alone many simply don't. */}
+                    strong password - with `email` alone many simply don't. */}
                 <input
                   className="input-field mt-1.5 px-4 py-3"
                   type="email"

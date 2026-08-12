@@ -12,7 +12,7 @@ import { formatNaira } from '../../../lib/format'
 /*
   Leads: available listings from verified landlords that have no handler yet.
 
-  An agent cannot claim one — assignment is the landlord's call
+  An agent cannot claim one - assignment is the landlord's call
   (`property_service.dart:945`), and the rules give an agent no write on a
   property they are not already assigned to. So the action here is to pitch,
   which is what the app's Discover screen does too.
@@ -68,7 +68,7 @@ export default function LeadsPage() {
       <div className="card p-5">
         <p className="font-semibold text-content">Landlords choose their handler</p>
         <p className="mt-1 text-sm text-content-secondary">
-          You cannot claim a listing. Pitch the landlord — if they assign you, it appears
+          You cannot claim a listing. Pitch the landlord - if they assign you, it appears
           under the properties you handle.
         </p>
       </div>

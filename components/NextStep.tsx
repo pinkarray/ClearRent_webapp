@@ -14,18 +14,18 @@ import {
 } from '../lib/tenancy'
 
 /*
-  "What do I do next?" — answered in one place, on every signed-in page.
+  "What do I do next?" - answered in one place, on every signed-in page.
 
   A live two-device run on 2026-08-06 lost a cold user twice, and both times the
   data was correct and the notification fired; only the on-screen next step was
   missing. A tenant who has just rated an inspection has no idea that expressing
   interest is a thing, and a landlord who has just accepted a tenant is given no
-  route to the agreement upload — it lives on a different tab, so the owner had
+  route to the agreement upload - it lives on a different tab, so the owner had
   to hunt for it.
 
   Both failures share a shape: the state machine advanced somewhere else, and the
   screen you are standing on does not mention it. So this is deliberately NOT on
-  the dashboard home — it renders inside AppShell, above every page, because the
+  the dashboard home - it renders inside AppShell, above every page, because the
   whole problem is that people are standing somewhere other than home when their
   turn comes.
 
@@ -36,7 +36,7 @@ import {
 type Tone = 'action' | 'waiting'
 
 /*
-  A rental is BORN 'pending_payment' — rental_interest_ops creates it the moment
+  A rental is BORN 'pending_payment' - rental_interest_ops creates it the moment
   the landlord accepts, and only flips it to 'active' once rent lands
   (`rental_interest_ops.ts:322`). So an allowlist of {active, moveout_pending}
   would have excluded exactly the rentals this banner exists for: the ones still
@@ -91,7 +91,7 @@ function tenantStep(
   if (payable) {
     return {
       title: 'Pay your rent',
-      detail: `${payable.propertyTitle} — your agreement is finalized, so rent is now unlocked.`,
+      detail: `${payable.propertyTitle} - your agreement is finalized, so rent is now unlocked.`,
       href: '/dashboard/tenancy',
       cta: 'Pay rent',
       tone: 'action',
@@ -104,7 +104,7 @@ function tenantStep(
   if (toSign) {
     return {
       title: 'Review your tenancy agreement',
-      detail: `${toSign.propertyTitle} — read it, then accept. Accepting is what unlocks rent payment.`,
+      detail: `${toSign.propertyTitle} - read it, then accept. Accepting is what unlocks rent payment.`,
       href: '/dashboard/tenancy',
       cta: 'Open agreement',
       tone: 'action',
@@ -120,7 +120,7 @@ function tenantStep(
   if (rentable) {
     return {
       title: 'Want to rent it? Tell the landlord',
-      detail: `You inspected ${rentable.propertyTitle}. Expressing interest is what starts the tenancy — the landlord cannot offer it to you until you do.`,
+      detail: `You inspected ${rentable.propertyTitle}. Expressing interest is what starts the tenancy - the landlord cannot offer it to you until you do.`,
       href: '/dashboard/inspections',
       cta: 'I want to rent it',
       tone: 'action',
@@ -133,7 +133,7 @@ function tenantStep(
   if (toRate) {
     return {
       title: 'Rate your inspection',
-      detail: `${toRate.propertyTitle} — required before you can say you want to rent it.`,
+      detail: `${toRate.propertyTitle} - required before you can say you want to rent it.`,
       href: '/dashboard/inspections',
       cta: 'Rate it',
       tone: 'action',
@@ -146,7 +146,7 @@ function tenantStep(
   if (toPayFor) {
     return {
       title: 'Pay to confirm your inspection',
-      detail: `${toPayFor.propertyTitle} — approved. Paying confirms the visit and releases the exact address.`,
+      detail: `${toPayFor.propertyTitle} - approved. Paying confirms the visit and releases the exact address.`,
       href: '/dashboard/inspections',
       cta: 'Pay now',
       tone: 'action',
@@ -157,7 +157,7 @@ function tenantStep(
   if (accepted && !live.some((r) => r.agreementUrl)) {
     return {
       title: 'Your landlord accepted you',
-      detail: `${accepted.propertyTitle} — they are preparing the tenancy agreement. You will get a notification when it is ready to sign.`,
+      detail: `${accepted.propertyTitle} - they are preparing the tenancy agreement. You will get a notification when it is ready to sign.`,
       href: '/dashboard/tenancy',
       cta: 'View tenancy',
       tone: 'waiting',
@@ -168,7 +168,7 @@ function tenantStep(
   if (pending) {
     return {
       title: 'Waiting for the landlord',
-      detail: `${pending.propertyTitle} — they have been notified that you want to rent it.`,
+      detail: `${pending.propertyTitle} - they have been notified that you want to rent it.`,
       href: '/dashboard/tenancy',
       cta: 'View tenancy',
       tone: 'waiting',
@@ -205,7 +205,7 @@ function landlordStep(interests: RentalInterest[], rentals: ActiveRental[]): Ste
   if (disputed) {
     return {
       title: 'Upload a corrected agreement',
-      detail: `${disputed.propertyTitle} — your tenant sent the agreement back${
+      detail: `${disputed.propertyTitle} - your tenant sent the agreement back${
         disputed.tenantDisputeReason ? `: “${disputed.tenantDisputeReason}”` : '.'
       }`,
       href: '/dashboard/rentals',
@@ -221,7 +221,7 @@ function landlordStep(interests: RentalInterest[], rentals: ActiveRental[]): Ste
   if (needsAgreement) {
     return {
       title: 'Upload the tenancy agreement',
-      detail: `${needsAgreement.propertyTitle} — your tenant is waiting on this. They cannot accept, and cannot pay rent, until you upload it.`,
+      detail: `${needsAgreement.propertyTitle} - your tenant is waiting on this. They cannot accept, and cannot pay rent, until you upload it.`,
       href: '/dashboard/rentals',
       cta: 'Upload agreement',
       tone: 'action',
@@ -232,7 +232,7 @@ function landlordStep(interests: RentalInterest[], rentals: ActiveRental[]): Ste
   if (moveout) {
     return {
       title: 'Confirm a move-out',
-      detail: `${moveout.propertyTitle} — confirm once you have the keys back. It confirms itself after the notice period if you do nothing.`,
+      detail: `${moveout.propertyTitle} - confirm once you have the keys back. It confirms itself after the notice period if you do nothing.`,
       href: '/dashboard/rentals',
       cta: 'Confirm move-out',
       tone: 'action',
@@ -245,7 +245,7 @@ function landlordStep(interests: RentalInterest[], rentals: ActiveRental[]): Ste
   if (awaiting) {
     return {
       title: 'Waiting on your tenant',
-      detail: `${awaiting.propertyTitle} — they are reviewing the agreement. Rent unlocks the moment they accept it.`,
+      detail: `${awaiting.propertyTitle} - they are reviewing the agreement. Rent unlocks the moment they accept it.`,
       href: '/dashboard/rentals',
       cta: 'View rental',
       tone: 'waiting',

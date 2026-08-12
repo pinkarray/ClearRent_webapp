@@ -167,7 +167,7 @@ export default function HandlerRequestsPage() {
               Add a payout account to approve
             </p>
             <p className="mt-1 text-sm text-content-secondary">
-              Rules require a payout destination before you can accept an inspection — that is
+              Rules require a payout destination before you can accept an inspection - that is
               where your {formatNaira(7000)} handler fee is settled.{' '}
               <Link href="/dashboard/bank" className="text-primary no-underline">
                 Add one

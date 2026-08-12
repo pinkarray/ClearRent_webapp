@@ -42,7 +42,7 @@ export default function HandlingPage() {
             vetting
           </p>
           <p className="mt-1 text-sm text-content-secondary">
-            A property is not bookable — and you earn nothing from it — until you confirm the
+            A property is not bookable - and you earn nothing from it - until you confirm the
             readiness checklist.
           </p>
         </div>

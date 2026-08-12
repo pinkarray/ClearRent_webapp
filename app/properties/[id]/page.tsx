@@ -19,10 +19,10 @@ type Props = { params: Promise<{ id: string }> }
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params
   const property = await getPublishedProperty(id)
-  if (!property) return { title: 'Property not found — ClearRent' }
+  if (!property) return { title: 'Property not found - ClearRent' }
 
   return {
-    title: `${property.title} — ${property.approximateAddress} | ClearRent`,
+    title: `${property.title} - ${property.approximateAddress} | ClearRent`,
     description: property.description.slice(0, 155),
     openGraph: {
       title: property.title,
@@ -136,7 +136,7 @@ export default async function PropertyDetailPage({ params }: Props) {
               >
                 <CloudinaryImage
                   src={src}
-                  alt={`${property.title} — photo ${i + 1}`}
+                  alt={`${property.title} - photo ${i + 1}`}
                   fill
                   sizes="(max-width: 768px) 100vw, 600px"
                   className="object-cover"

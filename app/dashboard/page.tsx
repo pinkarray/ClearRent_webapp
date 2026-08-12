@@ -251,7 +251,7 @@ export default function DashboardPage() {
         <>
           {/*
             Both of these are enforced by firestore.rules on the
-            inspection_requests create — verificationStatus via the client
+            inspection_requests create - verificationStatus via the client
             gate, hasBankDetails via actorHasBankDetails(). Showing them as a
             checklist means the tenant knows why booking is unavailable
             instead of meeting a permission error at the end.

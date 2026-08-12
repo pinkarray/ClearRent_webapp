@@ -12,7 +12,7 @@ import { clientDb } from './firebase-client'
 
   The landlord cannot approve their own request: `firestore.rules:1101` gives
   update rights to admin only, and create requires `status == 'pending'`. So
-  this writes the filing and nothing else — the decision happens in the admin
+  this writes the filing and nothing else - the decision happens in the admin
   dashboard, and the approved increase is applied by a Cloud Function.
 */
 

@@ -106,7 +106,7 @@ export function BookInspection({ propertyId }: { propertyId: string }) {
           Book an inspection
         </h2>
         <p className="mt-2 text-sm text-content-secondary">
-          Two things first — both are required before an inspection can be booked.
+          Two things first - both are required before an inspection can be booked.
         </p>
         <div className="mt-4 space-y-3">
           {!verified && (
@@ -137,7 +137,7 @@ export function BookInspection({ propertyId }: { propertyId: string }) {
       <div className="card border-l-4 border-l-primary p-6">
         <h2 className="text-base font-semibold text-content">Request sent</h2>
         <p className="mt-2 text-sm text-content-secondary">
-          The handler will approve or decline it. You pay only after it is approved — nothing
+          The handler will approve or decline it. You pay only after it is approved - nothing
           has been charged yet.
         </p>
         <Link

@@ -23,7 +23,7 @@ import { sortedFingerprint } from '../../../../lib/form-state'
 
   Everything an agent may change here is field-scoped by
   `firestore.rules:326`/`:336`. There is deliberately no edit form for rent,
-  address or availability — those stay the landlord's, and an attempt would be
+  address or availability - those stay the landlord's, and an attempt would be
   rejected wholesale rather than partially applied.
 */
 export default function HandledPropertyPage() {

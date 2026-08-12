@@ -6,7 +6,7 @@ import { clientApp, clientAuth } from './firebase-client'
   Password sign-in by phone number OR email.
 
   WHY THIS EXISTS. Web previously defaulted to phone OTP for every sign-in,
-  which costs an SMS per login — a per-login cost that grows with success, and
+  which costs an SMS per login - a per-login cost that grows with success, and
   the one part of auth that gets more expensive the better the product does.
   The Flutter app already solved this (`auth_service.dart:888` signInWithPhone):
   OTP is spent ONCE at signup to prove the number is really theirs, and every
@@ -14,7 +14,7 @@ import { clientApp, clientAuth } from './firebase-client'
 
   HOW PHONE+PASSWORD WORKS. Firebase has no "sign in with phone and password"
   primitive. Every ClearRent account already carries a linked email/password
-  credential — not for convenience, but because `initializePayment` reads
+  credential - not for convenience, but because `initializePayment` reads
   `request.auth.token.email` and rejects with `failed-precondition` when it is
   absent (see linkEmailPassword in user-profile.ts). So the number is resolved
   to that email server-side by `lookupEmailByPhone`, and the real sign-in is

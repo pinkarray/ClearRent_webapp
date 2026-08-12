@@ -27,7 +27,7 @@ async function sendNotificationEmail({
 }) {
   const resendKey = process.env.RESEND_API_KEY
   if (!resendKey) {
-    console.warn('⚠️ RESEND_API_KEY not set — skipping email notification')
+    console.warn('⚠️ RESEND_API_KEY not set - skipping email notification')
     return
   }
 

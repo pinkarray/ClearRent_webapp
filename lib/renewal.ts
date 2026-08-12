@@ -103,7 +103,7 @@ export async function completeRenewal(
     >(getFunctions(clientApp(), 'us-central1'), name)
     const res = await fn({ sourceId, paymentReference })
     if (res.data?.success !== true) {
-      return 'The renewal did not complete. Your payment is recorded — contact support with the reference.'
+      return 'The renewal did not complete. Your payment is recorded - contact support with the reference.'
     }
     return null
   } catch (err) {

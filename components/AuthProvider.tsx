@@ -30,7 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // out" instead. Auth-dependent pages surface it themselves.
     if (!isClientConfigured()) {
       console.error(
-        'Firebase web config missing — NEXT_PUBLIC_FIREBASE_* is not set. Sign-in is unavailable.',
+        'Firebase web config missing - NEXT_PUBLIC_FIREBASE_* is not set. Sign-in is unavailable.',
       )
       // Async so the "ready" flip is not a synchronous setState in the effect
       // body; the page still settles on its first paint.

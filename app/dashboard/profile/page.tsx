@@ -6,8 +6,8 @@ import { useAuth } from '../../../components/AuthProvider'
 
 /*
   The app's Profile tab (`landlord_home_screen.dart:1371`,
-  `tenant_home_screen.dart:2301`) is a menu hub. Web had the same destinations —
-  verification, bank details, inspections — as loose /dashboard/* routes that
+  `tenant_home_screen.dart:2301`) is a menu hub. Web had the same destinations -
+  verification, bank details, inspections - as loose /dashboard/* routes that
   nothing linked to, reachable only by typing the URL. This gives them the home
   they have in the app.
 */
@@ -16,8 +16,8 @@ type Item = { href: string; title: string; subtitle: string; badge?: string }
 
 function verificationSubtitle(status: string | undefined): string {
   if (status === 'verified') return 'Your identity is verified'
-  if (status === 'pending') return 'Submitted — under review'
-  if (status === 'rejected') return 'Rejected — submit again'
+  if (status === 'pending') return 'Submitted - under review'
+  if (status === 'rejected') return 'Rejected - submit again'
   return 'Verify your identity to unlock booking'
 }
 

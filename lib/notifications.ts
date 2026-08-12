@@ -12,7 +12,7 @@ import {
 import { clientDb } from './firebase-client'
 
 /*
-  Notifications are written only by Cloud Functions — `firestore.rules:1245` is
+  Notifications are written only by Cloud Functions - `firestore.rules:1245` is
   `allow create: if false` for clients. A recipient may read their own and mark
   them read, and nothing else: the update rule allowlists exactly
   `['read', 'readAt']` (rules:1259), so adding any other field rejects the whole

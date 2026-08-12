@@ -333,7 +333,7 @@ export default function ListPropertyPage() {
             <h2 className="font-semibold text-content">Location</h2>
             <Field
               label="Street address"
-              hint="Stored in the gated private/location subdoc — never shown publicly, released only after an inspection is approved."
+              hint="Stored in the gated private/location subdoc - never shown publicly, released only after an inspection is approved."
             >
               <input
                 className="input-field px-4 py-3"

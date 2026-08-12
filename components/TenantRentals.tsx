@@ -39,7 +39,7 @@ function tone(status: string): string {
 
 function label(status: string): string {
   if (status === 'expiring_soon') return 'Expiring soon'
-  if (status === 'grace_locked') return 'Term ended — renew'
+  if (status === 'grace_locked') return 'Term ended - renew'
   return status.replace(/_/g, ' ')
 }
 

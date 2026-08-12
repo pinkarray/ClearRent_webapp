@@ -19,7 +19,7 @@ import { clientDb } from './firebase-client'
 
   Sorting is done in memory throughout. The composite indexes for
   `where(...) + orderBy('createdAt')` are not provisioned, and a missing index
-  makes Firestore throw — which is how the app's Payments tab ended up
+  makes Firestore throw - which is how the app's Payments tab ended up
   permanently empty. The app does the same client-side sort for exactly this
   reason (`earnings_screen.dart:47`).
 */

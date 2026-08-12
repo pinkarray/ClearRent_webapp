@@ -7,22 +7,22 @@ type UserType = 'landlord' | 'tenant' | 'agent'
 const steps: Record<UserType, { icon: string; title: string; desc: string }[]> = {
   landlord: [
     { icon: '✅', title: 'Get Verified', desc: 'Submit your NIN and property documents. We confirm you\'re the legitimate owner before your listing goes live.' },
-    { icon: '🏠', title: 'List Your Property', desc: 'Add real photos, transparent pricing, and a full cost breakdown — rent, agent fee, and caution deposit — so tenants know exactly what they\'re paying.' },
+    { icon: '🏠', title: 'List Your Property', desc: 'Add real photos, transparent pricing, and a full cost breakdown - rent, agent fee, and caution deposit - so tenants know exactly what they\'re paying.' },
     { icon: '👔', title: 'Assign an Agent (Optional)', desc: 'Choose a verified agent to represent your property, or go direct. You\'re always in control of who manages your listing.' },
-    { icon: '🤝', title: 'Close with Confidence', desc: 'Review tenant profiles, approve who you trust, and manage the tenancy — all on one platform.' },
+    { icon: '🤝', title: 'Close with Confidence', desc: 'Review tenant profiles, approve who you trust, and manage the tenancy - all on one platform.' },
   ],
   tenant: [
     { icon: '✅', title: 'Verify Your Identity', desc: 'Submit your NIN and income proof. Your verified profile becomes a trust signal that gets you faster approvals from landlords.' },
     { icon: '🔍', title: 'Browse Real Listings', desc: 'Every property is owner-verified with confirmed documents. No fake listings, no bait-and-switch, no ghost properties.' },
-    { icon: '📅', title: 'Book a Transparent Inspection', desc: 'See the full inspection fee upfront. Get a verified agent or go direct with the landlord — your choice.' },
+    { icon: '📅', title: 'Book a Transparent Inspection', desc: 'See the full inspection fee upfront. Get a verified agent or go direct with the landlord - your choice.' },
     { icon: '🏡', title: 'Move In, Stress-Free', desc: 'Know exactly who you\'re renting from, what you\'re paying, and have it all documented before you sign anything.' },
   ],
   agent: [
     { icon: '✅', title: 'Get Verified as an Agent', desc: 'Submit your NIN, guarantor details, and experience proof. Earn a verified badge that makes landlords trust you immediately.' },
-    { icon: '🏘️', title: 'Discover Unassigned Properties', desc: 'Browse a live feed of landlord listings that don\'t yet have an agent. These are warm opportunities — landlords who need exactly what you offer.' },
+    { icon: '🏘️', title: 'Discover Unassigned Properties', desc: 'Browse a live feed of landlord listings that don\'t yet have an agent. These are warm opportunities - landlords who need exactly what you offer.' },
     { icon: '💬', title: 'Pitch & Get Assigned', desc: 'Send a pitch directly to the landlord through the platform. Once they assign you, the property is yours to represent.' },
-    { icon: '🎯', title: 'Find Matching Tenants', desc: 'Use our tenant discovery engine to identify tenants who match the property — by budget, income range, preferred area, and workplace proximity.' },
-    { icon: '🤝', title: 'Facilitate the Deal', desc: 'Bring the right tenant to the right property. Conduct the inspection, close the deal, and earn your commission — all tracked on-platform.' },
+    { icon: '🎯', title: 'Find Matching Tenants', desc: 'Use our tenant discovery engine to identify tenants who match the property - by budget, income range, preferred area, and workplace proximity.' },
+    { icon: '🤝', title: 'Facilitate the Deal', desc: 'Bring the right tenant to the right property. Conduct the inspection, close the deal, and earn your commission - all tracked on-platform.' },
     { icon: '⭐', title: 'Build Your Pipeline', desc: 'Every successful deal builds your rating and reputation. The better your track record, the more landlords come to you first.' },
   ],
 }
@@ -49,7 +49,7 @@ export default function HowItWorks() {
             Built for everyone in the deal
           </h2>
           <p style={{ fontSize: 17, color: 'var(--text-secondary)', maxWidth: 520, margin: '0 auto', lineHeight: 1.7 }}>
-            Whether you&apos;re renting out, moving in, or building a real estate business —
+            Whether you&apos;re renting out, moving in, or building a real estate business -
             ClearRent gives you the tools to do it right.
           </p>
         </div>

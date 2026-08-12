@@ -53,7 +53,7 @@ export default function Hero() {
             margin: '0 auto 36px',
           }}>
             No fraudulent agents. No fake listings. No wahala. Connect directly with
-            verified landlords and tenants — every identity confirmed before you meet.
+            verified landlords and tenants - every identity confirmed before you meet.
           </p>
 
           {/* CTA buttons */}
@@ -105,7 +105,7 @@ export default function Hero() {
           </div>
         </div>
 
-        {/* App preview mockup — hidden on very small screens, shown on sm+ */}
+        {/* App preview mockup - hidden on very small screens, shown on sm+ */}
         <div data-animate style={{ opacity: 0, display: 'flex', justifyContent: 'center', paddingBottom: 64 }}>
           <div style={{ width: '100%', maxWidth: 900 }}>
             <div className="card" style={{

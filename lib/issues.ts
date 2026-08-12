@@ -15,7 +15,7 @@ import { clientDb } from './firebase-client'
 /*
   Mirrors `report_issue_screen.dart:203` field for field. The category and
   priority vocabularies are closed sets shared with the app and the landlord's
-  issue queue — inventing a new value here would render as a blank chip there.
+  issue queue - inventing a new value here would render as a blank chip there.
 
   `firestore.rules:1121` scopes list access to a party on the issue, so the
   query below must filter by tenantId; an unscoped read is rejected outright.

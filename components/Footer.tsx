@@ -124,7 +124,7 @@ export default function Footer() {
                 info@verealtytech.com
               </a>
               <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
-                Mon – Fri<br />9am – 6pm WAT
+                Mon - Fri<br />9am - 6pm WAT
               </p>
             </div>
           </div>

@@ -9,7 +9,7 @@ import { isClientConfigured } from '../../lib/firebase-client'
 import { signInWithPassword } from '../../lib/sign-in'
 
 /*
-  Password is the default and OTP is the fallback — the reverse of how this page
+  Password is the default and OTP is the fallback - the reverse of how this page
   started, and it matches the app (`login_screen.dart`: password tabs, with OTP
   reserved for signup).
 
@@ -17,7 +17,7 @@ import { signInWithPassword } from '../../lib/sign-in'
   how often people come back, so success is punished. One SMS at signup proves
   the number is theirs; passwords carry every sign-in after that.
 
-  OTP stays reachable because it is also the de-facto password recovery path —
+  OTP stays reachable because it is also the de-facto password recovery path -
   a user who has forgotten their password can still get in with a code.
 */
 export default function LoginPage() {

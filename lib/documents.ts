@@ -50,13 +50,13 @@ export function paymentTypeLabel(type: string): string {
 export function agreementStatusLabel(status: string): string {
   switch (status) {
     case 'accepted':
-      return 'You accepted — awaiting landlord finalization'
+      return 'You accepted - awaiting landlord finalization'
     case 'disputed':
-      return 'You raised concerns — awaiting landlord response'
+      return 'You raised concerns - awaiting landlord response'
     case 'finalized':
-      return 'Finalized — agreement is in effect'
+      return 'Finalized - agreement is in effect'
     default:
-      return 'Uploaded — awaiting your review'
+      return 'Uploaded - awaiting your review'
   }
 }
 

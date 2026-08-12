@@ -28,7 +28,7 @@ type MaintenanceLog = {
   Property health: what has gone wrong on one listing, and what has been done
   about it proactively.
 
-  Both queries carry `landlordId == uid` as well as `propertyId` — the rules
+  Both queries carry `landlordId == uid` as well as `propertyId` - the rules
   scope list access on both collections to the owning landlord
   (`firestore.rules:1121`, `:1148`), so filtering on propertyId alone is
   rejected. Issues are fetched for the landlord and narrowed here, which also
@@ -166,7 +166,7 @@ export default function PropertyHealthPage() {
           Maintenance log
         </h2>
         <p className="mt-1 text-sm text-content-secondary">
-          Record proactive work — servicing, repainting, replacements. Only you and an admin
+          Record proactive work - servicing, repainting, replacements. Only you and an admin
           can read these.
         </p>
 

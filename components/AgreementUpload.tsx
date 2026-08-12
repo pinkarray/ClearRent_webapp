@@ -10,7 +10,7 @@ import { attachAgreement, type ActiveRental } from '../lib/tenancy'
 /*
   The landlord's half of the agreement, as a self-contained block.
 
-  It was previously only inside LandlordRentals, i.e. on /dashboard/rentals —
+  It was previously only inside LandlordRentals, i.e. on /dashboard/rentals -
   but the landlord's preceding action, accepting the tenant, happens on
   /dashboard/tenancy. So the moment they finished accepting, the next thing they
   had to do was on a page nothing pointed at, and in a live run the owner hunted
@@ -30,7 +30,7 @@ function agreementTone(status: string): string {
 /** What the landlord is actually waiting on, in their own terms. */
 function statusLine(r: ActiveRental): string {
   if (!r.agreementUrl) {
-    return 'Your tenant cannot accept — and cannot pay rent — until you upload the signed tenancy agreement here.'
+    return 'Your tenant cannot accept - and cannot pay rent - until you upload the signed tenancy agreement here.'
   }
   if (r.agreementStatus === 'disputed') {
     return 'Your tenant sent this back. Upload a corrected version to put it in front of them again.'
@@ -38,7 +38,7 @@ function statusLine(r: ActiveRental): string {
   if (r.agreementStatus === 'finalized') {
     return 'Accepted by your tenant. Rent is unlocked.'
   }
-  return 'Uploaded. Waiting for your tenant to read and accept it — that is what unlocks rent.'
+  return 'Uploaded. Waiting for your tenant to read and accept it - that is what unlocks rent.'
 }
 
 export default function AgreementUpload({ rental }: { rental: ActiveRental }) {

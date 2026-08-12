@@ -15,7 +15,7 @@ import { clientDb } from './firebase-client'
   Agent discovery and assignment, mirroring `agent_service.dart:97` and
   `property_service.dart:945`.
 
-  Only verified agents are listed — the same `accountType == 'agent'` +
+  Only verified agents are listed - the same `accountType == 'agent'` +
   `isVerified == true` pair the app queries. `/users` is readable by any signed
   in user (`firestore.rules:65`), so this needs no server route.
 */

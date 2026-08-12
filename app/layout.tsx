@@ -16,11 +16,11 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  title: 'ClearRent — Rent Without Regret',
+  title: 'ClearRent - Rent Without Regret',
   description: 'Nigeria\'s verification-first rental platform. Connect directly with verified landlords and tenants in Lagos. No fraud, no fake listings, no middlemen.',
   keywords: 'rent Lagos, verified landlord Nigeria, find apartment Lagos, rental platform Nigeria, no fraud rent',
   openGraph: {
-    title: 'ClearRent — Rent Without Regret',
+    title: 'ClearRent - Rent Without Regret',
     description: 'Nigeria\'s verification-first rental platform. Find verified properties in Lagos.',
     url: 'https://verealtytech.com',
     siteName: 'ClearRent',
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'ClearRent — Rent Without Regret',
+    title: 'ClearRent - Rent Without Regret',
     description: 'Nigeria\'s verification-first rental platform.',
   },
 }
@@ -47,7 +47,7 @@ export default function RootLayout({
           Without it the page paints with the SYSTEM theme and only corrects
           after hydration, so anyone whose choice differs from their OS sees a
           flash of the wrong one. The suppressHydrationWarning above exists for
-          precisely this attribute — the script was the missing half.
+          precisely this attribute - the script was the missing half.
         */}
         <script
           dangerouslySetInnerHTML={{

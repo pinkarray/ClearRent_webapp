@@ -70,7 +70,7 @@ export default function Waitlist() {
                 You&apos;re on the list!
               </h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: 16, lineHeight: 1.7 }}>
-                We&apos;ll notify you as soon as ClearRent opens in your area. Tell a friend — the more verified
+                We&apos;ll notify you as soon as ClearRent opens in your area. Tell a friend - the more verified
                 users, the better the platform for everyone.
               </p>
             </div>

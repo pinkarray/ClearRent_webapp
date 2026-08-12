@@ -5,7 +5,7 @@ import { clientDb } from './firebase-client'
   Client-side counterpart of `effectiveDocStatus` in lib/property.ts.
 
   A unit grouped under a building carries the literal 'inherited' as a MARKER,
-  not an approval — the building holds the single document an admin reviews. So
+  not an approval - the building holds the single document an admin reviews. So
   a raw `ownershipDocStatus !== 'verified'` check reports a fully-reviewed unit
   as "awaiting verification", which is exactly what it did on the landlord
   dashboard while the admin correctly showed it as reviewed.

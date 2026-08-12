@@ -12,7 +12,7 @@ function formatNaira(n: number): string {
 }
 
 function formatDate(d: Date | null): string {
-  if (!d) return '—'
+  if (!d) return '-'
   return d.toLocaleDateString('en-NG', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
@@ -85,7 +85,7 @@ export default function LeaseDetailsPage() {
         <Row label="Lease start" value={formatDate(rental.leaseStartDate)} />
         <Row label="Lease end" value={formatDate(rental.leaseEndDate)} />
         <Row label="Next payment due" value={formatDate(rental.nextPaymentDue)} />
-        <Row label="Landlord" value={rental.landlordName || '—'} />
+        <Row label="Landlord" value={rental.landlordName || '-'} />
         {rental.landlordPhone && <Row label="Landlord phone" value={rental.landlordPhone} />}
       </section>
 

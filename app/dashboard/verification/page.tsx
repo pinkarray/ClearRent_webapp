@@ -130,7 +130,7 @@ export default function VerificationPage() {
             <label className="block">
               <span className="text-sm font-medium text-content">NIN</span>
               <span className="mt-0.5 block text-xs text-content-hint">
-                11 digits. Encrypted on our servers — never stored in the clear.
+                11 digits. Encrypted on our servers - never stored in the clear.
               </span>
               <input
                 className="input-field mt-1.5 px-4 py-3 tracking-[0.2em]"
@@ -156,7 +156,7 @@ export default function VerificationPage() {
               />
             </label>
 
-            {/* The second document differs by role — a tenant proves income,
+            {/* The second document differs by role - a tenant proves income,
                 a landlord and an agent prove address. */}
             <label className="block">
               <span className="text-sm font-medium text-content">

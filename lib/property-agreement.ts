@@ -4,8 +4,8 @@ import { clientApp, clientDb } from './firebase-client'
 
 /*
   The blank tenancy agreement a landlord keeps against a PROPERTY, before any
-  tenant exists. Mirrors `PropertyService.savePropertyAgreement` in the app —
-  same storage path, same subdoc, same field names — because
+  tenant exists. Mirrors `PropertyService.savePropertyAgreement` in the app -
+  same storage path, same subdoc, same field names - because
   `createRentalForAcceptedInterest` reads it server-side and does not care which
   client wrote it.
 
@@ -15,7 +15,7 @@ import { clientApp, clientDb } from './firebase-client'
   which checks membership.
 
   Firestore: `properties/{id}/private/agreement`, whose rule admits only the
-  owner, the assigned agent and admin — deliberately NOT the location-reveal
+  owner, the assigned agent and admin - deliberately NOT the location-reveal
   grant that the sibling `private/{docId}` rule honours.
 */
 

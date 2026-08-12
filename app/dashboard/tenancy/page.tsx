@@ -164,7 +164,7 @@ export default function TenancyPage() {
             ) : (
               <>
                 Once you have completed and rated an inspection, you tell the landlord you
-                want to rent it — from{' '}
+                want to rent it - from{' '}
                 {/* Was a bare mention of "My inspections", which is only useful
                     if you already know where that is. */}
                 <Link href="/dashboard/inspections" className="text-primary no-underline underline">
@@ -201,7 +201,7 @@ export default function TenancyPage() {
                 )}
 
                 {/* Accepting used to end here, with the card simply flipping to
-                    "Accepted" — and the next thing the landlord owes lives in
+                    "Accepted" - and the next thing the landlord owes lives in
                     the section below, which they had no reason to look at.
 
                     A property that carries a signed agreement template no longer
@@ -213,12 +213,12 @@ export default function TenancyPage() {
                     {rentalFor(i.id)?.agreementUrl ? (
                       <>
                         Accepted, and your agreement was attached automatically.
-                        Next: your tenant signs it — rent unlocks the moment they do.
+                        Next: your tenant signs it - rent unlocks the moment they do.
                       </>
                     ) : (
                       <>
                         Accepted. Next: upload the tenancy agreement under{' '}
-                        <strong className="text-content">Active rentals</strong> below — your
+                        <strong className="text-content">Active rentals</strong> below - your
                         tenant cannot pay rent until they have accepted it.
                       </>
                     )}
@@ -268,7 +268,7 @@ export default function TenancyPage() {
                   <div className="mt-4 flex flex-wrap gap-3">
                     {/* Read it before you sign it. The file is private, so it
                         is fetched through getSignedAgreementUrl rather than
-                        linked — and asking someone to accept a document they
+                        linked - and asking someone to accept a document they
                         cannot open is not a real choice. */}
                     {r.agreementUrl && (
                       <button
@@ -282,7 +282,7 @@ export default function TenancyPage() {
 
                     {/* Accepting means uploading a copy you have SIGNED. A tap
                         alone left the document untouched, so the only record a
-                        tenant agreed was a row in our own database — which a
+                        tenant agreed was a row in our own database - which a
                         tenant could deny. The landlord signed before sending,
                         so the returned copy carries both signatures. */}
                     {r.agreementStatus !== 'finalized' &&
@@ -309,7 +309,7 @@ export default function TenancyPage() {
                               r.agreementRevisionDeclaredRent || r.rentAmount,
                             )}
                           </strong>
-                          . Check the document before you sign — if it says
+                          . Check the document before you sign - if it says
                           anything different, flag it instead.
                         </p>
                       )}
@@ -388,7 +388,7 @@ export default function TenancyPage() {
                 {!isLandlord && r.agreementStatus !== 'finalized' && (
                   <p className="mt-3 text-xs text-content-hint">
                     {r.agreementUrl
-                      ? 'Accepting the agreement finalizes it — that is what unlocks rent payment. There is no separate landlord step.'
+                      ? 'Accepting the agreement finalizes it - that is what unlocks rent payment. There is no separate landlord step.'
                       : 'Waiting for your landlord to upload the tenancy agreement. You can accept it here once they do, and that unlocks rent payment.'}
                   </p>
                 )}
@@ -418,10 +418,10 @@ export default function TenancyPage() {
               To accept, sign the agreement and upload the signed copy:
             </p>
             <ol className="mt-3 list-decimal space-y-1 pl-5 text-sm text-content-secondary">
-              <li>Download and read it — your landlord has already signed it</li>
+              <li>Download and read it - your landlord has already signed it</li>
               <li>Print and sign it, or sign on your device</li>
               <li>Photograph or scan the signed pages</li>
-              <li>Upload it here — that completes the agreement</li>
+              <li>Upload it here - that completes the agreement</li>
             </ol>
             <p className="mt-3 text-xs text-content-hint">
               The copy you send back carries both signatures. For court-admissible

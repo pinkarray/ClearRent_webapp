@@ -13,7 +13,7 @@ import { watchMyNotifications } from '../lib/notifications'
 /*
   The signed-in chrome. Before this existed every product route was a bare
   <main> with an ad-hoc "← ClearRent" link, so the only way to move between
-  screens was the browser Back button — the main reason the web read as a
+  screens was the browser Back button - the main reason the web read as a
   website rather than the app.
 
   Mirrors the app's navigation model (`landlord_home_screen.dart:1450`,
@@ -23,7 +23,7 @@ import { watchMyNotifications } from '../lib/notifications'
   sidebar, mobile as a bottom bar, which is where a thumb expects them.
 
   The app drops an unverified tenant to two tabs; here Saved and Messages both
-  work unverified (you can browse and read), so the tab set does not change —
+  work unverified (you can browse and read), so the tab set does not change -
   the verification gate lives where it actually bites, on sending and booking.
 */
 
@@ -271,7 +271,7 @@ export default function AppShell({
       </main>
 
       {/*
-        Mobile navigation — a floating capsule rather than an edge-to-edge bar.
+        Mobile navigation - a floating capsule rather than an edge-to-edge bar.
 
         Only the active tab carries its label, inside a filled pill; the others
         are icon-only. That is what keeps the bar narrow enough to float and
@@ -280,7 +280,7 @@ export default function AppShell({
         stacks.
 
         The label animates via max-width rather than display, so it can
-        transition — and the icon never shifts, because it is outside the
+        transition - and the icon never shifts, because it is outside the
         animating span.
 
         `.mobile-tabbar` is load-bearing: globals.css hides it while the
@@ -291,7 +291,7 @@ export default function AppShell({
         style={{ bottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}
       >
         {/*
-          Genuinely translucent — at 95% opacity the blur was invisible and
+          Genuinely translucent - at 95% opacity the blur was invisible and
           content sliding under it looked clipped rather than layered. 75% with
           a heavy blur is what makes it read as floating above the page.
         */}

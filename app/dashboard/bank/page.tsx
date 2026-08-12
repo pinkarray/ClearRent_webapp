@@ -68,7 +68,7 @@ export default function BankDetailsPage() {
       <div className="mx-auto max-w-2xl">
         <p className="text-content-secondary">
           Required before you can book an inspection, so any refund has somewhere to go. Your
-          account details are stored privately — only you and an admin can read them.
+          account details are stored privately - only you and an admin can read them.
         </p>
 
         {profile?.hasBankDetails && !saved && (

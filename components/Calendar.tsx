@@ -141,7 +141,7 @@ export function Calendar({
               disabled={!selectable}
               aria-pressed={isSelected}
               aria-label={`${day} ${MONTH_NAMES[view.month]} ${view.year}${
-                reason === 'closed' ? ' — not available' : ''
+                reason === 'closed' ? ' - not available' : ''
               }`}
               onClick={() => onChange(iso)}
               className="aspect-square rounded-sm text-sm transition-colors disabled:cursor-not-allowed"

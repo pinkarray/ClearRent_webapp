@@ -22,7 +22,7 @@ import { clientDb } from './firebase-client'
     `participants array-contains uid`. An unscoped read is rejected.
   - Sending a message requires the sender be an ACTIVE participant AND
     `isVerified()`. An unverified tenant gets `permission-denied` on send, not
-    on open — so the composer is disabled up front rather than failing at the
+    on open - so the composer is disabled up front rather than failing at the
     end.
   - Messages carry `timestamp`, not `createdAt`. The ordering index is on
     `timestamp` ascending.

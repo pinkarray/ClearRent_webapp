@@ -7,7 +7,7 @@ import type { Config } from 'tailwindcss'
   `[data-theme="dark"]` flip the whole palette in one place.
 
   The vars hold hex/rgba literals rather than raw channels, so the `/opacity`
-  modifier does not work on these. Use the `-tint` tokens instead — they mirror
+  modifier does not work on these. Use the `-tint` tokens instead - they mirror
   the app's `successLight`/`errorLight` family.
 
   Text colours live under `content` (`text-content`, `text-content-secondary`)

@@ -6,7 +6,7 @@ import { useTheme } from './ThemeProvider'
 
 /*
   Chrome for the public browse pages. They sit outside AppShell because they
-  must stay server-rendered for SEO and must work signed out — but they had no
+  must stay server-rendered for SEO and must work signed out - but they had no
   navigation at all, so a signed-in tenant tapping "Browse" fell out of the app
   onto a page whose only exit was the Back button.
 

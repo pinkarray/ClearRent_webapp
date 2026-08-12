@@ -26,7 +26,7 @@ import { resolveDocStatuses } from './ownership'
     scheduling → inspectionDays, inspectionTimeSlots, updatedAt
 
   Both are `hasOnly`, so slipping one extra key into either write rejects the
-  whole update. Nothing else on a property is agent-writable — rent, address and
+  whole update. Nothing else on a property is agent-writable - rent, address and
   availability stay the landlord's.
 */
 
@@ -68,9 +68,9 @@ export const DAYS = [
 ]
 
 export const TIME_SLOTS = [
-  { value: 'morning', label: 'Morning (9AM – 12PM)' },
-  { value: 'afternoon', label: 'Afternoon (12PM – 3PM)' },
-  { value: 'late_afternoon', label: 'Late afternoon (3PM – 6PM)' },
+  { value: 'morning', label: 'Morning (9AM - 12PM)' },
+  { value: 'afternoon', label: 'Afternoon (12PM - 3PM)' },
+  { value: 'late_afternoon', label: 'Late afternoon (3PM - 6PM)' },
 ] as const
 
 export type AgentProfile = {

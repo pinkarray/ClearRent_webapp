@@ -10,7 +10,7 @@ import { agentProfile, watchHandledProperties, type AgentProfile } from '../lib/
   they get more work.
 
   The "needs vetting" count leads because it is the one number that costs the
-  agent money — an unvetted property cannot be booked, so it earns nothing.
+  agent money - an unvetted property cannot be booked, so it earns nothing.
 */
 export default function AgentHome({ verified }: { verified: boolean }) {
   const { user } = useAuth()
@@ -84,8 +84,8 @@ export default function AgentHome({ verified }: { verified: boolean }) {
 
       <div className="grid gap-3 sm:grid-cols-3">
         {[
-          { label: 'Handling', value: counts?.handling ?? '—' },
-          { label: 'Inspections done', value: profile?.totalInspections ?? '—' },
+          { label: 'Handling', value: counts?.handling ?? '-' },
+          { label: 'Inspections done', value: profile?.totalInspections ?? '-' },
           {
             label: 'Rating',
             value:

@@ -75,7 +75,7 @@ export function currentPermission(): PushState {
 export async function enablePush(uid: string): Promise<string | null> {
   if (!(await pushSupported())) {
     return iosNeedsInstall()
-      ? 'On iPhone, add ClearRent to your Home Screen first — iOS does not allow notifications from a Safari tab.'
+      ? 'On iPhone, add ClearRent to your Home Screen first - iOS does not allow notifications from a Safari tab.'
       : 'This browser does not support notifications.'
   }
 

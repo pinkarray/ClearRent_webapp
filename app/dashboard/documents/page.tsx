@@ -19,12 +19,12 @@ function formatNaira(n: number): string {
 }
 
 function formatDate(d: Date | null): string {
-  if (!d) return '—'
+  if (!d) return '-'
   return d.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 function formatDateTime(d: Date | null): string {
-  if (!d) return '—'
+  if (!d) return '-'
   return d.toLocaleString('en-NG', {
     day: 'numeric',
     month: 'short',
@@ -165,7 +165,7 @@ export default function DocumentsPage() {
                         share(
                           'active_rentals',
                           r.id,
-                          `Tenancy Agreement – ${r.propertyTitle}`,
+                          `Tenancy Agreement - ${r.propertyTitle}`,
                         )
                       }
                     >
@@ -205,7 +205,7 @@ export default function DocumentsPage() {
                       className="btn-ghost px-4 py-2 text-sm"
                       disabled={busyId === l.id}
                       onClick={() =>
-                        share('tenancy_links', l.id, `Tenancy Agreement – ${l.propertyTitle}`)
+                        share('tenancy_links', l.id, `Tenancy Agreement - ${l.propertyTitle}`)
                       }
                     >
                       Share

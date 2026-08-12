@@ -67,12 +67,12 @@ export default function LandlordRentals() {
       ) : rows.length === 0 ? (
         <div className="card p-8 text-center">
           <p className="text-content-secondary">No tenants yet.</p>
-          {/* It appears on ACCEPTANCE, not on payment — rental_interest_ops
+          {/* It appears on ACCEPTANCE, not on payment - rental_interest_ops
               creates it there. The old copy told landlords to wait for a
               payment that cannot happen until they have uploaded an agreement
               from this very page. */}
           <p className="mt-1 text-sm text-content-hint">
-            A rental appears here as soon as you accept a tenant — that is where you upload
+            A rental appears here as soon as you accept a tenant - that is where you upload
             the tenancy agreement.
           </p>
         </div>
@@ -104,7 +104,7 @@ export default function LandlordRentals() {
             {/*
               Move-out handover. The tenant has given notice; confirming ends
               the tenancy and frees the unit. If the landlord never acts, the
-              auto-confirm sweep does this server-side — so this is a shortcut,
+              auto-confirm sweep does this server-side - so this is a shortcut,
               not a veto, which is why there is no "reject" here.
             */}
             {r.status === 'moveout_pending' && (
@@ -119,7 +119,7 @@ export default function LandlordRentals() {
                   <div className="mt-3">
                     <p className="text-sm text-content-secondary">
                       Caution deposit on record: {formatNaira(r.cautionDeposit)}. It is
-                      returned in full unless you declare a deduction — ClearRent never
+                      returned in full unless you declare a deduction - ClearRent never
                       holds this money, so this is a record, not a transfer.
                     </p>
                     <div className="mt-2 flex flex-wrap gap-3">

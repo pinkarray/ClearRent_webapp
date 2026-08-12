@@ -199,7 +199,7 @@ export default function Pricing() {
         </div>
 
         <p style={{ textAlign: 'center', marginTop: 32, fontSize: 13, color: 'var(--text-hint)' }}>
-          Inspection fees are separate and transparent — you see exactly what you pay before booking.
+          Inspection fees are separate and transparent - you see exactly what you pay before booking.
         </p>
       </div>
     </section>

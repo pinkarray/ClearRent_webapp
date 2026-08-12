@@ -4,7 +4,7 @@
 
   The problem this solves: a button that reads "Save" and is still clickable
   after saving gives no signal that anything happened, so people click it again
-  — and a second identical write is at best wasted and at worst confusing when
+  - and a second identical write is at best wasted and at worst confusing when
   it races the first. Comparing the current values against the last saved ones
   lets the button say "Saved" and go quiet until something actually changes.
 

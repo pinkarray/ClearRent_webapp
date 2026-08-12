@@ -13,11 +13,11 @@ import {
 import { clientDb } from './firebase-client'
 
 /*
-  Saved properties live at `users/{uid}/savedProperties/{propertyId}` — a
+  Saved properties live at `users/{uid}/savedProperties/{propertyId}` - a
   subcollection the owner alone can read or write (`firestore.rules:125`).
 
   Note the root `saved_properties` collection is `allow read, write: if false`
-  (rules:589). It is dead, not an alternative — writing there fails silently
+  (rules:589). It is dead, not an alternative - writing there fails silently
   from the caller's point of view. Mirrors `saved_properties_service.dart`.
 */
 

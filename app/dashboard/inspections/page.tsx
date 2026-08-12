@@ -39,9 +39,9 @@ type Row = {
 const STATUS_COPY: Record<string, string> = {
   pending: 'Waiting for the handler to approve',
   approved: 'Approved',
-  pendingPayment: 'Approved — payment needed',
+  pendingPayment: 'Approved - payment needed',
   pendingVerification: 'Checking your payment',
-  declinedByAgent: 'Declined by the agent — the landlord may still approve',
+  declinedByAgent: 'Declined by the agent - the landlord may still approve',
   declined: 'Declined',
   completed: 'Completed',
   cancelled: 'Cancelled',
@@ -240,10 +240,10 @@ export default function TenantInspectionsPage() {
                 />
 
                 {/* The step nobody found. It is not a footnote on a finished
-                    inspection — it is how a tenancy starts, and nothing else
+                    inspection - it is how a tenancy starts, and nothing else
                     on the platform moves until the tenant does it. Given its
                     own tinted block for that reason. */}
-                {/* Already told them — the tenancy is under way, so point at it
+                {/* Already told them - the tenancy is under way, so point at it
                     instead of asking the same question again. */}
                 {r.status === 'completed' && claimed.has(r.propertyId) && (
                   <div className="mt-4 border-t border-divider pt-4">
@@ -259,7 +259,7 @@ export default function TenantInspectionsPage() {
 
                 {r.status === 'completed' && r.tenantRated && !claimed.has(r.propertyId) && (
                   <div className="mt-4 rounded-md bg-primary-tint p-4">
-                    <p className="font-semibold text-content">Next step — want to rent it?</p>
+                    <p className="font-semibold text-content">Next step - want to rent it?</p>
                     <p className="mt-0.5 text-sm text-content-secondary">
                       Telling the landlord is what starts the tenancy. They cannot offer you
                       the place until you do, and nothing is charged now.
@@ -273,7 +273,7 @@ export default function TenantInspectionsPage() {
                     </button>
                     {interestId && (
                       <p className="mt-2 text-sm text-primary">
-                        Sent —{' '}
+                        Sent -{' '}
                         <Link href="/dashboard/tenancy" className="no-underline underline">
                           track it under Tenancy
                         </Link>

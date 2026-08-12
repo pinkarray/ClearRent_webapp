@@ -269,7 +269,7 @@ export async function finalizeVerificationPayment(
   } catch (err) {
     const code = (err as { code?: string })?.code ?? ''
     if (code === 'functions/unauthenticated') {
-      return 'You were charged, but the request was rejected (sign-in or App Check). Reload and reopen this page — nothing is lost.'
+      return 'You were charged, but the request was rejected (sign-in or App Check). Reload and reopen this page - nothing is lost.'
     }
     if (code === 'functions/failed-precondition') {
       return (

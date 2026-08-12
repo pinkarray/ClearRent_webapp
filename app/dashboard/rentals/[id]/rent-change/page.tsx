@@ -98,7 +98,7 @@ export default function RentChangePage() {
         <p className="text-lg font-semibold text-content">Submitted for review</p>
         <p className="mt-2 text-sm text-content-secondary">
           An admin reviews every rent change. If approved, the new rent applies at your
-          tenant&apos;s next renewal — never mid-lease.
+          tenant&apos;s next renewal - never mid-lease.
         </p>
         <button
           className="btn-primary mt-6 px-6 py-3"
@@ -166,7 +166,7 @@ export default function RentChangePage() {
       <label className="block">
         <span className="text-sm font-medium text-content">Justification</span>
         <span className="mt-0.5 block text-xs text-content-hint">
-          An admin reads this. Be specific — what changed, and what it cost.
+          An admin reads this. Be specific - what changed, and what it cost.
         </span>
         <textarea
           className="input-field mt-1.5 px-4 py-3"

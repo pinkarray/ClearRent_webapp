@@ -257,7 +257,7 @@ export default function EditListingPage() {
             <p className="mt-1 text-sm text-content-secondary">
               This property is vetted and bookable
               {listing.readinessCheckedBy && listing.readinessCheckedBy !== user.uid
-                ? ' — your assigned agent confirmed it.'
+                ? ' - your assigned agent confirmed it.'
                 : '.'}{' '}
               Tenants can request inspections now.
             </p>

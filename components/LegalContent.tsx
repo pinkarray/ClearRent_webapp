@@ -76,15 +76,15 @@ export function PrivacyPolicyContent() {
         'Usage data: How you interact with the platform, device information, IP address',
         'Communications: Messages sent through our in-app chat system',
       ])}
-      {p('Some of this information — in particular your NIN, income details, and verification documents — constitutes sensitive personal data under the NDPA, and we apply additional safeguards to it as described in Section 5.')}
+      {p('Some of this information - in particular your NIN, income details, and verification documents - constitutes sensitive personal data under the NDPA, and we apply additional safeguards to it as described in Section 5.')}
 
       {h('3. Lawful Basis for Processing')}
       {p('Under the NDPA, we process your personal data on one or more of the following lawful bases:')}
       {ul([
-        'Consent — for optional processing, such as tenant profile details used for matching. You may withdraw consent at any time (see Section 8).',
-        'Performance of a contract — to provide the services you sign up for, including verification, listings, inspections, and payments.',
-        'Legal obligation — to comply with Nigerian law, including anti-fraud, tax, and record-keeping requirements.',
-        'Legitimate interest — to operate, secure, and improve the platform, and to prevent fraud, provided this does not override your rights and freedoms.',
+        'Consent - for optional processing, such as tenant profile details used for matching. You may withdraw consent at any time (see Section 8).',
+        'Performance of a contract - to provide the services you sign up for, including verification, listings, inspections, and payments.',
+        'Legal obligation - to comply with Nigerian law, including anti-fraud, tax, and record-keeping requirements.',
+        'Legitimate interest - to operate, secure, and improve the platform, and to prevent fraud, provided this does not override your rights and freedoms.',
       ])}
       {p('Where we rely on consent for sensitive personal data (such as your NIN for identity verification), we obtain that consent explicitly at the point of collection.')}
 
@@ -115,9 +115,9 @@ export function PrivacyPolicyContent() {
       {h('7. Who We Share Your Data With')}
       {p('We do not sell your personal data. We may share limited information with:')}
       {ul([
-        'Other verified platform users — only what is necessary for a transaction (for example, a tenant\'s name and verified status visible to a landlord, or a handler\'s contact details for a booked inspection)',
-        'Infrastructure and payment providers — Google Firebase, Cloudinary, and Paystack, acting as data processors under data processing agreements',
-        'Regulatory and law-enforcement authorities — where required by Nigerian law, regulation, or valid court order',
+        'Other verified platform users - only what is necessary for a transaction (for example, a tenant\'s name and verified status visible to a landlord, or a handler\'s contact details for a booked inspection)',
+        'Infrastructure and payment providers - Google Firebase, Cloudinary, and Paystack, acting as data processors under data processing agreements',
+        'Regulatory and law-enforcement authorities - where required by Nigerian law, regulation, or valid court order',
       ])}
 
       {h('8. Your Rights')}
@@ -127,14 +127,14 @@ export function PrivacyPolicyContent() {
         'Rectify inaccurate or incomplete information',
         'Erase your account and associated personal data, subject to legal retention requirements',
         'Restrict or object to certain processing',
-        'Data portability — receive your data in a structured, commonly used format',
+        'Data portability - receive your data in a structured, commonly used format',
         'Withdraw consent for any processing based on consent, without affecting prior lawful processing',
         'Lodge a complaint with the Nigeria Data Protection Commission (NDPC)',
       ])}
       {p('To exercise any of these rights, contact us at info@verealtytech.com. We will respond within the timeframe required by the NDPA.')}
 
       {h('9. Data Retention')}
-      {p('We retain your personal data for as long as your account is active. If you delete your account, we will remove your personal data within 30 days, except where retention is required by law — for example, financial and transaction records, which we retain for the period required under applicable Nigerian tax and company law (generally up to six years). Anonymised or aggregated data that no longer identifies you may be retained for analytics.')}
+      {p('We retain your personal data for as long as your account is active. If you delete your account, we will remove your personal data within 30 days, except where retention is required by law - for example, financial and transaction records, which we retain for the period required under applicable Nigerian tax and company law (generally up to six years). Anonymised or aggregated data that no longer identifies you may be retained for analytics.')}
 
       {h('10. Children\'s Privacy')}
       {p('ClearRent is not intended for use by persons under 18 years of age. We do not knowingly collect personal data from minors. If you believe a minor has registered on our platform, please contact us immediately and we will remove the account and associated data.')}
@@ -214,7 +214,7 @@ export function TermsContent() {
         'Agents: not to divert a landlord\'s prospective tenants to off-platform deals, and not to collect any platform fee outside the platform',
         'Tenants: not to arrange to rent a property discovered through ClearRent directly with the landlord or agent in order to avoid the deal completion fee',
       ])}
-      {p('For the avoidance of doubt, this does not restrict legitimate direct arrangements that fall outside ClearRent\'s fees — for example, transport or logistics costs agreed directly between a tenant and an agent for travel to an inspection.')}
+      {p('For the avoidance of doubt, this does not restrict legitimate direct arrangements that fall outside ClearRent\'s fees - for example, transport or logistics costs agreed directly between a tenant and an agent for travel to an inspection.')}
       {p('We may suspend or ban any account, and pursue recovery of avoided fees, where we reasonably believe deliberate circumvention has occurred.')}
 
       {h('10. Fees and Payments')}
@@ -299,9 +299,9 @@ export function CookiePolicyContent() {
       {h('Essential Cookies')}
       {p('These cookies are necessary for the website to function and cannot be disabled.')}
       {ul([
-        'Theme preference — remembers whether you selected light, dark, or system theme so it persists between visits. Stored in localStorage as "clearrent-theme".',
-        'Session cookies — used by Next.js for routing and rendering. These expire when you close your browser.',
-        'Authentication state — when you use email verification or sign-in features, Google Firebase may store authentication data in your browser to manage your session.',
+        'Theme preference - remembers whether you selected light, dark, or system theme so it persists between visits. Stored in localStorage as "clearrent-theme".',
+        'Session cookies - used by Next.js for routing and rendering. These expire when you close your browser.',
+        'Authentication state - when you use email verification or sign-in features, Google Firebase may store authentication data in your browser to manage your session.',
       ])}
 
       {h('Analytics Cookies')}
@@ -313,9 +313,9 @@ export function CookiePolicyContent() {
       {h('3. Third-Party Services')}
       {p('Our website uses the following third-party services that may set their own cookies or use local storage:')}
       {ul([
-        'Google Fonts — used to load the Outfit and Lora typefaces. Google may collect limited data on font requests. See Google\'s Privacy Policy for details.',
-        'Google Firebase — used for authentication (including email verification) and may store authentication state in your browser. See Google\'s Privacy Policy for details.',
-        'Vercel — our hosting provider may set functional cookies as part of their infrastructure. See Vercel\'s Privacy Policy for details.',
+        'Google Fonts - used to load the Outfit and Lora typefaces. Google may collect limited data on font requests. See Google\'s Privacy Policy for details.',
+        'Google Firebase - used for authentication (including email verification) and may store authentication state in your browser. See Google\'s Privacy Policy for details.',
+        'Vercel - our hosting provider may set functional cookies as part of their infrastructure. See Vercel\'s Privacy Policy for details.',
       ])}
 
       {h('4. Local Storage')}

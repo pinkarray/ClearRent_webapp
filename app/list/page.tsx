@@ -16,12 +16,15 @@ const LAGOS = 'Lagos'
 // system understands, so a web-created listing rendered with a raw type string
 // in the app and matched no tenant filter. 'shop' is out until the commercial
 // branch exists, same as the app.
+// Web lists WHOLE properties only, so this mirrors
+// PropertyModel.wholePropertyTypes — 'room' is absent because a lone room is a
+// unit inside a building, which is the app's grouped flow.
 const PROPERTY_TYPES: Array<[value: string, label: string]> = [
   ['flat', 'Flat'],
   ['duplex', 'Duplex'],
-  ['selfContain', 'Self Contain'],
   ['bungalow', 'Bungalow'],
-  ['room', 'Room'],
+  ['selfContain', 'Self Contain'],
+  ['miniFlat', 'Mini Flat'],
 ]
 // Matches the app's current vocabulary. 'pop' replaced the legacy
 // 'false_ceiling'; a property can carry more than one.

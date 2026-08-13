@@ -44,6 +44,18 @@ export type PublicProperty = {
   unitLabel: string
   floor: string
   /**
+   * For single-space types (room / room & parlour / self contain): what the
+   * tenant gets exclusively. 'private' | 'shared', and 'none' for a kitchen.
+   * Empty on a multi-room dwelling, where facilities are private by
+   * construction, and on listings written before the fields existed.
+   *
+   * This is what separates a shared room from a self-contained flat — without
+   * it both rendered as "1 bed · 1 bath".
+   */
+  bathroomAccess: string
+  toiletAccess: string
+  kitchenAccess: string
+  /**
    * What the whole building is (duplex, compound, storey building), from the
    * BUILDING doc. Deliberately NOT the building's name: the app asks for names
    * like "Olu Compound, 12 Allen Ave", so a name routinely carries the street
@@ -169,6 +181,9 @@ function toPublicProperty(
     floor: buildingId.length > 0 ? str(d.floor) : '',
     structure:
       buildingId.length > 0 ? buildings.get(buildingId)?.structure ?? '' : '',
+    bathroomAccess: str(d.bathroomAccess),
+    toiletAccess: str(d.toiletAccess),
+    kitchenAccess: str(d.kitchenAccess),
     createdAt: createdAt?.toDate ? createdAt.toDate().toISOString() : null,
   }
 }
@@ -283,6 +298,8 @@ export {
   formatNairaFull,
   rentPeriod,
   propertyTypeLabel,
+  isSingleSpace,
+  sharedFacilities,
   unitContext,
 } from './format'
 

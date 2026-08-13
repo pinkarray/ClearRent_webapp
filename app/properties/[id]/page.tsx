@@ -7,12 +7,22 @@ import SaveButton from '../../../components/SaveButton'
 import {
   formatNairaFull,
   getPublishedProperty,
+  isSingleSpace,
   propertyTypeLabel,
   rentPeriod,
   totalPackage,
   unitContext,
   type PublicProperty,
 } from '../../../lib/property'
+
+/** Listings written before the access fields existed carry ''. Say so rather
+ *  than guessing — "private" would overclaim, "shared" would undersell. */
+function accessLabel(access: string): string {
+  if (access === 'private') return 'Private'
+  if (access === 'shared') return 'Shared'
+  if (access === 'none') return 'None'
+  return 'Not stated'
+}
 
 export const revalidate = 300
 
@@ -162,11 +172,25 @@ export default async function PropertyDetailPage({ params }: Props) {
             <div className="card p-6">
               <h2 className="text-lg font-semibold text-content">The space</h2>
               <div className="mt-3 grid grid-cols-2 gap-x-6 sm:grid-cols-3">
-                <Row label="Bedrooms" value={String(property.bedrooms)} />
-                <Row label="Bathrooms" value={String(property.bathrooms)} />
-                <Row label="Toilets" value={String(property.toilets)} />
-                <Row label="Living rooms" value={String(property.livingRooms)} />
-                <Row label="Kitchens" value={String(property.kitchens)} />
+                {/* A single space is described by what the tenant gets
+                    exclusively, not by room counts — "Bedrooms 1" for a room is
+                    a tautology, and it read identically to a self-contained
+                    flat. */}
+                {isSingleSpace(property.propertyType) ? (
+                  <>
+                    <Row label="Bathroom" value={accessLabel(property.bathroomAccess)} />
+                    <Row label="Toilet" value={accessLabel(property.toiletAccess)} />
+                    <Row label="Kitchen" value={accessLabel(property.kitchenAccess)} />
+                  </>
+                ) : (
+                  <>
+                    <Row label="Bedrooms" value={String(property.bedrooms)} />
+                    <Row label="Bathrooms" value={String(property.bathrooms)} />
+                    <Row label="Toilets" value={String(property.toilets)} />
+                    <Row label="Living rooms" value={String(property.livingRooms)} />
+                    <Row label="Kitchens" value={String(property.kitchens)} />
+                  </>
+                )}
                 {property.ceilingTypes.length > 0 && (
                   <Row
                     label="Ceiling"

@@ -104,6 +104,18 @@ export async function createListing(uid: string, input: ListingInput): Promise<s
     // the accept-time slot guard keys off this number, so it is not the
     // landlord's to raise. firestore.rules pins it to 1.
     maxTenants: 1,
+    // Self contain is the one single-space type web can list, and it means
+    // self-contained — private facilities by definition. Writing them keeps it
+    // from rendering as "Not stated" next to app-created listings. The other
+    // web types are multi-room, where facilities are private by construction
+    // and the fields are deliberately absent.
+    ...(input.propertyType === 'selfContain'
+      ? {
+          bathroomAccess: 'private',
+          toiletAccess: 'private',
+          kitchenAccess: 'private',
+        }
+      : {}),
     viewCount: 0,
     inquiryCount: 0,
     savedCount: 0,

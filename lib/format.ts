@@ -26,15 +26,40 @@ export function rentPeriod(frequency: string): string {
 const TYPE_LABELS: Record<string, string> = {
   flat: 'Flat',
   duplex: 'Duplex',
-  selfContain: 'Self Contain',
   bungalow: 'Bungalow',
+  selfContain: 'Self Contain',
+  miniFlat: 'Mini Flat',
   room: 'Room',
+  roomAndParlour: 'Room & Parlour',
   shop: 'Shop',
   office: 'Office',
 }
 
 export function propertyTypeLabel(value: string): string {
   return TYPE_LABELS[value] ?? value
+}
+
+/**
+ * Types that are ONE space. They have no meaningful bedroom count — what
+ * separates them is which facilities are the tenant's own, so their spec is
+ * [sharedFacilities], not "1 bed · 1 bath".
+ */
+export function isSingleSpace(type: string): boolean {
+  return type === 'room' || type === 'roomAndParlour' || type === 'selfContain'
+}
+
+/** "shared bathroom · shared kitchen". Empty when nothing is shared. */
+export function sharedFacilities(p: {
+  bathroomAccess: string
+  toiletAccess: string
+  kitchenAccess: string
+}): string {
+  const parts: string[] = []
+  if (p.bathroomAccess === 'shared') parts.push('shared bathroom')
+  if (p.toiletAccess === 'shared') parts.push('shared toilet')
+  if (p.kitchenAccess === 'shared') parts.push('shared kitchen')
+  else if (p.kitchenAccess === 'none') parts.push('no kitchen')
+  return parts.join(' · ')
 }
 
 /** BuildingModel.structures — what the whole building is. */

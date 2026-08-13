@@ -1,11 +1,19 @@
 import Link from 'next/link'
 import { CloudinaryImage } from './CloudinaryImage'
-import { formatNaira, rentPeriod, unitContext } from '../lib/format'
+import {
+  formatNaira,
+  isSingleSpace,
+  rentPeriod,
+  sharedFacilities,
+  unitContext,
+} from '../lib/format'
 import type { PublicProperty } from '../lib/property'
 
 export function PropertyCard({ property }: { property: PublicProperty }) {
   const cover = property.images[0]
   const unit = unitContext(property)
+  const singleSpace = isSingleSpace(property.propertyType)
+  const shared = sharedFacilities(property)
 
   return (
     <Link href={`/properties/${property.id}`} className="card block overflow-hidden no-underline">
@@ -52,10 +60,19 @@ export function PropertyCard({ property }: { property: PublicProperty }) {
           {property.approximateAddress}
         </p>
 
+        {/* A single space has no meaningful room count — "1 bed · 1 bath" made
+            a shared room identical to a self-contained one-bedroom flat. What
+            it comes with is the real spec. */}
         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-content-secondary">
-          <span>{property.bedrooms} bed</span>
-          <span>{property.bathrooms} bath</span>
-          <span>{property.toilets} toilet</span>
+          {singleSpace ? (
+            <span>{shared || 'Private bathroom & kitchen'}</span>
+          ) : (
+            <>
+              <span>{property.bedrooms} bed</span>
+              <span>{property.bathrooms} bath</span>
+              <span>{property.toilets} toilet</span>
+            </>
+          )}
         </div>
       </div>
     </Link>

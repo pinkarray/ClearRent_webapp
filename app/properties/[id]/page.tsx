@@ -7,8 +7,10 @@ import SaveButton from '../../../components/SaveButton'
 import {
   formatNairaFull,
   getPublishedProperty,
+  propertyTypeLabel,
   rentPeriod,
   totalPackage,
+  unitContext,
   type PublicProperty,
 } from '../../../lib/property'
 
@@ -112,14 +114,22 @@ export default async function PropertyDetailPage({ params }: Props) {
 
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <span className="verified-badge">Ownership verified</span>
-          <span className="text-sm capitalize text-content-secondary">
-            {property.propertyType.replace(/_/g, ' ')}
+          <span className="text-sm text-content-secondary">
+            {propertyTypeLabel(property.propertyType)}
           </span>
         </div>
 
         <h1 className="mt-3 text-3xl font-bold text-content sm:text-4xl">
           {property.title}
         </h1>
+
+        {/* What this unit is and what it sits in, for a unit inside a
+            building. The building's name is withheld - it carries the street. */}
+        {unitContext(property) && (
+          <p className="mt-1 text-sm text-content-secondary">
+            {unitContext(property)}
+          </p>
+        )}
         <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
           <p className="text-content-secondary">{property.approximateAddress}</p>
           <SaveButton propertyId={property.id} />

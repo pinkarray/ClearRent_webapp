@@ -6,7 +6,23 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '../../components/AuthProvider'
 import { createListing, uploadImage, type ListingInput } from '../../lib/create-listing'
 
-const PROPERTY_TYPES = ['flat', 'bungalow', 'duplex', 'self_contain', 'single_room', 'shop']
+// ClearRent operates in Lagos today, so the State field is defaulted rather
+// than fixed. Nothing rejects another state outright: admin review is the gate,
+// and it is the only one that can say yes on the day we expand.
+const LAGOS = 'Lagos'
+
+// The app's actual vocabulary (PropertyModel.selectableTypes). This list used
+// to read 'self_contain' / 'single_room' / 'shop' — values nothing else in the
+// system understands, so a web-created listing rendered with a raw type string
+// in the app and matched no tenant filter. 'shop' is out until the commercial
+// branch exists, same as the app.
+const PROPERTY_TYPES: Array<[value: string, label: string]> = [
+  ['flat', 'Flat'],
+  ['duplex', 'Duplex'],
+  ['selfContain', 'Self Contain'],
+  ['bungalow', 'Bungalow'],
+  ['room', 'Room'],
+]
 // Matches the app's current vocabulary. 'pop' replaced the legacy
 // 'false_ceiling'; a property can carry more than one.
 const CEILING_TYPES = ['pop', 'pvc', 'concrete', 'asbestos', 'slate', 'none']
@@ -32,7 +48,6 @@ type Draft = {
   cautionDepositRefundable: boolean
   amenities: string
   rules: string
-  maxTenants: string
   landlordLivesInProperty: boolean
   landlordLivesOnPremises: boolean
   currentTenantsCount: string
@@ -54,7 +69,7 @@ const EMPTY: Draft = {
   kitchens: '1',
   address: '',
   city: '',
-  state: '',
+  state: LAGOS,
   lga: '',
   rent: '',
   rentFrequency: 'yearly',
@@ -63,7 +78,6 @@ const EMPTY: Draft = {
   cautionDepositRefundable: true,
   amenities: '',
   rules: '',
-  maxTenants: '1',
   landlordLivesInProperty: false,
   landlordLivesOnPremises: false,
   currentTenantsCount: '0',
@@ -163,7 +177,6 @@ export default function ListPropertyPage() {
         cautionDepositRefundable: draft.cautionDepositRefundable,
         amenities: csv(draft.amenities),
         rules: csv(draft.rules),
-        maxTenants: toInt(draft.maxTenants, 1),
         landlordLivesInProperty: draft.landlordLivesInProperty,
         landlordLivesOnPremises: draft.landlordLivesOnPremises,
         currentTenantsCount: toInt(draft.currentTenantsCount),
@@ -237,6 +250,18 @@ export default function ListPropertyPage() {
           </div>
         )}
 
+        {/* Web lists whole properties only. Grouping units under one building
+            (a room in your duplex, two flats in one compound) lives in the app,
+            where the building picker and its shared ownership document are. */}
+        <div className="card mt-6 border-l-4 border-l-primary p-5">
+          <p className="font-semibold text-content">This lists a whole property</p>
+          <p className="mt-1 text-sm text-content-secondary">
+            One tenant gets the entire place. Letting rooms or flats separately -
+            each at its own rent, under one ownership document - is done in the
+            ClearRent app.
+          </p>
+        </div>
+
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
           <section className="card space-y-4 p-6">
             <h2 className="font-semibold text-content">The basics</h2>
@@ -264,9 +289,9 @@ export default function ListPropertyPage() {
                   value={draft.propertyType}
                   onChange={(e) => set('propertyType', e.target.value)}
                 >
-                  {PROPERTY_TYPES.map((t) => (
-                    <option key={t} value={t}>
-                      {t.replace(/_/g, ' ')}
+                  {PROPERTY_TYPES.map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
                     </option>
                   ))}
                 </select>
@@ -358,7 +383,19 @@ export default function ListPropertyPage() {
                   onChange={(e) => set('city', e.target.value)}
                 />
               </Field>
-              <Field label="State">
+              {/* Not gated: ClearRent operates in Lagos today, but every
+                  listing is reviewed by an admin before it can be browsed, and
+                  that is where an out-of-state listing is approved or
+                  rejected. Defaulted rather than fixed, so opening another
+                  state costs no release. */}
+              <Field
+                label="State"
+                hint={
+                  draft.state.trim().toLowerCase() === LAGOS.toLowerCase()
+                    ? undefined
+                    : 'ClearRent operates in Lagos today. Listings elsewhere are reviewed and may not be approved yet.'
+                }
+              >
                 <input
                   className="input-field px-4 py-3"
                   required
@@ -462,26 +499,22 @@ export default function ListPropertyPage() {
                 onChange={(e) => set('rules', e.target.value)}
               />
             </Field>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Max tenants">
-                <input
-                  className="input-field px-4 py-3"
-                  type="number"
-                  min={1}
-                  value={draft.maxTenants}
-                  onChange={(e) => set('maxTenants', e.target.value)}
-                />
-              </Field>
-              <Field label="Current tenants">
-                <input
-                  className="input-field px-4 py-3"
-                  type="number"
-                  min={0}
-                  value={draft.currentTenantsCount}
-                  onChange={(e) => set('currentTenantsCount', e.target.value)}
-                />
-              </Field>
-            </div>
+            {/* "Max tenants" used to be a free number here. One listing = one
+                tenancy: the rent, caution deposit, agent fee, agreement and
+                Paystack split on this doc are all singular, and the accept-time
+                slot guard keys off whatever is stored - so a value above 1 let
+                a second tenant in against the first one's terms. Two lettable
+                units are two listings sharing a building. firestore.rules now
+                pins maxTenants to 1; createListing sends it. */}
+            <Field label="Current tenants">
+              <input
+                className="input-field px-4 py-3"
+                type="number"
+                min={0}
+                value={draft.currentTenantsCount}
+                onChange={(e) => set('currentTenantsCount', e.target.value)}
+              />
+            </Field>
             <div className="space-y-2 text-sm text-content">
               {(
                 [

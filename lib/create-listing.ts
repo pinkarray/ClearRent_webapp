@@ -34,7 +34,6 @@ export type ListingInput = {
   cautionDepositRefundable: boolean
   amenities: string[]
   rules: string[]
-  maxTenants: number
   landlordLivesInProperty: boolean
   landlordLivesOnPremises: boolean
   currentTenantsCount: number
@@ -101,7 +100,10 @@ export async function createListing(uid: string, input: ListingInput): Promise<s
     assignedAgentId: null,
     assignedAgentName: null,
     assignedAgentPhone: null,
-    maxTenants: input.maxTenants,
+    // One listing = one tenancy. Everything priced on this doc is singular, and
+    // the accept-time slot guard keys off this number, so it is not the
+    // landlord's to raise. firestore.rules pins it to 1.
+    maxTenants: 1,
     viewCount: 0,
     inquiryCount: 0,
     savedCount: 0,

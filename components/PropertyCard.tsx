@@ -1,9 +1,11 @@
 import Link from 'next/link'
 import { CloudinaryImage } from './CloudinaryImage'
-import { formatNaira, rentPeriod, type PublicProperty } from '../lib/property'
+import { formatNaira, rentPeriod, unitContext } from '../lib/format'
+import type { PublicProperty } from '../lib/property'
 
 export function PropertyCard({ property }: { property: PublicProperty }) {
   const cover = property.images[0]
+  const unit = unitContext(property)
 
   return (
     <Link href={`/properties/${property.id}`} className="card block overflow-hidden no-underline">
@@ -39,6 +41,12 @@ export function PropertyCard({ property }: { property: PublicProperty }) {
         <h3 className="mt-1 line-clamp-1 text-base font-semibold text-content">
           {property.title}
         </h3>
+
+        {/* Which unit, when it's one of several in a building — two identical
+            flats in one compound are otherwise the same card twice. */}
+        {unit && (
+          <p className="mt-0.5 line-clamp-1 text-xs text-content-hint">{unit}</p>
+        )}
 
         <p className="mt-1 line-clamp-1 text-sm text-content-secondary">
           {property.approximateAddress}

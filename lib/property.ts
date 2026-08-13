@@ -36,6 +36,21 @@ export type PublicProperty = {
   rules: string[]
   recurringDues: { name?: string; amount?: number; frequency?: string }[]
   ceilingTypes: string[]
+  /**
+   * Which unit this is inside its building — "Room 2", "Left flat" — and its
+   * floor. Empty for a whole-property listing. Two units of the same shape in
+   * one compound are otherwise the same card twice.
+   */
+  unitLabel: string
+  floor: string
+  /**
+   * What the whole building is (duplex, compound, storey building), from the
+   * BUILDING doc. Deliberately NOT the building's name: the app asks for names
+   * like "Olu Compound, 12 Allen Ave", so a name routinely carries the street
+   * address that `private/location` exists to withhold. Empty when standalone,
+   * or when the building predates the field.
+   */
+  structure: string
   createdAt: string | null
 }
 
@@ -86,9 +101,11 @@ function approximateAddress(d: RawProperty): string {
  * Mirrors `_effectiveDocStatus` in property_detail_screen.dart, including its
  * default: unknown building ⇒ 'pending', never 'verified'.
  */
-function effectiveDocStatus(d: RawProperty, buildingStatuses: Map<string, string>): string {
+function effectiveDocStatus(d: RawProperty, buildings: Map<string, BuildingInfo>): string {
   const buildingId = str(d.buildingId)
-  if (buildingId.length > 0) return buildingStatuses.get(buildingId) ?? 'pending'
+  if (buildingId.length > 0) {
+    return buildings.get(buildingId)?.ownershipDocStatus ?? 'pending'
+  }
   return str(d.ownershipDocStatus, 'none')
 }
 
@@ -97,7 +114,7 @@ function effectiveDocStatus(d: RawProperty, buildingStatuses: Map<string, string
  * Written as an allowlist on the literal 'verified' — the rules file documents
  * how a denylist let 'inherited' and 'not_uploaded' walk through every guard.
  */
-function isPublishable(d: RawProperty, buildingStatuses: Map<string, string>): boolean {
+function isPublishable(d: RawProperty, buildings: Map<string, BuildingInfo>): boolean {
   // `isListable` in the Flutter model: the landlord's availability toggle AND
   // an actually-open spot.
   const hasAvailableSpots = num(d.currentTenantsCount) < num(d.maxTenants, 1)
@@ -105,12 +122,17 @@ function isPublishable(d: RawProperty, buildingStatuses: Map<string, string>): b
     d.isAvailable === true &&
     hasAvailableSpots &&
     d.readyForInspections === true &&
-    effectiveDocStatus(d, buildingStatuses) === 'verified'
+    effectiveDocStatus(d, buildings) === 'verified'
   )
 }
 
-function toPublicProperty(id: string, d: RawProperty): PublicProperty {
+function toPublicProperty(
+  id: string,
+  d: RawProperty,
+  buildings: Map<string, BuildingInfo>
+): PublicProperty {
   const createdAt = d.createdAt as { toDate?: () => Date } | undefined
+  const buildingId = str(d.buildingId)
 
   return {
     id,
@@ -141,26 +163,46 @@ function toPublicProperty(id: string, d: RawProperty): PublicProperty {
       ? (d.recurringDues as PublicProperty['recurringDues'])
       : [],
     ceilingTypes: parseCeilingTypes(d),
+    // Only meaningful for a grouped unit; a whole-property listing has no
+    // siblings to be told apart from.
+    unitLabel: buildingId.length > 0 ? str(d.unitLabel) : '',
+    floor: buildingId.length > 0 ? str(d.floor) : '',
+    structure:
+      buildingId.length > 0 ? buildings.get(buildingId)?.structure ?? '' : '',
     createdAt: createdAt?.toDate ? createdAt.toDate().toISOString() : null,
   }
 }
 
 /**
- * Loads the ownership-doc status of every building referenced by [docs], so
- * grouped units can be resolved without an N+1 read per unit.
+ * What a grouped unit needs from its building. The NAME is deliberately not
+ * here — it routinely carries the street address (see PublicProperty.structure)
+ * and this object feeds public pages.
  */
-async function loadBuildingStatuses(docs: RawProperty[]): Promise<Map<string, string>> {
+type BuildingInfo = {
+  ownershipDocStatus: string
+  structure: string
+}
+
+/**
+ * Loads every building referenced by [docs], so grouped units can be resolved
+ * without an N+1 read per unit.
+ */
+async function loadBuildings(docs: RawProperty[]): Promise<Map<string, BuildingInfo>> {
   const ids = [...new Set(docs.map((d) => str(d.buildingId)).filter((id) => id.length > 0))]
-  const statuses = new Map<string, string>()
-  if (ids.length === 0) return statuses
+  const buildings = new Map<string, BuildingInfo>()
+  if (ids.length === 0) return buildings
 
   const db = adminDb()
   const snaps = await db.getAll(...ids.map((id) => db.collection('buildings').doc(id)))
   for (const snap of snaps) {
     if (!snap.exists) continue
-    statuses.set(snap.id, str(snap.data()?.ownershipDocStatus, 'none'))
+    const data = snap.data()
+    buildings.set(snap.id, {
+      ownershipDocStatus: str(data?.ownershipDocStatus, 'none'),
+      structure: str(data?.structure),
+    })
   }
-  return statuses
+  return buildings
 }
 
 export type PropertyFilters = {
@@ -207,11 +249,11 @@ export async function getPublishedProperties(
     .get()
 
   const raw = snap.docs.map((d) => ({ id: d.id, data: d.data() as RawProperty }))
-  const buildingStatuses = await loadBuildingStatuses(raw.map((r) => r.data))
+  const buildings = await loadBuildings(raw.map((r) => r.data))
 
   return raw
-    .filter((r) => isPublishable(r.data, buildingStatuses))
-    .map((r) => toPublicProperty(r.id, r.data))
+    .filter((r) => isPublishable(r.data, buildings))
+    .map((r) => toPublicProperty(r.id, r.data, buildings))
     .filter((p) => matchesFilters(p, filters))
 }
 
@@ -225,10 +267,10 @@ export async function getPublishedProperty(id: string): Promise<PublicProperty |
   if (!snap.exists) return null
 
   const data = snap.data() as RawProperty
-  const buildingStatuses = await loadBuildingStatuses([data])
-  if (!isPublishable(data, buildingStatuses)) return null
+  const buildings = await loadBuildings([data])
+  if (!isPublishable(data, buildings)) return null
 
-  return toPublicProperty(snap.id, data)
+  return toPublicProperty(snap.id, data, buildings)
 }
 
 // ── Formatting, mirroring the Flutter model's helpers ──
@@ -236,7 +278,13 @@ export async function getPublishedProperty(id: string): Promise<PublicProperty |
 // without importing this module, which pulls in the Admin SDK. Re-exported here
 // because the server pages already import them from this path.
 
-export { formatNaira, formatNairaFull, rentPeriod } from './format'
+export {
+  formatNaira,
+  formatNairaFull,
+  rentPeriod,
+  propertyTypeLabel,
+  unitContext,
+} from './format'
 
 /** Rent + agent fee + caution deposit, same definition as `totalPackage`. */
 export function totalPackage(p: PublicProperty): number {

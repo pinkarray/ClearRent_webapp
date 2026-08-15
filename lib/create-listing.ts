@@ -10,6 +10,7 @@ import {
 } from 'firebase/firestore'
 import { clientDb } from './firebase-client'
 import { trackPropertyAdded } from './activity'
+import { isSingleSpace } from './format'
 
 export type ListingInput = {
   title: string
@@ -104,12 +105,12 @@ export async function createListing(uid: string, input: ListingInput): Promise<s
     // the accept-time slot guard keys off this number, so it is not the
     // landlord's to raise. firestore.rules pins it to 1.
     maxTenants: 1,
-    // Self contain is the one single-space type web can list, and it means
-    // self-contained — private facilities by definition. Writing them keeps it
-    // from rendering as "Not stated" next to app-created listings. The other
-    // web types are multi-room, where facilities are private by construction
-    // and the fields are deliberately absent.
-    ...(input.propertyType === 'selfContain'
+    // Web lists WHOLE properties, so a single space listed here has nobody to
+    // share with — its facilities are private by definition. Writing them keeps
+    // it from rendering as "Not stated" next to app-created listings. The
+    // multi-room types carry no access fields at all, since a flat's own
+    // bathroom is private by construction.
+    ...(isSingleSpace(input.propertyType)
       ? {
           bathroomAccess: 'private',
           toiletAccess: 'private',

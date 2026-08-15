@@ -23,14 +23,18 @@ export function rentPeriod(frequency: string): string {
  * The app's propertyType vocabulary (PropertyModel.typeLabels). Values are
  * camelCase, so the old `.replace(/_/g, ' ')` rendered 'selfContain' as-is.
  */
+// 'miniFlat' is not pickable anywhere: it is the same dwelling as
+// 'roomAndParlour', which is the word Nigerians actually use. The label stays
+// so a doc written while both were offered still renders.
 const TYPE_LABELS: Record<string, string> = {
   flat: 'Flat',
   duplex: 'Duplex',
+  semiDetachedDuplex: 'Semi-Detached Duplex',
   bungalow: 'Bungalow',
   selfContain: 'Self Contain',
-  miniFlat: 'Mini Flat',
   room: 'Room',
   roomAndParlour: 'Room & Parlour',
+  miniFlat: 'Mini Flat',
   shop: 'Shop',
   office: 'Office',
 }
@@ -45,7 +49,12 @@ export function propertyTypeLabel(value: string): string {
  * [sharedFacilities], not "1 bed · 1 bath".
  */
 export function isSingleSpace(type: string): boolean {
-  return type === 'room' || type === 'roomAndParlour' || type === 'selfContain'
+  return (
+    type === 'room' ||
+    type === 'roomAndParlour' ||
+    type === 'selfContain' ||
+    type === 'miniFlat'
+  )
 }
 
 /** "shared bathroom · shared kitchen". Empty when nothing is shared. */

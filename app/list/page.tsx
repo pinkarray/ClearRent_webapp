@@ -22,9 +22,10 @@ const LAGOS = 'Lagos'
 const PROPERTY_TYPES: Array<[value: string, label: string]> = [
   ['flat', 'Flat'],
   ['duplex', 'Duplex'],
+  ['semiDetachedDuplex', 'Semi-Detached Duplex'],
   ['bungalow', 'Bungalow'],
   ['selfContain', 'Self Contain'],
-  ['miniFlat', 'Mini Flat'],
+  ['roomAndParlour', 'Room & Parlour'],
 ]
 // Matches the app's current vocabulary. 'pop' replaced the legacy
 // 'false_ceiling'; a property can carry more than one.

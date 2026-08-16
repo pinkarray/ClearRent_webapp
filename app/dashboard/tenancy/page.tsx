@@ -11,6 +11,8 @@ import { startPayment } from '../../../lib/payments'
 import {
   acceptAgreement,
   acceptRentalInterest,
+  confirmDepositReceived,
+  contestSettlement,
   disputeAgreement,
   flagRentChange,
   requestMoveOut,
@@ -105,6 +107,18 @@ export default function TenancyPage() {
     }
     const reason = window.prompt('Reason for moving out') ?? ''
     await run(r.id, () => requestMoveOut(r.id, parsed, reason))
+  }
+
+  async function depositArrived(r: ActiveRental) {
+    await run(r.id, () => confirmDepositReceived(r.id))
+  }
+
+  async function depositMissing(r: ActiveRental) {
+    const statement = window.prompt(
+      'What happened? (e.g. the money never arrived, or the deduction is wrong)',
+    )
+    if (!statement?.trim()) return
+    await run(r.id, () => contestSettlement(r.id, statement.trim()))
   }
 
   async function dispute(r: ActiveRental) {
@@ -254,6 +268,63 @@ export default function TenancyPage() {
                     {r.status}
                   </span>
                 </div>
+
+                {/* The handover. The TENANCY is already over here — what is
+                    unresolved is the caution deposit, and the PROPERTY stays
+                    off the market until the tenant answers. Web had no surface
+                    for this at all, so a tenant could only close it from the
+                    app and the landlord's unit sat stranded. */}
+                {!isLandlord &&
+                  r.handoverStage === 'awaiting_confirm' &&
+                  !r.tenantContested && (
+                    <div className="mt-4 rounded-lg border border-warning/40 bg-warning/5 p-4">
+                      <p className="font-semibold text-content">
+                        Were you paid your caution deposit?
+                      </p>
+                      <p className="mt-1 text-sm text-content-secondary">
+                        Your landlord says they have returned{' '}
+                        {formatNaira(
+                          Math.max(r.cautionDeposit - r.cautionDeductionAmount, 0),
+                        )}
+                        {r.cautionDeductionAmount > 0 && (
+                          <>
+                            , after withholding{' '}
+                            {formatNaira(r.cautionDeductionAmount)}
+                            {r.cautionDeductionReason
+                              ? ` for "${r.cautionDeductionReason}"`
+                              : ''}
+                          </>
+                        )}
+                        . Your tenancy is already over - this only settles the
+                        money.
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <button
+                          className="btn-primary px-5 py-2.5 text-sm"
+                          disabled={busy === r.id}
+                          onClick={() => void depositArrived(r)}
+                        >
+                          Yes, I was paid
+                        </button>
+                        <button
+                          className="btn-ghost px-5 py-2.5 text-sm"
+                          disabled={busy === r.id}
+                          onClick={() => void depositMissing(r)}
+                        >
+                          No, something is wrong
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                {!isLandlord && r.tenantContested && (
+                  <div className="mt-4 rounded-lg border border-divider bg-surface-secondary p-4">
+                    <p className="text-sm text-content-secondary">
+                      You have disputed this settlement. An admin is reviewing
+                      it - it will not close on its own while a dispute is open.
+                    </p>
+                  </div>
+                )}
 
                 {/* The landlord's half of the tenancy, inline. This is the
                     step a live run lost: the accept happens on this page, so

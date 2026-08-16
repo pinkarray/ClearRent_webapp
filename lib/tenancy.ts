@@ -165,6 +165,21 @@ export type ActiveRental = {
   agreementUrl: string
   /** Why the tenant sent the agreement back, when agreementStatus is disputed. */
   tenantDisputeReason: string | null
+  /**
+   * How far the move-out handover has got: '' | 'awaiting_evidence' |
+   * 'awaiting_condition' | 'awaiting_settlement' | 'awaiting_confirm' |
+   * 'closed'. The TENANCY is already over by the time any of this runs — what
+   * is unresolved is the caution deposit, and the PROPERTY stays off the
+   * market until this reaches 'closed'.
+   */
+  handoverStage: string
+  /** Withheld from the deposit, and why. Declared by the landlord. */
+  cautionDeductionAmount: number
+  cautionDeductionReason: string | null
+  /** The tenant already answered, so nothing is outstanding from them. */
+  handoverTenantConfirmedAt: Date | null
+  /** The tenant disputed the settlement; an admin resolves it, not a timeout. */
+  tenantContested: boolean
   /** Snapshotted at acceptance, so a later listing edit cannot change it. */
   cautionDeposit: number
   createdAt: Date | null
@@ -197,6 +212,12 @@ function toRental(d: QueryDocumentSnapshot): ActiveRental {
       nextPaymentDue: x.nextPaymentDue?.toDate?.() ?? null,
       agreementUrl: (x.agreementUrl as string) ?? '',
       tenantDisputeReason: (x.tenantDisputeReason as string) ?? null,
+      handoverStage: (x.handoverStage as string) ?? '',
+      cautionDeductionAmount: (x.cautionDeductionAmount as number) ?? 0,
+      cautionDeductionReason: (x.cautionDeductionReason as string) ?? null,
+      handoverTenantConfirmedAt:
+        x.handoverTenantConfirmedAt?.toDate?.() ?? null,
+      tenantContested: x.tenantContested === true,
       cautionDeposit: (x.cautionDeposit as number) ?? 0,
       createdAt: x.createdAt?.toDate?.() ?? null,
   } satisfies ActiveRental
@@ -373,6 +394,58 @@ export async function requestMoveOut(
     return null
   } catch {
     return 'Could not submit your move-out notice.'
+  }
+}
+
+/**
+ * The outgoing tenant confirms the caution deposit reached them, which closes
+ * the handover and releases the property for relisting.
+ *
+ * ClearRent never holds the deposit — the money moves landlord-to-tenant
+ * off-platform — so this confirmation is the only signal that it arrived. The
+ * app writes exactly these two fields (ActiveRentalService.handoverConfirmPaid)
+ * and both are in the active_rentals update allowlist.
+ *
+ * A silence sweep closes it after 7 days IF the landlord uploaded proof of
+ * transfer, so a tenant who never answers does not trap the unit forever — but
+ * a landlord who never paid cannot wait it out either.
+ */
+export async function confirmDepositReceived(
+  rentalId: string,
+): Promise<string | null> {
+  try {
+    await updateDoc(doc(clientDb(), 'active_rentals', rentalId), {
+      handoverStage: 'closed',
+      handoverTenantConfirmedAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
+    return null
+  } catch {
+    return 'Could not record your confirmation.'
+  }
+}
+
+/**
+ * The tenant says the deposit did NOT arrive, or that the deduction is wrong.
+ *
+ * This deliberately does not close the handover: a contested settlement is an
+ * admin's to resolve, and the silence sweep skips `tenantContested` rentals so
+ * a dispute can never be decided by timeout.
+ */
+export async function contestSettlement(
+  rentalId: string,
+  statement: string,
+): Promise<string | null> {
+  try {
+    await updateDoc(doc(clientDb(), 'active_rentals', rentalId), {
+      tenantContested: true,
+      tenantContestStatement: statement,
+      contestedAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
+    return null
+  } catch {
+    return 'Could not record your response.'
   }
 }
 

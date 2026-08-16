@@ -180,6 +180,12 @@ export type ActiveRental = {
   handoverTenantConfirmedAt: Date | null
   /** The tenant disputed the settlement; an admin resolves it, not a timeout. */
   tenantContested: boolean
+  /**
+   * Storage PATH (not a URL) of the landlord's proof of transfer. Private:
+   * storage rules admit only the uploader, so the tenant's view of it goes
+   * through `getConditionMediaUrl`, which checks tenancy membership.
+   */
+  handoverProofUrl: string
   /** Snapshotted at acceptance, so a later listing edit cannot change it. */
   cautionDeposit: number
   createdAt: Date | null
@@ -218,6 +224,7 @@ function toRental(d: QueryDocumentSnapshot): ActiveRental {
       handoverTenantConfirmedAt:
         x.handoverTenantConfirmedAt?.toDate?.() ?? null,
       tenantContested: x.tenantContested === true,
+      handoverProofUrl: (x.handoverProofUrl as string) ?? '',
       cautionDeposit: (x.cautionDeposit as number) ?? 0,
       createdAt: x.createdAt?.toDate?.() ?? null,
   } satisfies ActiveRental
@@ -394,6 +401,33 @@ export async function requestMoveOut(
     return null
   } catch {
     return 'Could not submit your move-out notice.'
+  }
+}
+
+/**
+ * A short-lived link to the landlord's proof of transfer.
+ *
+ * Storage rules only ever admit the uploader — they cannot read Firestore to
+ * check who is party to a tenancy — so the counterparty's view has to go
+ * through the callable, which does that check server-side. Showing the tenant
+ * the receipt turns most of this step from a dispute into a look.
+ */
+export async function handoverProofLink(
+  rentalId: string,
+  path: string,
+): Promise<{ url: string } | { error: string }> {
+  try {
+    initAppCheck()
+    const fn = httpsCallable<{ rentalId: string; path: string }, { url: string }>(
+      callables(),
+      'getConditionMediaUrl',
+    )
+    const res = await fn({ rentalId, path })
+    return { url: res.data.url }
+  } catch (err) {
+    return {
+      error: err instanceof Error ? err.message : 'Could not open that proof.',
+    }
   }
 }
 

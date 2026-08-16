@@ -13,6 +13,7 @@ import {
   acceptRentalInterest,
   confirmDepositReceived,
   contestSettlement,
+  handoverProofLink,
   disputeAgreement,
   flagRentChange,
   requestMoveOut,
@@ -119,6 +120,18 @@ export default function TenancyPage() {
     )
     if (!statement?.trim()) return
     await run(r.id, () => contestSettlement(r.id, statement.trim()))
+  }
+
+  async function viewProof(r: ActiveRental) {
+    setError(null)
+    setBusy(r.id)
+    const res = await handoverProofLink(r.id, r.handoverProofUrl)
+    setBusy(null)
+    if ('error' in res) {
+      setError(res.error)
+      return
+    }
+    window.open(res.url, '_blank', 'noopener,noreferrer')
   }
 
   async function dispute(r: ActiveRental) {
@@ -298,6 +311,15 @@ export default function TenancyPage() {
                         . Your tenancy is already over - this only settles the
                         money.
                       </p>
+                      {r.handoverProofUrl && (
+                        <button
+                          className="mt-2 text-sm font-medium text-primary underline"
+                          disabled={busy === r.id}
+                          onClick={() => void viewProof(r)}
+                        >
+                          See their proof of payment
+                        </button>
+                      )}
                       <div className="mt-3 flex flex-wrap gap-2">
                         <button
                           className="btn-primary px-5 py-2.5 text-sm"
@@ -318,10 +340,14 @@ export default function TenancyPage() {
                   )}
 
                 {!isLandlord && r.tenantContested && (
-                  <div className="mt-4 rounded-lg border border-divider bg-surface-secondary p-4">
-                    <p className="text-sm text-content-secondary">
-                      You have disputed this settlement. An admin is reviewing
-                      it - it will not close on its own while a dispute is open.
+                  <div className="mt-4 rounded-lg border border-error/40 bg-error/5 p-4">
+                    <p className="font-semibold text-content">
+                      You reported a problem with this settlement
+                    </p>
+                    <p className="mt-1 text-sm text-content-secondary">
+                      Your landlord has been notified and an admin is reviewing
+                      it. This will NOT close on its own while the dispute is
+                      open, so nothing is decided by you waiting.
                     </p>
                   </div>
                 )}

@@ -44,17 +44,31 @@ export type PublicProperty = {
   unitLabel: string
   floor: string
   /**
-   * For single-space types (room / room & parlour / self contain): what the
-   * tenant gets exclusively. 'private' | 'shared', and 'none' for a kitchen.
-   * Empty on a multi-room dwelling, where facilities are private by
-   * construction, and on listings written before the fields existed.
-   *
-   * This is what separates a shared room from a self-contained flat — without
-   * it both rendered as "1 bed · 1 bath".
+   * True when this listing is one unit inside a building, rather than a whole
+   * property. It is what decides whether sharing is a question at all: only a
+   * unit has other tenants to share with. `unitLabel` and `structure` cannot
+   * stand in for it — both are legitimately empty on a grouped unit.
+   */
+  grouped: boolean
+  /**
+   * What the tenant gets exclusively: 'private' | 'shared', and 'none' for a
+   * kitchen. Set for any GROUPED unit whatever its type — a self contain in a
+   * face-me-I-face-you bungalow can still share the toilet, and a two-bedroom
+   * flat in a compound can have its toilet outside. Empty on a whole-property
+   * listing (nobody to share with) and on listings written before the fields.
    */
   bathroomAccess: string
   toiletAccess: string
   kitchenAccess: string
+  livingRoomAccess: string
+  /**
+   * The unit's OWN building, when the site is a compound. One C of O can cover
+   * a duplex and a bungalow side by side, so the site's `structure` says only
+   * "compound" and would lose which one the tenant is renting in. Empty on
+   * every other site type, where `structure` already describes the building.
+   */
+  unitBuildingStructure: string
+  unitBuildingLabel: string
   /**
    * What the whole building is (duplex, compound, storey building), from the
    * BUILDING doc. Deliberately NOT the building's name: the app asks for names
@@ -179,11 +193,16 @@ function toPublicProperty(
     // siblings to be told apart from.
     unitLabel: buildingId.length > 0 ? str(d.unitLabel) : '',
     floor: buildingId.length > 0 ? str(d.floor) : '',
+    grouped: buildingId.length > 0,
     structure:
       buildingId.length > 0 ? buildings.get(buildingId)?.structure ?? '' : '',
     bathroomAccess: str(d.bathroomAccess),
     toiletAccess: str(d.toiletAccess),
     kitchenAccess: str(d.kitchenAccess),
+    livingRoomAccess: str(d.livingRoomAccess),
+    unitBuildingStructure:
+      buildingId.length > 0 ? str(d.unitBuildingStructure) : '',
+    unitBuildingLabel: buildingId.length > 0 ? str(d.unitBuildingLabel) : '',
     createdAt: createdAt?.toDate ? createdAt.toDate().toISOString() : null,
   }
 }

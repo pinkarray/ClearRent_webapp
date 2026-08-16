@@ -62,11 +62,13 @@ export function sharedFacilities(p: {
   bathroomAccess: string
   toiletAccess: string
   kitchenAccess: string
+  livingRoomAccess?: string
 }): string {
   const parts: string[] = []
   if (p.bathroomAccess === 'shared') parts.push('shared bathroom')
   if (p.toiletAccess === 'shared') parts.push('shared toilet')
   if (p.kitchenAccess === 'shared') parts.push('shared kitchen')
+  if (p.livingRoomAccess === 'shared') parts.push('shared living room')
   else if (p.kitchenAccess === 'none') parts.push('no kitchen')
   return parts.join(' · ')
 }
@@ -100,10 +102,22 @@ export function unitContext(p: {
   unitLabel: string
   floor: string
   structure: string
+  unitBuildingStructure?: string
+  unitBuildingLabel?: string
 }): string {
   const parts: string[] = []
   if (p.unitLabel) parts.push(p.unitLabel)
   if (p.floor) parts.push(FLOOR_LABELS[p.floor] ?? `Floor ${p.floor}`)
+  // On a compound the site structure says only "compound" — the building the
+  // tenant is renting in lives on the unit, since one C of O can cover a
+  // duplex and a bungalow side by side.
+  const own = p.unitBuildingStructure
+    ? STRUCTURE_LABELS[p.unitBuildingStructure]
+    : ''
+  if (own) {
+    const which = p.unitBuildingLabel ? ` ${p.unitBuildingLabel}` : ''
+    parts.push(`in ${own}${which}`)
+  }
   const structure = p.structure ? STRUCTURE_LABELS[p.structure] : ''
   if (structure) parts.push(`in a ${structure}`)
   return parts.join(' · ')

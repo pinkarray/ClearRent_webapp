@@ -172,23 +172,27 @@ export default async function PropertyDetailPage({ params }: Props) {
             <div className="card p-6">
               <h2 className="text-lg font-semibold text-content">The space</h2>
               <div className="mt-3 grid grid-cols-2 gap-x-6 sm:grid-cols-3">
-                {/* A single space is described by what the tenant gets
-                    exclusively, not by room counts — "Bedrooms 1" for a room is
-                    a tautology, and it read identically to a self-contained
-                    flat. */}
-                {isSingleSpace(property.propertyType) ? (
-                  <>
-                    <Row label="Bathroom" value={accessLabel(property.bathroomAccess)} />
-                    <Row label="Toilet" value={accessLabel(property.toiletAccess)} />
-                    <Row label="Kitchen" value={accessLabel(property.kitchenAccess)} />
-                  </>
-                ) : (
+                {/* Two independent questions. Counts say what is PRESENT, and
+                    are real for a whole property and a multi-room unit alike —
+                    only a single space has nothing to count. Sharing says who
+                    else uses it, which only arises inside a building and then
+                    applies to every type. A two-bedroom flat in a compound has
+                    2 bedrooms AND a shared toilet. */}
+                {!(property.grouped && isSingleSpace(property.propertyType)) && (
                   <>
                     <Row label="Bedrooms" value={String(property.bedrooms)} />
                     <Row label="Bathrooms" value={String(property.bathrooms)} />
                     <Row label="Toilets" value={String(property.toilets)} />
                     <Row label="Living rooms" value={String(property.livingRooms)} />
                     <Row label="Kitchens" value={String(property.kitchens)} />
+                  </>
+                )}
+                {property.grouped && (
+                  <>
+                    <Row label="Bathroom" value={accessLabel(property.bathroomAccess)} />
+                    <Row label="Toilet" value={accessLabel(property.toiletAccess)} />
+                    <Row label="Kitchen" value={accessLabel(property.kitchenAccess)} />
+                    <Row label="Living room" value={accessLabel(property.livingRoomAccess)} />
                   </>
                 )}
                 {property.ceilingTypes.length > 0 && (

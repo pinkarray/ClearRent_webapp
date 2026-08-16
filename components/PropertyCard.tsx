@@ -62,15 +62,18 @@ export function PropertyCard({ property }: { property: PublicProperty }) {
 
         {/* A single space has no meaningful room count — "1 bed · 1 bath" made
             a shared room identical to a self-contained one-bedroom flat. What
-            it comes with is the real spec. */}
+            it comes with is the real spec. A multi-room unit keeps its counts
+            but still says what it shares: counts alone would read as fully
+            self-contained when the toilet is outside. */}
         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-content-secondary">
-          {singleSpace ? (
+          {property.grouped && singleSpace ? (
             <span>{shared || 'Private bathroom & kitchen'}</span>
           ) : (
             <>
               <span>{property.bedrooms} bed</span>
               <span>{property.bathrooms} bath</span>
               <span>{property.toilets} toilet</span>
+              {shared && <span>· {shared}</span>}
             </>
           )}
         </div>

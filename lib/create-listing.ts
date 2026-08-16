@@ -10,7 +10,6 @@ import {
 } from 'firebase/firestore'
 import { clientDb } from './firebase-client'
 import { trackPropertyAdded } from './activity'
-import { isSingleSpace } from './format'
 
 export type ListingInput = {
   title: string
@@ -105,18 +104,12 @@ export async function createListing(uid: string, input: ListingInput): Promise<s
     // the accept-time slot guard keys off this number, so it is not the
     // landlord's to raise. firestore.rules pins it to 1.
     maxTenants: 1,
-    // Web lists WHOLE properties, so a single space listed here has nobody to
-    // share with — its facilities are private by definition. Writing them keeps
-    // it from rendering as "Not stated" next to app-created listings. The
-    // multi-room types carry no access fields at all, since a flat's own
-    // bathroom is private by construction.
-    ...(isSingleSpace(input.propertyType)
-      ? {
-          bathroomAccess: 'private',
-          toiletAccess: 'private',
-          kitchenAccess: 'private',
-        }
-      : {}),
+    // Web lists WHOLE properties only — it writes no buildingId — so there is
+    // nobody to share with and the access fields do not apply. They are asked
+    // and stored only for a unit inside a building, where every type can share
+    // (a self contain in a compound still queues for the toilet). Public pages
+    // gate the sharing rows on `grouped`, so omitting them shows nothing here
+    // rather than "Not stated".
     viewCount: 0,
     inquiryCount: 0,
     savedCount: 0,

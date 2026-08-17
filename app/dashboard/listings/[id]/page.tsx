@@ -121,6 +121,12 @@ export default function EditListingPage() {
           >
             Assign an agent
           </Link>
+          <Link
+            href={`/dashboard/listings/${propertyId}/caretaker`}
+            className="btn-ghost px-4 py-2 text-sm no-underline"
+          >
+            Caretaker
+          </Link>
         </div>
 
         {frozen && (

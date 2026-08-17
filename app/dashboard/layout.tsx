@@ -11,6 +11,7 @@ const titles: Record<string, string> = {
   '/dashboard': 'Home',
   '/dashboard/activity': 'Activity',
   '/dashboard/bank': 'Bank details',
+  '/dashboard/caretaking': 'Caretaking',
   '/dashboard/coverage': 'Coverage & availability',
   '/dashboard/documents': 'Documents',
   '/dashboard/earnings': 'Earnings',
@@ -37,6 +38,7 @@ const titles: Record<string, string> = {
 const deepTitles: Record<string, string> = {
   '/dashboard/handling/*': 'Property you handle',
   '/dashboard/listings/*/agent': 'Assign an agent',
+  '/dashboard/listings/*/caretaker': 'Caretaker',
   '/dashboard/listings/*/health': 'Property health',
   '/dashboard/messages/*': 'Conversation',
   '/dashboard/rentals/*/renew': 'Renew tenancy',

@@ -1,8 +1,10 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '../../../components/AuthProvider'
+import { myInvites } from '../../../lib/caretaker'
 
 /*
   The app's Profile tab (`landlord_home_screen.dart:1371`,
@@ -27,6 +29,21 @@ export default function ProfilePage() {
 
   const accountType = profile?.accountType
   const status = profile?.verificationStatus
+
+  const [hasCaretaking, setHasCaretaking] = useState(false)
+  const [pendingInvites, setPendingInvites] = useState(0)
+  const uid = user?.uid
+  useEffect(() => {
+    if (!uid) return
+    void (async () => {
+      const invites = await myInvites(uid)
+      const live = invites.filter(
+        (i) => i.status === 'pending' || i.status === 'accepted',
+      )
+      setHasCaretaking(live.length > 0)
+      setPendingInvites(live.filter((i) => i.status === 'pending').length)
+    })()
+  }, [uid])
 
   const items: Item[] = [
     {
@@ -126,6 +143,20 @@ export default function ProfilePage() {
         subtitle: 'Unassigned listings you could pitch for',
       },
     )
+  }
+
+  // Caretaking is role-independent: a caretaker can be a tenant, a landlord or
+  // an agent, so it cannot live in any one role's block above — nor in the nav
+  // capsule, which is a fixed five tabs per role. Shown only to people who
+  // actually have an arrangement, so it stays invisible to everyone else.
+  if (hasCaretaking) {
+    items.push({
+      href: '/dashboard/caretaking',
+      title: 'Properties you manage',
+      subtitle: pendingInvites > 0
+        ? `${pendingInvites} invitation(s) waiting on you`
+        : 'Issues and maintenance for someone else’s property',
+    })
   }
 
   return (

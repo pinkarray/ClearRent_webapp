@@ -6,6 +6,8 @@ import { useParams } from 'next/navigation'
 import {
   addDoc,
   collection,
+  doc,
+  getDoc,
   getDocs,
   query,
   serverTimestamp,
@@ -28,11 +30,16 @@ type MaintenanceLog = {
   Property health: what has gone wrong on one listing, and what has been done
   about it proactively.
 
-  Both queries carry `landlordId == uid` as well as `propertyId` - the rules
-  scope list access on both collections to the owning landlord
-  (`firestore.rules:1121`, `:1148`), so filtering on propertyId alone is
-  rejected. Issues are fetched for the landlord and narrowed here, which also
-  avoids a composite index the project does not have.
+  A list rule is evaluated against the QUERY's constraints, not the stored
+  documents: a field the query pins by equality is known, and reading any other
+  field is an evaluation error that denies. So EACH PRINCIPAL MUST PIN THE
+  FIELD ITS OWN RULE BRANCH READS.
+
+  The landlord therefore keeps `landlordId == uid` (issues are fetched for them
+  and narrowed here, which also avoids a composite index the project does not
+  have). The CARETAKER's branch reads `propertyId` via isPropertyCaretaker, so
+  they pin propertyId alone - and the landlord cannot ride that same query even
+  though every matching document plainly names them.
 */
 export default function PropertyHealthPage() {
   const { user } = useAuth()
@@ -44,18 +51,59 @@ export default function PropertyHealthPage() {
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [ownerUid, setOwnerUid] = useState('')
+  const [isCaretaker, setIsCaretaker] = useState(false)
 
   const load = useCallback(async () => {
     if (!user || !propertyId) return
-    const all = await landlordIssues(user.uid)
-    setIssues(all.filter((i) => i.propertyId === propertyId))
+
+    // Who is looking? The caretaker sees the same screen as the owner, but
+    // cannot run the owner's queries.
+    const propSnap = await getDoc(doc(clientDb(), 'properties', propertyId))
+    const ownerId = (propSnap.data()?.landlordId as string | undefined) ?? ''
+    const asCaretaker =
+      (propSnap.data()?.caretakerId as string | undefined) === user.uid
+    setOwnerUid(ownerId)
+    setIsCaretaker(asCaretaker)
+
+    if (asCaretaker) {
+      const issueSnap = await getDocs(
+        query(collection(clientDb(), 'issues'), where('propertyId', '==', propertyId)),
+      )
+      setIssues(
+        issueSnap.docs.map((d) => {
+          const x = d.data()
+          const issue: LandlordIssue = {
+            id: d.id,
+            propertyId: (x.propertyId as string) ?? '',
+            propertyTitle: (x.propertyTitle as string) ?? '',
+            tenantName: (x.tenantName as string) ?? 'Tenant',
+            title: (x.title as string) ?? '',
+            description: (x.description as string) ?? '',
+            category: (x.category as string) ?? 'other',
+            priority: (x.priority as string) ?? 'medium',
+            status: (x.status as string) ?? 'open',
+            createdAt: x.createdAt?.toDate?.() ?? null,
+          }
+          return issue
+        }),
+      )
+    } else {
+      const all = await landlordIssues(user.uid)
+      setIssues(all.filter((i) => i.propertyId === propertyId))
+    }
 
     const snap = await getDocs(
-      query(
-        collection(clientDb(), 'maintenance_logs'),
-        where('landlordId', '==', user.uid),
-        where('propertyId', '==', propertyId),
-      ),
+      asCaretaker
+        ? query(
+            collection(clientDb(), 'maintenance_logs'),
+            where('propertyId', '==', propertyId),
+          )
+        : query(
+            collection(clientDb(), 'maintenance_logs'),
+            where('landlordId', '==', user.uid),
+            where('propertyId', '==', propertyId),
+          ),
     )
     setLogs(
       snap.docs
@@ -86,7 +134,12 @@ export default function PropertyHealthPage() {
     try {
       await addDoc(collection(clientDb(), 'maintenance_logs'), {
         propertyId,
-        landlordId: user.uid,
+        // The OWNER's uid, not the writer's - a log belongs to the property, so
+        // the landlord's landlordId-scoped query must return the caretaker's
+        // entries too. `loggedBy` records who actually did the work, and the
+        // create rule requires it to be the caller.
+        landlordId: ownerUid || user.uid,
+        loggedBy: user.uid,
         category,
         note: note.trim(),
         loggedAt: serverTimestamp(),
@@ -119,6 +172,13 @@ export default function PropertyHealthPage() {
           </div>
         ))}
       </div>
+
+      {isCaretaker ? (
+        <div className="card border-primary/40 p-4 text-sm text-content-secondary">
+          You manage this property as caretaker. You can triage issues and log
+          maintenance here. Rent, deposits and payouts stay with the owner.
+        </div>
+      ) : null}
 
       <section>
         <h2 className="text-sm font-semibold uppercase tracking-wide text-content-hint">

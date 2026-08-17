@@ -19,6 +19,28 @@ function formatNaira(n: number): string {
   to a rental, so splitting them across two web routes would just mean two
   identical lists.
 */
+/** Whose turn it is on a handover, in the landlord's terms. */
+const HANDOVER_STEP: Record<string, string> = {
+  awaiting_evidence: 'Waiting for your former tenant to record the condition.',
+  awaiting_condition:
+    'Your turn: check the unit and confirm what condition it is in.',
+  awaiting_settlement:
+    'Your turn: settle the caution deposit and attach proof of transfer.',
+  awaiting_confirm:
+    'Waiting for your former tenant to confirm they were paid. With proof of ' +
+    'transfer attached, this closes itself after 7 days.',
+}
+
+/** The tenancy is over, however it ended. */
+function hasEnded(r: ActiveRental): boolean {
+  return r.status.startsWith('ended')
+}
+
+/** Settled or not, the property stays gated until the stage reaches closed. */
+function isHandoverOpen(r: ActiveRental): boolean {
+  return r.handoverStage.length > 0 && r.handoverStage !== 'closed'
+}
+
 export default function LandlordRentals() {
   const { user } = useAuth()
   const [rows, setRows] = useState<ActiveRental[] | null>(null)
@@ -97,9 +119,15 @@ export default function LandlordRentals() {
               <span>Rent {r.rentPaymentStatus}</span>
             </div>
 
-            <div className="mt-4 border-t border-divider pt-4">
-              <AgreementUpload rental={r} />
-            </div>
+            {/* Agreement handling belongs to a LIVE tenancy. On an ended one
+                "Replace" offers to swap the agreement of record on a contract
+                that is already over, which is worse than useless next to an
+                open deposit dispute. */}
+            {!hasEnded(r) && (
+              <div className="mt-4 border-t border-divider pt-4">
+                <AgreementUpload rental={r} />
+              </div>
+            )}
 
             {/*
               Move-out handover. The tenant has given notice; confirming ends
@@ -163,6 +191,41 @@ export default function LandlordRentals() {
               </div>
             )}
 
+            {/* The tenancy is over; the DEPOSIT is not, and the unit stays off
+                the market until it closes. Only `moveout_pending` had a
+                section before, so an ended rental showed nothing at all about
+                the one thing still outstanding. */}
+            {hasEnded(r) && isHandoverOpen(r) && (
+              <div
+                className={`mt-4 rounded-lg border p-4 ${
+                  r.tenantContested
+                    ? 'border-error/40 bg-error/5'
+                    : 'border-warning/40 bg-warning/5'
+                }`}
+              >
+                <p className="font-semibold text-content">
+                  {r.tenantContested
+                    ? 'Your tenant says the deposit has not arrived'
+                    : 'This unit is off the market until the deposit is settled'}
+                </p>
+                {r.tenantContested && r.tenantContestStatement && (
+                  <p className="mt-1 text-sm italic text-content">
+                    &ldquo;{r.tenantContestStatement}&rdquo;
+                  </p>
+                )}
+                <p className="mt-1 text-sm text-content-secondary">
+                  {HANDOVER_STEP[r.handoverStage] ?? 'Handover in progress.'}
+                </p>
+                {r.tenantContested && (
+                  <p className="mt-2 text-sm text-content-secondary">
+                    ClearRent is reviewing this. It will not close on its own
+                    while the dispute is open - settle it with your tenant, or
+                    send us proof of the transfer.
+                  </p>
+                )}
+              </div>
+            )}
+
             <div className="mt-4 flex flex-wrap gap-3">
               <Link
                 href={`/dashboard/listings/${r.propertyId}`}
@@ -170,12 +233,15 @@ export default function LandlordRentals() {
               >
                 View listing
               </Link>
-              <Link
-                href={`/dashboard/rentals/${r.id}/rent-change`}
-                className="btn-ghost px-4 py-2 text-sm no-underline"
-              >
-                Request rent change
-              </Link>
+              {/* There is no rent to change on a tenancy that has ended. */}
+              {!hasEnded(r) && (
+                <Link
+                  href={`/dashboard/rentals/${r.id}/rent-change`}
+                  className="btn-ghost px-4 py-2 text-sm no-underline"
+                >
+                  Request rent change
+                </Link>
+              )}
             </div>
           </div>
         ))

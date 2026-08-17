@@ -180,6 +180,8 @@ export type ActiveRental = {
   handoverTenantConfirmedAt: Date | null
   /** The tenant disputed the settlement; an admin resolves it, not a timeout. */
   tenantContested: boolean
+  /** The tenant's own words, so the landlord sees the claim, not just a flag. */
+  tenantContestStatement: string
   /**
    * Storage PATH (not a URL) of the landlord's proof of transfer. Private:
    * storage rules admit only the uploader, so the tenant's view of it goes
@@ -224,6 +226,7 @@ function toRental(d: QueryDocumentSnapshot): ActiveRental {
       handoverTenantConfirmedAt:
         x.handoverTenantConfirmedAt?.toDate?.() ?? null,
       tenantContested: x.tenantContested === true,
+      tenantContestStatement: (x.tenantContestStatement as string) ?? '',
       handoverProofUrl: (x.handoverProofUrl as string) ?? '',
       cautionDeposit: (x.cautionDeposit as number) ?? 0,
       createdAt: x.createdAt?.toDate?.() ?? null,

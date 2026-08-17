@@ -138,6 +138,8 @@ export type ActiveRental = {
   propertyId: string
   propertyTitle: string
   tenantId: string
+  /** Needed to open a conversation from the LANDLORD's side. */
+  tenantName: string
   landlordId: string
   status: string
   agreementStatus: string
@@ -201,6 +203,7 @@ function toRental(d: QueryDocumentSnapshot): ActiveRental {
       propertyId: (x.propertyId as string) ?? '',
       propertyTitle: (x.propertyTitle as string) ?? '(property)',
       tenantId: (x.tenantId as string) ?? '',
+      tenantName: (x.tenantName as string) ?? 'Tenant',
       landlordId: (x.landlordId as string) ?? '',
       status: (x.status as string) ?? 'active',
       agreementStatus: (x.agreementStatus as string) ?? 'pending',

@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import AgreementUpload from './AgreementUpload'
 import { useAuth } from './AuthProvider'
 import { formatDate } from '../lib/format'
+import { getOrCreatePropertyConversation } from '../lib/chat'
 import { confirmMoveOut, watchActiveRentals, type ActiveRental } from '../lib/tenancy'
 
 function formatNaira(n: number): string {
@@ -42,7 +44,8 @@ function isHandoverOpen(r: ActiveRental): boolean {
 }
 
 export default function LandlordRentals() {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
+  const router = useRouter()
   const [rows, setRows] = useState<ActiveRental[] | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -65,6 +68,26 @@ export default function LandlordRentals() {
       ),
     )
   }, [uid])
+
+  async function messageTenant(r: ActiveRental) {
+    if (!user) return
+    setError(null)
+    setBusyId(r.id)
+    const res = await getOrCreatePropertyConversation({
+      propertyId: r.propertyId,
+      propertyTitle: r.propertyTitle,
+      landlordId: user.uid,
+      landlordName: profile?.fullName ?? 'Landlord',
+      tenantId: r.tenantId,
+      tenantName: r.tenantName,
+    })
+    setBusyId(null)
+    if ('error' in res) {
+      setError(res.error)
+      return
+    }
+    router.push(`/dashboard/messages/${res.id}`)
+  }
 
   async function confirmHandover(rentalId: string) {
     setError(null)
@@ -223,6 +246,16 @@ export default function LandlordRentals() {
                     send us proof of the transfer.
                   </p>
                 )}
+                {/* "Settle it with your tenant" is useless advice without a way
+                    to reach them. The tenancy is over, so the rental card is
+                    the only place that still knows who they were. */}
+                <button
+                  className="btn-ghost mt-3 px-5 py-2.5 text-sm"
+                  disabled={busyId === r.id}
+                  onClick={() => void messageTenant(r)}
+                >
+                  Message former tenant
+                </button>
               </div>
             )}
 

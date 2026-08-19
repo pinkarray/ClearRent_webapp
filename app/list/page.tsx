@@ -397,7 +397,7 @@ export default function ListPropertyPage() {
                 hint={
                   draft.state.trim().toLowerCase() === LAGOS.toLowerCase()
                     ? undefined
-                    : 'ClearRent operates in Lagos today. Listings elsewhere are reviewed and may not be approved yet.'
+                    : 'ClearRent is expanding beyond Lagos. Every listing is reviewed before it goes live.'
                 }
               >
                 <input

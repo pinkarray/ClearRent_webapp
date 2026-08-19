@@ -7,6 +7,7 @@ import { Calendar } from './Calendar'
 import {
   TIME_SLOT_DISPLAY,
   TIME_SLOT_LABEL,
+  availableInspectionSlots,
   createInspectionRequest,
   isSlotStillBookable,
   loadBookableProperty,
@@ -47,6 +48,10 @@ export function BookInspection({ propertyId }: { propertyId: string }) {
   // Earliest bookable day. Resolved on mount rather than during render — the
   // clock is not a pure input.
   const [minDate, setMinDate] = useState('')
+  // Slots the SERVER says are free for the chosen date. null = not resolved
+  // yet or the call failed; never treated as "all free".
+  const [freeSlots, setFreeSlots] = useState<string[] | null>(null)
+  const [slotsLoading, setSlotsLoading] = useState(false)
 
   useEffect(() => {
     if (!user) return
@@ -61,6 +66,29 @@ export function BookInspection({ propertyId }: { propertyId: string }) {
       setMinDate(openToday ? today : toLocalISO(new Date(Date.now() + 86400000)))
     })()
   }, [user, propertyId])
+
+  // Availability is server-side: the handler's offered slots minus the ones
+  // they are already booked for. Filtering the property's raw list by
+  // time-of-day alone (what this did before) let a tenant book a taken slot
+  // and pay for it, leaving a charge to refund by hand.
+  useEffect(() => {
+    if (!date || !propertyId) {
+      setFreeSlots(null)
+      return
+    }
+    let cancelled = false
+    setSlotsLoading(true)
+    setSlot('')
+    ;(async () => {
+      const s = await availableInspectionSlots(propertyId, new Date(`${date}T00:00:00`))
+      if (cancelled) return
+      setFreeSlots(s)
+      setSlotsLoading(false)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [date, propertyId])
 
   if (!ready) {
     return (
@@ -157,9 +185,12 @@ export function BookInspection({ propertyId }: { propertyId: string }) {
   const allowedDays = property.inspectionDays
   // On today, a slot that has already started (or is inside the lead time) is
   // not offered. Any future date leaves the list untouched.
-  const slots = date
-    ? property.inspectionTimeSlots.filter((s) => isSlotStillBookable(date, s))
-    : property.inspectionTimeSlots
+  // Server list ∩ still-bookable-today. When the server call has not resolved
+  // (or failed) we show NOTHING rather than the unfiltered list — offering a
+  // slot we cannot vouch for is what caused the pay-then-refund bug.
+  const slots = !date
+    ? []
+    : (freeSlots ?? []).filter((s) => isSlotStillBookable(date, s))
 
   // The calendar only offers days the handler shows on, so a selected date is
   // valid by construction — this is just for the confirmation line.
@@ -232,6 +263,22 @@ export function BookInspection({ propertyId }: { propertyId: string }) {
       <fieldset className="mt-4">
         <legend className="text-sm font-medium text-content">Time</legend>
         <div className="mt-2 grid gap-2">
+          {!date ? (
+            <p className="text-sm text-content-secondary">Pick a date first.</p>
+          ) : slotsLoading ? (
+            <p className="text-sm text-content-secondary">Checking what is free…</p>
+          ) : freeSlots === null ? (
+            // The availability call failed. Say so rather than showing the
+            // unchecked list — an offered slot we cannot vouch for is how a
+            // tenant ends up paying for a booking that gets declined.
+            <p className="text-sm text-error">
+              Could not check availability. Please try again.
+            </p>
+          ) : slots.length === 0 ? (
+            <p className="text-sm text-content-secondary">
+              No times left on this date. Try another day.
+            </p>
+          ) : null}
           {slots.map((s) => (
             <button
               key={s}

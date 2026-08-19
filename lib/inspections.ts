@@ -553,3 +553,39 @@ export async function rateInspection(
     return 'Could not save your rating. It may already have been submitted.'
   }
 }
+
+/**
+ * Slots actually bookable for a property on a date.
+ *
+ * MUST be server-side. Availability is the handler's offered slots minus the
+ * times they are already booked for, and a tenant is not allowed to list
+ * another handler's inspections to work that out — that would leak other
+ * tenants' bookings. The client query is silently denied, so every slot looks
+ * free.
+ *
+ * Web was doing exactly that: filtering the property's raw `inspectionTimeSlots`
+ * by time-of-day alone and never subtracting taken ones. A tenant could book a
+ * slot someone else already held AND PAY for it, and only then would the
+ * server's conflict guard decline the request — leaving a real charge to refund
+ * by hand. The app has called this since the same bug was fixed there.
+ *
+ * Returns null when the call fails, which the caller must treat as "unknown"
+ * rather than "all free" — falling back to the unfiltered list is what caused
+ * the problem in the first place.
+ */
+export async function availableInspectionSlots(
+  propertyId: string,
+  date: Date,
+): Promise<string[] | null> {
+  initAppCheck()
+  try {
+    const fn = httpsCallable<
+      { propertyId: string; dateMillis: number },
+      { slots: string[] }
+    >(getFunctions(clientApp(), 'us-central1'), 'getAvailableInspectionSlots')
+    const res = await fn({ propertyId, dateMillis: date.getTime() })
+    return Array.isArray(res.data?.slots) ? res.data.slots : []
+  } catch {
+    return null
+  }
+}

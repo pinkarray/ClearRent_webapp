@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { RefundNotice } from '../../../components/RefundNotice'
 import { useRouter } from 'next/navigation'
 import { collection, onSnapshot, orderBy, query, where } from 'firebase/firestore'
 import { useAuth } from '../../../components/AuthProvider'
@@ -206,6 +207,9 @@ export default function TenantInspectionsPage() {
                   {r.requestedTimeDisplay && <span>{r.requestedTimeDisplay}</span>}
                   {r.totalFee > 0 && <span>{formatNaira(r.totalFee)}</span>}
                 </div>
+
+                {/* Renders only when a refund record exists for this request. */}
+                <RefundNotice sourceId={r.id} />
 
                 {r.status === 'approved' && r.paymentStatus === 'unpaid' && (
                   <div className="mt-4 border-t border-divider pt-4">

@@ -12,7 +12,7 @@ export type InspectionState = {
   id: string
   status: string
   paymentStatus: string
-  /** The scheduled slot. Arrival/completion only open on this calendar day. */
+  /** The scheduled slot. Arrival/completion open 2h before it. */
   requestedDate: Date | null
   tenantArrived: boolean
   handlerArrived: boolean
@@ -32,14 +32,25 @@ export type InspectionState = {
   handlerIsResident?: boolean
 }
 
-/** Same calendar day in the viewer's timezone. Mirrors the app's _isToday. */
-function isToday(d: Date): boolean {
-  const n = new Date()
-  return (
-    d.getFullYear() === n.getFullYear() &&
-    d.getMonth() === n.getMonth() &&
-    d.getDate() === n.getDate()
-  )
+/**
+ * Arrival opens two hours before the slot and stays open after it — the same
+ * window the app enforces as `isWithinOnWayWindow`
+ * (`inspection_request_model.dart`).
+ *
+ * Web used to open it for the whole calendar DAY. For a 3pm slot that let a
+ * tenant here mark arrived from midnight, while the landlord on the app saw
+ * no on-my-way or arrived control until 1pm — so the tenant stood "arrived"
+ * with nothing on the other side to meet them. Same rule both clients.
+ */
+const ARRIVAL_WINDOW_MS = 2 * 60 * 60 * 1000
+
+function arrivalOpen(d: Date): boolean {
+  return Date.now() >= d.getTime() - ARRIVAL_WINDOW_MS
+}
+
+/** When the window opens, for the not-yet message. */
+function opensAt(d: Date): Date {
+  return new Date(d.getTime() - ARRIVAL_WINDOW_MS)
 }
 
 /**
@@ -97,7 +108,7 @@ export function InspectionActions({
     state.status === 'approved' &&
     (state.paymentStatus === 'paid' || state.paymentStatus === 'not_required')
 
-  const onTheDay = state.requestedDate !== null && isToday(state.requestedDate)
+  const onTheDay = state.requestedDate !== null && arrivalOpen(state.requestedDate)
   const live = settled && onTheDay
   const waiting = settled && !onTheDay
 
@@ -110,10 +121,16 @@ export function InspectionActions({
       {waiting && (
         <p className="text-sm text-content-secondary">
           {state.requestedDate
-            ? `Arrival and completion open on ${state.requestedDate.toLocaleDateString(
+            ? `Arrival and completion open at ${opensAt(state.requestedDate).toLocaleString(
                 'en-NG',
-                { weekday: 'long', day: 'numeric', month: 'long' },
-              )}.`
+                {
+                  weekday: 'long',
+                  day: 'numeric',
+                  month: 'long',
+                  hour: 'numeric',
+                  minute: '2-digit',
+                },
+              )} - two hours before your slot.`
             : 'This inspection has no scheduled date on file - contact support.'}
         </p>
       )}

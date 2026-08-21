@@ -185,7 +185,14 @@ export async function disputeIssueResolution(
   try {
     await updateDoc(doc(clientDb(), 'issues', issueId), {
       status: 'in_progress',
-      tenantDisputeReason: reason.trim(),
+      // `disputeReason`, NOT `tenantDisputeReason`. The app's landlord screen
+      // reads `disputeReason` (`landlord_issues_screen.dart:761`); web and the
+      // app's issue-history screen were writing the other name, so a dispute
+      // raised from either simply never appeared — the landlord saw the issue
+      // reopen with no reason and no sign a dispute had happened.
+      // `tenantDisputeReason` also means something else entirely on
+      // active_rentals (an AGREEMENT dispute), which is how the names drifted.
+      disputeReason: reason.trim(),
       updatedAt: serverTimestamp(),
     })
     return null

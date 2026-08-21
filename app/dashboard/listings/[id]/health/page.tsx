@@ -84,6 +84,8 @@ export default function PropertyHealthPage() {
             priority: (x.priority as string) ?? 'medium',
             status: (x.status as string) ?? 'open',
             createdAt: x.createdAt?.toDate?.() ?? null,
+            disputeReason:
+              (x.disputeReason as string) ?? (x.tenantDisputeReason as string) ?? '',
           }
           return issue
         }),

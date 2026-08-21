@@ -126,6 +126,12 @@ export type LandlordIssue = {
   priority: string
   status: string
   createdAt: Date | null
+  /**
+   * Why the tenant said it was not fixed. Legacy rows carry the reason under
+   * `tenantDisputeReason`, so read both — the older name was written by web and
+   * by the app's issue-history screen before they were aligned.
+   */
+  disputeReason: string
 }
 
 export async function landlordIssues(uid: string): Promise<LandlordIssue[]> {
@@ -146,6 +152,8 @@ export async function landlordIssues(uid: string): Promise<LandlordIssue[]> {
         priority: (x.priority as string) ?? 'medium',
         status: (x.status as string) ?? 'open',
         createdAt: x.createdAt?.toDate?.() ?? null,
+        disputeReason:
+          (x.disputeReason as string) ?? (x.tenantDisputeReason as string) ?? '',
       }
     })
     .sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0))
@@ -185,6 +193,8 @@ export async function caretakerIssues(propertyId: string): Promise<LandlordIssue
         priority: (x.priority as string) ?? 'medium',
         status: (x.status as string) ?? 'open',
         createdAt: x.createdAt?.toDate?.() ?? null,
+        disputeReason:
+          (x.disputeReason as string) ?? (x.tenantDisputeReason as string) ?? '',
       }
     })
     .sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0))

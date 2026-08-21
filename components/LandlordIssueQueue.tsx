@@ -87,6 +87,23 @@ export default function LandlordIssueQueue({ propertyId }: { propertyId?: string
 
         <p className="mt-3 text-sm text-content-secondary">{i.description}</p>
 
+        {/*
+          The tenant sent it back. Without this the issue simply reappeared as
+          'in progress' with a Mark fixed button and no indication anything had
+          been rejected, let alone why — which is the whole point of asking the
+          tenant. Shown only while the work is outstanding, as the app does.
+        */}
+        {i.status === 'in_progress' && i.disputeReason && (
+          <div className="mt-3 rounded-xl border border-red-500/30 bg-red-500/5 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-red-600">
+              Tenant says this is not fixed
+            </p>
+            <p className="mt-1 text-sm italic text-content-secondary">
+              “{i.disputeReason}”
+            </p>
+          </div>
+        )}
+
         {OPEN_STATUSES.includes(i.status) && (
           <div className="mt-4 flex flex-wrap gap-3 border-t border-divider pt-4">
             {i.status === 'open' && (

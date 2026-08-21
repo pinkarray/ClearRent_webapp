@@ -8,7 +8,8 @@ import {
   setDoc,
   updateDoc,
 } from 'firebase/firestore'
-import { clientDb } from './firebase-client'
+import { getStorage, ref as storageRef, uploadBytes } from 'firebase/storage'
+import { clientApp, clientDb } from './firebase-client'
 import { trackPropertyAdded } from './activity'
 
 export type ListingInput = {
@@ -42,6 +43,18 @@ export type ListingInput = {
   /** A flat can mix ceiling types, so this is a list — matches the app. */
   ceilingTypes: string[]
   videoUrl: string | null
+  /**
+   * Proof of ownership — a C of O, deed of assignment, or other document.
+   *
+   * REQUIRED, exactly as the app requires it (`add_property_screen.dart:1344`).
+   * Web used to write `ownershipDocStatus: 'none'` and collect nothing, which
+   * made every web listing a dead end: admin gates verify/reject on status
+   * `'pending'`, so a `'none'` listing showed "No document uploaded" with no
+   * action available, and could never be verified or published.
+   */
+  ownershipDocFile: File
+  /** Matches the app's `_ownershipDocType`. */
+  ownershipDocType: 'c_of_o' | 'deed' | 'other'
 }
 
 /**
@@ -60,6 +73,20 @@ export type ListingInput = {
  */
 export async function createListing(uid: string, input: ListingInput): Promise<string> {
   const db = clientDb()
+
+  // Uploaded BEFORE the property doc is written: storage rules make
+  // `ownership/{uid}/{docId}` write-once (`resource == null`), so a failed
+  // upload must not leave behind a listing claiming a document it never got.
+  // The stored value is the PATH, not a download URL — the same as the app
+  // (`property_service.dart:91`), which is what the admin viewer resolves.
+  const ext = input.ownershipDocFile.name.includes('.')
+    ? input.ownershipDocFile.name.split('.').pop()
+    : 'pdf'
+  const ownershipDocPath = `ownership/${uid}/cofo_${Date.now()}.${ext}`
+  await uploadBytes(
+    storageRef(getStorage(clientApp()), ownershipDocPath),
+    input.ownershipDocFile,
+  )
 
   const userSnap = await getDoc(doc(db, 'users', uid))
   const userData = userSnap.data()
@@ -127,10 +154,12 @@ export async function createListing(uid: string, input: ListingInput): Promise<s
     inspectionPropertyCluster: null,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
-    // Standalone listing with no document uploaded yet. 'none' is inside the
-    // owner allowlist in rules; 'inherited' would be rejected here because
-    // there is no building to inherit from.
-    ownershipDocStatus: 'none',
+    // Born awaiting review, with the document attached. rules:625 allows the
+    // owner to create at 'none' or 'pending' and nothing else — 'verified' is
+    // the admin's to write, via adminReviewPropertyDoc.
+    ownershipDocStatus: 'pending',
+    ownershipDocUrl: ownershipDocPath,
+    ownershipDocType: input.ownershipDocType,
   }
 
   // The parent doc must be committed BEFORE the subdoc: the subdoc's write rule

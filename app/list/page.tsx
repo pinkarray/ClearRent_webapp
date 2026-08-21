@@ -133,6 +133,9 @@ export default function ListPropertyPage() {
 
   const [draft, setDraft] = useState<Draft>(EMPTY)
   const [files, setFiles] = useState<File[]>([])
+  const [ownershipDoc, setOwnershipDoc] = useState<File | null>(null)
+  const [ownershipDocType, setOwnershipDocType] =
+    useState<'c_of_o' | 'deed' | 'other'>('c_of_o')
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -149,6 +152,14 @@ export default function ListPropertyPage() {
     if (!user) return
     setError(null)
     setCreatedId(null)
+
+    // Required, as the app requires it. Without a document the listing is born
+    // 'none', which admin cannot verify OR reject — it just sits there.
+    if (!ownershipDoc) {
+      setError('Attach proof of ownership - a C of O, deed, or other document.')
+      return
+    }
+
     setBusy(true)
 
     try {
@@ -158,7 +169,7 @@ export default function ListPropertyPage() {
         images.push(await uploadImage(file, user.uid))
       }
 
-      setStatus('Creating listing…')
+      setStatus('Uploading your ownership document…')
       const input: ListingInput = {
         title: draft.title.trim(),
         description: draft.description.trim(),
@@ -188,12 +199,16 @@ export default function ListPropertyPage() {
         caretakerLivesOnPremises: draft.caretakerLivesOnPremises,
         ceilingTypes: draft.ceilingTypes,
         videoUrl: draft.videoUrl.trim() || null,
+        ownershipDocFile: ownershipDoc,
+        ownershipDocType,
       }
 
       const id = await createListing(user.uid, input)
       setCreatedId(id)
       setDraft(EMPTY)
       setFiles([])
+      setOwnershipDoc(null)
+      setOwnershipDocType('c_of_o')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create listing')
     } finally {
@@ -538,6 +553,44 @@ export default function ListPropertyPage() {
                 </label>
               ))}
             </div>
+          </section>
+
+          <section className="card space-y-4 p-6">
+            <h2 className="font-semibold text-content">Proof of ownership</h2>
+            <p className="text-sm text-content-secondary">
+              An admin checks this before your listing goes on public browse. A C of O
+              or deed runs to several pages - upload it as one PDF.
+            </p>
+
+            <Field label="Document type">
+              <select
+                className="input-field px-4 py-3"
+                value={ownershipDocType}
+                onChange={(e) =>
+                  setOwnershipDocType(e.target.value as 'c_of_o' | 'deed' | 'other')
+                }
+              >
+                <option value="c_of_o">Certificate of Occupancy</option>
+                <option value="deed">Deed of Assignment</option>
+                <option value="other">Other property document</option>
+              </select>
+            </Field>
+
+            <Field label="Document">
+              <input
+                className="input-field px-4 py-3"
+                type="file"
+                accept="application/pdf,image/*"
+                required
+                onChange={(e) => setOwnershipDoc(e.target.files?.[0] ?? null)}
+              />
+            </Field>
+
+            {ownershipDoc && (
+              <p className="text-sm text-content-secondary">
+                Attached: {ownershipDoc.name}
+              </p>
+            )}
           </section>
 
           {error && <p className="text-sm text-red-600">{error}</p>}

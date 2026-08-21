@@ -211,8 +211,18 @@ export default function PropertyHealthPage() {
                 </div>
               </div>
             ))}
+            {/*
+              A caretaker MUST carry the property scope through. /dashboard/issues
+              branches on accountType, and a caretaker keeps their own — the live
+              one is a tenant — so an unscoped link dropped them on the
+              report-an-issue form instead of the triage the rules already allow.
+            */}
             <Link
-              href="/dashboard/issues"
+              href={
+                isCaretaker
+                  ? `/dashboard/issues?asCaretaker=1&propertyId=${propertyId}`
+                  : '/dashboard/issues'
+              }
               className="btn-ghost inline-block px-4 py-2 text-sm no-underline"
             >
               Work the issue queue

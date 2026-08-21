@@ -152,6 +152,45 @@ export async function landlordIssues(uid: string): Promise<LandlordIssue[]> {
 }
 
 /**
+ * The same queue, scoped to ONE property, for the caretaker who manages it.
+ *
+ * It filters by `propertyId` and nothing else, and that is not a style choice.
+ * A Firestore list rule is evaluated against the QUERY's constraints rather
+ * than the stored documents, so each principal must pin the field its own rule
+ * branch reads: `isPropertyCaretaker` reads `propertyId`, so a caretaker who
+ * queried by `landlordId` would be denied outright even though every matching
+ * document plainly names the owner. See the `issues` list rule in
+ * `firestore.rules`, and `property_health_screen.dart`, which carries the same
+ * split on the app side.
+ *
+ * Triage itself needs no separate path: `setIssueStatus` writes exactly
+ * `status`/`updatedAt`/`pendingConfirmationAt`/`resolvedAt`, which is precisely
+ * the caretaker's update allowlist.
+ */
+export async function caretakerIssues(propertyId: string): Promise<LandlordIssue[]> {
+  const snap = await getDocs(
+    query(collection(clientDb(), 'issues'), where('propertyId', '==', propertyId)),
+  )
+  return snap.docs
+    .map((d) => {
+      const x = d.data()
+      return {
+        id: d.id,
+        propertyId: (x.propertyId as string) ?? '',
+        propertyTitle: (x.propertyTitle as string) ?? '(property)',
+        tenantName: (x.tenantName as string) ?? 'Tenant',
+        title: (x.title as string) ?? '',
+        description: (x.description as string) ?? '',
+        category: (x.category as string) ?? 'other',
+        priority: (x.priority as string) ?? 'medium',
+        status: (x.status as string) ?? 'open',
+        createdAt: x.createdAt?.toDate?.() ?? null,
+      }
+    })
+    .sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0))
+}
+
+/**
  * Moves an issue along. The tenant's notification is fired by a Firestore
  * trigger, not from here — clients cannot create notifications at all
  * (`firestore.rules:1245`), and writing one would double up with the trigger.

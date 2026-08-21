@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from './AuthProvider'
 import { formatDate } from '../lib/format'
-import { landlordIssues, setIssueStatus, type LandlordIssue } from '../lib/landlord'
+import { caretakerIssues, landlordIssues, setIssueStatus, type LandlordIssue } from '../lib/landlord'
 
 const OPEN_STATUSES = ['open', 'in_progress', 'pending_confirmation']
 
@@ -21,7 +21,16 @@ function priorityTone(priority: string): string {
 }
 
 /** The landlord's maintenance queue — the counterpart of the tenant's /issues. */
-export default function LandlordIssueQueue() {
+/**
+ * The owner's issue queue, and — with `propertyId` set — the caretaker's view
+ * of the same queue for the one unit they manage.
+ *
+ * The two differ ONLY in the query, because the rules evaluate a list against
+ * the query's constraints: a caretaker must pin `propertyId`, a landlord
+ * `landlordId`. Triage actions are identical; `setIssueStatus` writes exactly
+ * the keys the caretaker's update allowlist permits.
+ */
+export default function LandlordIssueQueue({ propertyId }: { propertyId?: string }) {
   const { user } = useAuth()
   const [rows, setRows] = useState<LandlordIssue[] | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
@@ -29,8 +38,8 @@ export default function LandlordIssueQueue() {
 
   const load = useCallback(async () => {
     if (!user) return
-    setRows(await landlordIssues(user.uid))
-  }, [user])
+    setRows(propertyId ? await caretakerIssues(propertyId) : await landlordIssues(user.uid))
+  }, [user, propertyId])
 
   useEffect(() => {
     ;(async () => {

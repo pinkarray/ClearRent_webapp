@@ -200,7 +200,10 @@ export async function caretakerIssues(propertyId: string): Promise<LandlordIssue
  */
 export async function setIssueStatus(
   issueId: string,
-  status: 'in_progress' | 'pending_confirmation' | 'resolved',
+  // Deliberately NOT 'resolved'. Only the tenant closes an issue, through
+  // confirmIssueResolved — see the note on the Mark fixed button in
+  // LandlordIssueQueue. Widening this again reopens that bypass.
+  status: 'in_progress' | 'pending_confirmation',
 ): Promise<string | null> {
   try {
     await updateDoc(doc(clientDb(), 'issues', issueId), {
@@ -209,7 +212,6 @@ export async function setIssueStatus(
       ...(status === 'pending_confirmation'
         ? { pendingConfirmationAt: serverTimestamp() }
         : {}),
-      ...(status === 'resolved' ? { resolvedAt: serverTimestamp() } : {}),
     })
     return null
   } catch (err) {

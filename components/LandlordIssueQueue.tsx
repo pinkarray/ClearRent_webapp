@@ -49,7 +49,7 @@ export default function LandlordIssueQueue({ propertyId }: { propertyId?: string
 
   async function move(
     id: string,
-    status: 'in_progress' | 'pending_confirmation' | 'resolved',
+    status: 'in_progress' | 'pending_confirmation',
   ) {
     setError(null)
     setBusyId(id)
@@ -98,13 +98,34 @@ export default function LandlordIssueQueue({ propertyId }: { propertyId?: string
                 Start work
               </button>
             )}
+            {/*
+              'pending_confirmation', NEVER 'resolved'. Whoever manages the
+              property says the work is done; the TENANT is the one who says it
+              is fixed, via confirm/dispute in TenantIssueCentre. Writing
+              'resolved' straight from here closed the issue over the tenant's
+              head — they were never asked, the reminder sweep (which queries
+              'pending_confirmation') never chased anyone, and the Cloud
+              Function sent a bare "resolved" notice instead of the
+              confirm-or-dispute prompt. The app has only ever offered
+              'Mark Fixed' here (`landlord_issues_screen.dart:844`).
+            */}
             {i.status !== 'pending_confirmation' && (
               <button
                 className="btn-primary px-4 py-2 text-sm"
                 disabled={busyId === i.id}
-                onClick={() => move(i.id, 'resolved')}
+                onClick={() => move(i.id, 'pending_confirmation')}
               >
-                {busyId === i.id ? 'Saving…' : 'Mark resolved'}
+                {busyId === i.id ? 'Saving…' : 'Mark fixed'}
+              </button>
+            )}
+            {/* The other half of the app's pair: it is not fixed after all. */}
+            {i.status === 'pending_confirmation' && (
+              <button
+                className="btn-ghost px-4 py-2 text-sm"
+                disabled={busyId === i.id}
+                onClick={() => move(i.id, 'in_progress')}
+              >
+                Still working
               </button>
             )}
             <Link

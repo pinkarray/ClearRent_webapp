@@ -30,6 +30,8 @@ export type AppNotification = {
   read: boolean
   /** Route hint written by the functions, e.g. `/tenant/inspections`. */
   route: string | null
+  /** Present on `/chat` notifications; names the thread to open. */
+  conversationId: string | null
   createdAt: Date | null
 }
 
@@ -51,6 +53,7 @@ function toNotifications(snap: QuerySnapshot): AppNotification[] {
       body: (x.body as string) ?? '',
       read: x.read === true,
       route: payload.route ?? null,
+      conversationId: payload.conversationId ?? null,
       createdAt: x.createdAt?.toDate?.() ?? null,
     }
   })
@@ -91,17 +94,49 @@ export async function markAllRead(rows: AppNotification[]): Promise<void> {
 /**
  * `payload.route` holds a Flutter route. The constants are declared across
  * `functions/src/*_ops.ts` (e.g. `inspection_reminders_ops.ts:21`); this maps
- * the ones with a web equivalent. Anything unmapped renders without a link
- * rather than as a dead one — /agent/* has no web surface at all yet.
+ * them to their web equivalent.
+ *
+ * Every route the functions actually emit is mapped. It was five before, four
+ * of which were real — `/tenant/home` is not emitted by anything — so the
+ * highest-volume landlord notifications (`/landlord/rentals`, tied for most
+ * emitted) and a caretaker's invitation all rendered as dead text.
+ *
+ * Several Flutter routes collapse onto one web page because the web page
+ * already branches on accountType: `/dashboard/rentals`, `/dashboard/issues`
+ * and `/dashboard/tenancy` each serve both sides.
+ *
+ * Kept in sync with `webPath()` in `app/firebase-messaging-sw.js/route.ts` —
+ * the service worker resolves the same payload when the tab is closed.
  */
-export function webRoute(route: string | null): string | null {
+const ROUTES: Record<string, string> = {
+  '/tenant/home': '/dashboard',
+  '/tenant/inspections': '/dashboard/inspections',
+  '/tenant/my-rentals': '/dashboard/rentals',
+  '/tenant/issue-history': '/dashboard/issues',
+  '/tenant/documents': '/dashboard/documents',
+  '/landlord/home': '/dashboard',
+  // The landlord's properties are listed on the dashboard home; there is no
+  // separate index route on web.
+  '/landlord/properties': '/dashboard',
+  '/landlord/inspections': '/dashboard/requests',
+  '/landlord/rentals': '/dashboard/rentals',
+  '/landlord/issues': '/dashboard/issues',
+  // LandlordRentals is where an agreement is uploaded and tracked.
+  '/landlord/agreements': '/dashboard/rentals',
+  '/caretaker/invites': '/dashboard/caretaking',
+  '/chat': '/dashboard/messages',
+}
+
+export function webRoute(
+  route: string | null,
+  conversationId?: string | null,
+): string | null {
   if (!route) return null
-  const map: Record<string, string> = {
-    '/tenant/home': '/dashboard',
-    '/tenant/inspections': '/dashboard/inspections',
-    '/tenant/my-rentals': '/dashboard/rentals',
-    '/tenant/issue-history': '/dashboard/issues',
-    '/landlord/inspections': '/dashboard/requests',
+  // A chat notification names its thread, and landing on the list instead of
+  // the conversation that prompted it is a second search for something the
+  // payload already identified.
+  if (route === '/chat' && conversationId) {
+    return `/dashboard/messages/${conversationId}`
   }
-  return map[route] ?? null
+  return ROUTES[route] ?? null
 }

@@ -40,14 +40,25 @@ const messaging = firebase.messaging();
  * Kept in sync with webRoute() in lib/notifications.ts — an unmapped route
  * falls back to the notification list rather than a dead link.
  */
-function webPath(route) {
+function webPath(route, conversationId) {
   const map = {
     "/tenant/home": "/dashboard",
     "/tenant/inspections": "/dashboard/inspections",
     "/tenant/my-rentals": "/dashboard/rentals",
     "/tenant/issue-history": "/dashboard/issues",
+    "/tenant/documents": "/dashboard/documents",
+    "/landlord/home": "/dashboard",
+    "/landlord/properties": "/dashboard",
     "/landlord/inspections": "/dashboard/requests",
+    "/landlord/rentals": "/dashboard/rentals",
+    "/landlord/issues": "/dashboard/issues",
+    "/landlord/agreements": "/dashboard/rentals",
+    "/caretaker/invites": "/dashboard/caretaking",
+    "/chat": "/dashboard/messages",
   };
+  if (route === "/chat" && conversationId) {
+    return "/dashboard/messages/" + conversationId;
+  }
   return map[route] || "/dashboard/notifications";
 }
 
@@ -75,7 +86,8 @@ messaging.onBackgroundMessage((payload) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = webPath(event.notification.data?.route);
+  const data = event.notification.data || {};
+  const url = webPath(data.route, data.conversationId);
   // Focus an open tab rather than opening a second one.
   event.waitUntil(
     self.clients

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { collection, onSnapshot, query, where } from 'firebase/firestore'
 import AgentHome from '../../components/AgentHome'
+import CaretakerBanner from '../../components/CaretakerBanner'
 import { useAuth } from '../../components/AuthProvider'
 import { clientDb } from '../../lib/firebase-client'
 import { resolveDocStatuses } from '../../lib/ownership'
@@ -98,6 +99,13 @@ export default function DashboardPage() {
           {accountType ? `Signed in as ${accountType}` : 'Signed in'}
         </p>
       </div>
+
+      {/*
+        Above the role sections, because a caretaker keeps whatever accountType
+        they signed up with — the role decides their capsule, not this work.
+        Renders nothing for everyone else.
+      */}
+      <CaretakerBanner />
 
       {/*
         Accounts predating web onboarding (and the two staff accounts) have no

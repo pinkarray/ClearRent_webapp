@@ -72,7 +72,7 @@ export default function NotificationsPage() {
       ) : (
         <div className="space-y-2">
           {rows.map((n) => {
-            const href = webRoute(n.route)
+            const href = webRoute(n.route, n.conversationId)
             const body = (
               <>
                 <div className="flex items-start gap-3">

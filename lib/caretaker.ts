@@ -1,5 +1,5 @@
 import { getFunctions, httpsCallable } from 'firebase/functions'
-import { collection, getDocs, query, where } from 'firebase/firestore'
+import { collection, getDocs, onSnapshot, query, where } from 'firebase/firestore'
 import { clientApp, clientDb, initAppCheck } from './firebase-client'
 
 /**
@@ -63,6 +63,41 @@ export async function myInvites(uid: string): Promise<CaretakerInvite[]> {
     query(collection(clientDb(), 'caretaker_invites'), where('caretakerId', '==', uid)),
   )
   return snap.docs.map((d) => toInvite(d.id, d.data()))
+}
+
+/**
+ * Live version of {@link myInvites}, for the banner that is a caretaker's only
+ * entry point. An invitation arrives because a LANDLORD acted, so it is by
+ * definition never something this user's own navigation would surface — a
+ * one-time read leaves them staring at a page that will not change.
+ *
+ * Returns the unsubscribe function.
+ */
+export function watchMyInvites(
+  uid: string,
+  onChange: (rows: CaretakerInvite[]) => void,
+): () => void {
+  return onSnapshot(
+    query(collection(clientDb(), 'caretaker_invites'), where('caretakerId', '==', uid)),
+    (snap) => onChange(snap.docs.map((d) => toInvite(d.id, d.data()))),
+  )
+}
+
+/** Titles of the properties this user currently manages, live. */
+export function watchManagedProperties(
+  uid: string,
+  onChange: (rows: { id: string; title: string }[]) => void,
+): () => void {
+  return onSnapshot(
+    query(collection(clientDb(), 'properties'), where('caretakerId', '==', uid)),
+    (snap) =>
+      onChange(
+        snap.docs.map((d) => ({
+          id: d.id,
+          title: (d.data().title as string) ?? 'Untitled property',
+        })),
+      ),
+  )
 }
 
 /**

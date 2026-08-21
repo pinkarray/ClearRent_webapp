@@ -166,7 +166,7 @@ export default function ListingCaretakerPage() {
               </p>
             </div>
             <button
-              className="btn btn-ghost text-error"
+              className="btn-ghost px-4 py-2 text-sm text-error"
               disabled={busy}
               onClick={() => remove(live)}
             >
@@ -204,7 +204,7 @@ export default function ListingCaretakerPage() {
                 </span>
               </label>
             ) : null}
-            <button className="btn btn-primary" disabled={busy} onClick={check}>
+            <button className="btn-primary px-5 py-2.5 text-sm" disabled={busy} onClick={check}>
               {busy ? 'Checking…' : 'Continue'}
             </button>
           </div>
@@ -222,13 +222,13 @@ export default function ListingCaretakerPage() {
           </p>
           <div className="mt-4 flex gap-3">
             <button
-              className="btn btn-secondary"
+              className="btn-ghost px-5 py-2.5 text-sm"
               disabled={busy}
               onClick={() => setConfirming(null)}
             >
               Not them
             </button>
-            <button className="btn btn-primary" disabled={busy} onClick={send}>
+            <button className="btn-primary px-5 py-2.5 text-sm" disabled={busy} onClick={send}>
               {busy ? 'Sending…' : 'Send invitation'}
             </button>
           </div>

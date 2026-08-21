@@ -108,14 +108,14 @@ export default function CaretakingPage() {
                 </p>
                 <div className="mt-4 flex gap-3">
                   <button
-                    className="btn btn-secondary"
+                    className="btn-ghost px-5 py-2.5 text-sm"
                     disabled={busy === i.id}
                     onClick={() => answer(i, false)}
                   >
                     Decline
                   </button>
                   <button
-                    className="btn btn-primary"
+                    className="btn-primary px-5 py-2.5 text-sm"
                     disabled={busy === i.id}
                     onClick={() => answer(i, true)}
                   >
@@ -152,14 +152,14 @@ export default function CaretakingPage() {
                     </div>
                     <div className="flex shrink-0 gap-3">
                       <Link
-                        className="btn btn-secondary"
+                        className="btn-ghost px-4 py-2 text-sm no-underline"
                         href={`/dashboard/listings/${p.id}/health`}
                       >
                         Open
                       </Link>
                       {grant ? (
                         <button
-                          className="btn btn-ghost text-error"
+                          className="btn-ghost px-4 py-2 text-sm text-error"
                           disabled={busy === grant.id}
                           onClick={() => stepBack(grant)}
                         >

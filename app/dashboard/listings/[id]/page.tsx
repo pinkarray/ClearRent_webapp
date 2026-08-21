@@ -11,6 +11,7 @@ import {
   loadListingForEdit,
   markReadyForInspections,
   saveListingEdits,
+  uploadOwnershipDoc,
   type EditableListing,
 } from '../../../../lib/listing-ops'
 
@@ -41,6 +42,10 @@ export default function EditListingPage() {
    * landlord cannot fire the same write twice by tapping again.
    */
   const [savedState, setSavedState] = useState<string | null>(null)
+
+  const [docFile, setDocFile] = useState<File | null>(null)
+  const [docType, setDocType] = useState<'c_of_o' | 'deed' | 'other'>('c_of_o')
+  const [docBusy, setDocBusy] = useState(false)
 
   const load = useCallback(async () => {
     const l = await loadListingForEdit(propertyId)
@@ -256,6 +261,87 @@ export default function EditListingPage() {
             rent={listing.rent}
           />
         )}
+
+        {/*
+          A listing with no document (or a rejected one) is otherwise stuck for
+          good: admin gates Verify/Reject on status 'pending', so 'none' offers
+          them nothing to act on and the listing can never reach public browse.
+          'inherited' units are skipped — their document lives on the building.
+        */}
+        {listing.ownershipDocStatus !== 'inherited' &&
+          listing.ownershipDocStatus !== 'verified' && (
+            <div className="card mt-6 p-6">
+              <h2 className="font-semibold text-content">Ownership document</h2>
+
+              {listing.ownershipDocStatus === 'pending' ? (
+                <p className="mt-1 text-sm text-content-secondary">
+                  Submitted. An admin is reviewing it. You can replace it below if you
+                  sent the wrong file.
+                </p>
+              ) : listing.ownershipDocStatus === 'rejected' ? (
+                <p className="mt-1 text-sm text-content-secondary">
+                  An admin rejected this document
+                  {listing.ownershipDocRejectionReason
+                    ? `: ${listing.ownershipDocRejectionReason}`
+                    : '.'}{' '}
+                  Upload a replacement to send it back for review.
+                </p>
+              ) : (
+                <p className="mt-1 text-sm text-content-secondary">
+                  This listing has no ownership document, so an admin cannot approve it
+                  and it will not reach public browse. Upload one to fix that - a C of O
+                  or deed runs to several pages, so send it as one PDF.
+                </p>
+              )}
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <select
+                  className="input-field px-4 py-3"
+                  value={docType}
+                  onChange={(e) =>
+                    setDocType(e.target.value as 'c_of_o' | 'deed' | 'other')
+                  }
+                >
+                  <option value="c_of_o">Certificate of Occupancy</option>
+                  <option value="deed">Deed of Assignment</option>
+                  <option value="other">Other property document</option>
+                </select>
+                <input
+                  className="input-field px-4 py-3"
+                  type="file"
+                  accept="application/pdf,image/*"
+                  onChange={(e) => setDocFile(e.target.files?.[0] ?? null)}
+                />
+              </div>
+
+              <button
+                className="btn-primary mt-4 w-full px-6 py-3"
+                disabled={!docFile || docBusy}
+                onClick={async () => {
+                  if (!docFile || !user) return
+                  setDocBusy(true)
+                  setError(null)
+                  setMessage(null)
+                  const err = await uploadOwnershipDoc(
+                    user.uid,
+                    propertyId,
+                    docFile,
+                    docType,
+                  )
+                  setDocBusy(false)
+                  if (err) {
+                    setError(err)
+                    return
+                  }
+                  setDocFile(null)
+                  setMessage('Document sent for review.')
+                  await load()
+                }}
+              >
+                {docBusy ? 'Uploading…' : 'Send for review'}
+              </button>
+            </div>
+          )}
 
         <div className="card mt-6 p-6">
           <h2 className="font-semibold text-content">Ready for inspections</h2>

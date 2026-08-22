@@ -4,26 +4,52 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '../../../components/AuthProvider'
 import { timeAgo } from '../../../lib/format'
-import { landlordActivities, type Activity } from '../../../lib/landlord'
+import { landlordFeed, type FeedItem } from '../../../lib/landlord'
 
-/** A glyph per activity type, so the feed scans without reading every line. */
+/**
+ * A glyph per event type, so the feed scans without reading every line.
+ *
+ * Keyed on types from BOTH logs now — the activity types written by the
+ * clients and the notification types written by the Cloud Functions. Anything
+ * unmapped falls back to a dot rather than disappearing.
+ */
 const GLYPH: Record<string, string> = {
-  property_viewed: '👁',
+  // written by the clients into `activities`
+  propertyViewed: '👁',
+  propertyAdded: '🏠',
   inquiry: '💬',
+  payment: '₦',
+  property_assigned: '🤝',
+  moveout_requested: '📦',
+  // written by the functions into `notifications`
   issue_reported: '⚠',
-  inspection_requested: '📅',
-  inspection_completed: '✓',
-  payment_received: '₦',
-  rental_started: '🔑',
+  issue_updated: '🔧',
+  issue_pending_reminder: '⏳',
+  inspection_request: '📅',
+  inspection_arrival: '📍',
+  rental_interest_paid: '₦',
+  rental_accept_reminder: '⏳',
+  rental_expired: '⌛',
+  agreement_finalized: '📄',
+  caretaker_accepted: '🛠',
+  caretaker_declined: '🛠',
+  agent_declined: '🤝',
+  agent_removed: '🤝',
+  handover_closed: '🔑',
+  handover_resolved: '🔑',
+  handover_condition_reminder: '📦',
+  moveout_auto_confirmed: '📦',
+  moveout_pending_reminder: '📦',
+  listing_suspension: '🚫',
 }
 
 export default function ActivityPage() {
   const { user } = useAuth()
-  const [rows, setRows] = useState<Activity[] | null>(null)
+  const [rows, setRows] = useState<FeedItem[] | null>(null)
 
   useEffect(() => {
     if (!user) return
-    ;(async () => setRows(await landlordActivities(user.uid)))()
+    ;(async () => setRows(await landlordFeed(user.uid)))()
   }, [user])
 
   if (!user) return null
@@ -36,7 +62,8 @@ export default function ActivityPage() {
         <div className="card p-8 text-center">
           <p className="text-content-secondary">No activity yet.</p>
           <p className="mt-1 text-sm text-content-hint">
-            Views, inquiries and inspection events on your listings show up here.
+            Views, inquiries, inspections and tenancy events on your listings show up
+            here.
           </p>
         </div>
       ) : (
@@ -48,18 +75,22 @@ export default function ActivityPage() {
                   {GLYPH[a.type] ?? '•'}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-content">{a.title}</p>
+                  <div className="flex items-start gap-2">
+                    {a.unread && (
+                      <span
+                        aria-hidden
+                        className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary"
+                      />
+                    )}
+                    <p className="font-medium text-content">{a.title}</p>
+                  </div>
                   <p className="mt-0.5 text-sm text-content-secondary">{a.message}</p>
                   <p className="mt-1 text-xs text-content-hint">{timeAgo(a.createdAt)}</p>
                 </div>
               </div>
             )
-            return a.propertyId ? (
-              <Link
-                key={a.id}
-                href={`/dashboard/listings/${a.propertyId}`}
-                className="card block p-4 no-underline"
-              >
+            return a.href ? (
+              <Link key={a.id} href={a.href} className="card block p-4 no-underline">
                 {inner}
               </Link>
             ) : (

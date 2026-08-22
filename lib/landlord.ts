@@ -8,6 +8,7 @@ import {
   where,
 } from 'firebase/firestore'
 import { clientDb } from './firebase-client'
+import { myNotifications, webRoute } from './notifications'
 
 /*
   Landlord-side reads.
@@ -227,4 +228,66 @@ export async function setIssueStatus(
   } catch (err) {
     return err instanceof Error ? err.message : 'Could not update that issue.'
   }
+}
+
+/**
+ * The activity feed, merged from BOTH logs.
+ *
+ * `activities` is written ad hoc by whichever client screen remembered to —
+ * nine event types in all, four of them from `activity_service.dart`.
+ * `notifications` is written centrally by the Cloud Functions, and carries
+ * nineteen landlord-facing types. Sixteen of those never reached the feed:
+ * a tenant requesting an inspection, rent interest being paid, an agreement
+ * finalising, a caretaker accepting, a listing being suspended.
+ *
+ * That gap is structural, not an oversight anyone can fix once. Every event
+ * added since the feed was built went through the functions and skipped it,
+ * and would keep doing so. Reading both is the only version that stays
+ * complete — anything that notifies now appears here automatically.
+ *
+ * `activities` still matters on its own: property VIEWS belong in a feed and
+ * must never be a push.
+ */
+export type FeedItem = {
+  id: string
+  title: string
+  message: string
+  createdAt: Date | null
+  /** Where tapping should go. Null when there is nowhere useful. */
+  href: string | null
+  /** Notifications carry read state; activities have none of their own. */
+  unread: boolean
+  type: string
+}
+
+export async function landlordFeed(uid: string): Promise<FeedItem[]> {
+  // Independent collections — one failing should not blank the whole feed.
+  const [activities, notifications] = await Promise.all([
+    landlordActivities(uid).catch(() => [] as Activity[]),
+    myNotifications(uid).catch(() => []),
+  ])
+
+  const fromActivities: FeedItem[] = activities.map((a) => ({
+    id: `a_${a.id}`,
+    title: a.title,
+    message: a.message,
+    createdAt: a.createdAt,
+    href: a.propertyId ? `/dashboard/listings/${a.propertyId}` : null,
+    unread: false,
+    type: a.type,
+  }))
+
+  const fromNotifications: FeedItem[] = notifications.map((n) => ({
+    id: `n_${n.id}`,
+    title: n.title,
+    message: n.body,
+    createdAt: n.createdAt,
+    href: webRoute(n.route, n.conversationId),
+    unread: !n.read,
+    type: n.type,
+  }))
+
+  return [...fromActivities, ...fromNotifications].sort(
+    (a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0),
+  )
 }

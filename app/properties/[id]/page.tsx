@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { BookInspection } from '../../../components/BookInspection'
 import { CloudinaryImage } from '../../../components/CloudinaryImage'
 import SaveButton from '../../../components/SaveButton'
+import TrackView from '../../../components/TrackView'
 import {
   formatNairaFull,
   getPublishedProperty,
@@ -143,6 +144,7 @@ export default async function PropertyDetailPage({ params }: Props) {
         <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
           <p className="text-content-secondary">{property.approximateAddress}</p>
           <SaveButton propertyId={property.id} />
+          <TrackView propertyId={property.id} />
         </div>
 
         {property.images.length > 0 && (

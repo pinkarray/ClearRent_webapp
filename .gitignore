@@ -43,3 +43,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local agent notes — contains machine paths and internal architecture detail.
+CLAUDE.md

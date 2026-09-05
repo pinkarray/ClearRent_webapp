@@ -37,7 +37,11 @@ function callables() {
 
 /**
  * Starts a payment and returns Paystack's hosted checkout URL.
- * [amount] is in Naira and display-only for every type but 'renewal'.
+ *
+ * [amount] is in Naira and DISPLAY-ONLY for every type, renewal included. The
+ * server prices each charge itself and refuses one it cannot price, so this
+ * figure never decides what is taken. Renewal was the one exception until the
+ * server started throwing rather than falling back to whatever was sent here.
  */
 export async function initializePayment(
   type: PaymentType,

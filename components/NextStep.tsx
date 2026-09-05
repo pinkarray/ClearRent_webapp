@@ -53,6 +53,42 @@ const ENDED = new Set([
   'ended_by_landlord',
 ])
 
+/*
+  A handover outlives the tenancy that produced it.
+
+  `liveRentals` is deliberately left alone: it feeds the tenant branch too, and
+  an ended rental leaking into those checks would be a worse bug than the one
+  being fixed. The handover lookup below scans the FULL list instead, because
+  the rental it needs is terminal by definition - the tenancy ended, and the
+  caution deposit did not end with it.
+
+  Only the two stages the landlord can actually act on. `awaiting_evidence` and
+  `awaiting_confirm` sit with the former tenant, and a banner telling someone to
+  do a thing they cannot do is worse than no banner.
+*/
+const LANDLORD_TURN: Record<string, { title: string; detail: string; cta: string }> = {
+  awaiting_condition: {
+    title: 'Check the unit and record its condition',
+    detail:
+      'the tenancy has ended but the handover has not. Nothing can be settled, ' +
+      'and the unit cannot be relisted, until you record what condition you ' +
+      'found it in.',
+    cta: 'Record condition',
+  },
+  awaiting_settlement: {
+    title: 'Settle the caution deposit',
+    detail:
+      'your former tenant is waiting on their deposit. Send it, attach proof of ' +
+      'the transfer, and the handover closes itself once they confirm.',
+    cta: 'Settle deposit',
+  },
+}
+
+/** Settled or not, a handover is open until the stage reaches closed. */
+function isHandoverOpen(r: ActiveRental): boolean {
+  return r.handoverStage.length > 0 && r.handoverStage !== 'closed'
+}
+
 function liveRentals(rentals: ActiveRental[]): ActiveRental[] {
   return rentals.filter((r) => !ENDED.has(r.status))
 }
@@ -235,6 +271,25 @@ function landlordStep(interests: RentalInterest[], rentals: ActiveRental[]): Ste
       detail: `${moveout.propertyTitle} - confirm once you have the keys back. It confirms itself after the notice period if you do nothing.`,
       href: '/dashboard/rentals',
       cta: 'Confirm move-out',
+      tone: 'action',
+    }
+  }
+
+  // Deliberately `rentals`, not `live`: an open handover only ever sits on an
+  // ENDED tenancy, so the live filter excluded exactly the case this exists
+  // for. A landlord was left holding a former tenant's deposit with nothing on
+  // the dashboard saying so, and the only route to it was a rentals page they
+  // had no reason to open.
+  const handover = rentals.find(
+    (r) => isHandoverOpen(r) && LANDLORD_TURN[r.handoverStage],
+  )
+  if (handover) {
+    const step = LANDLORD_TURN[handover.handoverStage]
+    return {
+      title: step.title,
+      detail: `${handover.propertyTitle} - ${step.detail}`,
+      href: '/dashboard/rentals',
+      cta: step.cta,
       tone: 'action',
     }
   }

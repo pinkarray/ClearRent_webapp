@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { doc, getDoc } from 'firebase/firestore'
 import { useAuth } from '../../../../../components/AuthProvider'
 import { clientDb } from '../../../../../lib/firebase-client'
@@ -12,6 +12,7 @@ import {
   revokeCaretaker,
   type CaretakerInvite,
 } from '../../../../../lib/caretaker'
+import { getOrCreateCaretakerConversation } from '../../../../../lib/chat'
 
 /*
   Appoint or remove the caretaker for one listing.
@@ -39,6 +40,7 @@ export default function ListingCaretakerPage() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  const router = useRouter()
 
   const load = useCallback(async () => {
     if (!user || !propertyId) return
@@ -101,6 +103,7 @@ export default function ListingCaretakerPage() {
   /* Step 2 - the landlord confirms the name, not the digits. */
   async function send() {
     if (!confirming) return
+    const invitedName = confirming.name
     setBusy(true)
     const err = await inviteCaretaker(
       phone,
@@ -114,8 +117,33 @@ export default function ListingCaretakerPage() {
       return
     }
     setPhone('')
-    setNotice('Invitation sent. They appear here once they accept.')
+    // Name the person. A bare "Invitation sent" left the landlord unable to
+    // tell it had reached who they meant, and the recovery they reached for
+    // was inviting again, which the callable then rejects with "you already
+    // have a caretaker invite waiting", reading like a bug rather than truth.
+    setNotice(
+      `Invitation sent to ${invitedName}. They appear here as your caretaker ` +
+        'once they accept. You do not need to invite them again.',
+    )
     await load()
+  }
+
+  /** Open the landlord↔caretaker thread. Works before acceptance as well as
+   *  after: it carries no tenant and no property, so it touches nothing the
+   *  caretaker is not entitled to see. */
+  async function messageCaretaker(invite: CaretakerInvite) {
+    setBusy(true)
+    setError(null)
+    const res = await getOrCreateCaretakerConversation(invite.landlordId, {
+      uid: invite.caretakerId,
+      name: invite.caretakerName,
+    })
+    setBusy(false)
+    if ('error' in res) {
+      setError(res.error)
+      return
+    }
+    router.push(`/dashboard/messages/${res.id}`)
   }
 
   async function remove(invite: CaretakerInvite) {
@@ -165,13 +193,25 @@ export default function ListingCaretakerPage() {
                     : 'Manages this property'}
               </p>
             </div>
-            <button
-              className="btn-ghost px-4 py-2 text-sm text-error"
-              disabled={busy}
-              onClick={() => remove(live)}
-            >
-              {live.status === 'pending' ? 'Withdraw' : 'Remove'}
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Chasing an unanswered invitation is the action a landlord
+                  actually wants here. Without it the only button was Withdraw,
+                  so "they haven't replied" had no outlet but re-inviting. */}
+              <button
+                className="btn-ghost px-4 py-2 text-sm"
+                disabled={busy}
+                onClick={() => messageCaretaker(live)}
+              >
+                Message
+              </button>
+              <button
+                className="btn-ghost px-4 py-2 text-sm text-error"
+                disabled={busy}
+                onClick={() => remove(live)}
+              >
+                {live.status === 'pending' ? 'Withdraw' : 'Remove'}
+              </button>
+            </div>
           </div>
         ) : (
           <div className="mt-5 space-y-4">

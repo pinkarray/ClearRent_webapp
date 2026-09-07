@@ -38,6 +38,8 @@ export type Conversation = {
   tenantName: string
   agentId: string
   agentName: string
+  caretakerId: string
+  caretakerName: string
   participants: string[]
   lastMessage: string
   lastMessageTime: Date | null
@@ -74,6 +76,8 @@ function toConversation(id: string, x: Record<string, unknown>, uid: string): Co
     tenantName: (x.tenantName as string) ?? '',
     agentId: (x.agentId as string) ?? '',
     agentName: (x.agentName as string) ?? '',
+    caretakerId: (x.caretakerId as string) ?? '',
+    caretakerName: (x.caretakerName as string) ?? '',
     participants: Array.isArray(x.participants)
       ? x.participants.filter((p): p is string => typeof p === 'string')
       : [],
@@ -362,12 +366,79 @@ export async function getOrCreatePitchConversation(
       tenantName: '',
       agentId: agent.uid,
       agentName: agent.name,
+      caretakerId: '',
+      caretakerName: '',
       participants: [landlordId, agent.uid],
       lastMessage: '',
       lastMessageTime: Timestamp.now(),
       lastMessageSenderId: '',
       unreadCounts: { [landlordId]: 0, [agent.uid]: 0 },
       conversationType: 'agent_pitch',
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    })
+    return { id: ref.id }
+  } catch (err) {
+    return {
+      error: err instanceof Error ? err.message : 'Could not start that conversation.',
+    }
+  }
+}
+
+/**
+ * The landlord ↔ caretaker thread, mirroring
+ * `conversation_service.getOrCreateCaretakerConversation`.
+ *
+ * Distinct from the three-party caretaker thread, which is opened server-side
+ * on ACCEPTANCE and carries the tenant. This one exists from the moment an
+ * invitation is sent, so a landlord can chase an unanswered invite instead of
+ * sending a second one. An invitation can cover a whole building, so it is
+ * keyed to the pair rather than to a property, same reasoning as the pitch
+ * thread above, and it needs no composite index for the same reason.
+ */
+export async function getOrCreateCaretakerConversation(
+  landlordId: string,
+  caretaker: { uid: string; name: string },
+): Promise<{ id: string } | { error: string }> {
+  if (!landlordId) return { error: 'That listing has no landlord on it.' }
+  if (!caretaker.uid) return { error: 'Could not identify that caretaker.' }
+
+  try {
+    const existing = await getDocs(
+      query(
+        collection(clientDb(), 'conversations'),
+        where('landlordId', '==', landlordId),
+        where('caretakerId', '==', caretaker.uid),
+        where('conversationType', '==', 'caretaker_direct'),
+      ),
+    )
+    if (!existing.empty) return { id: existing.docs[0].id }
+
+    const landlordSnap = await getDoc(doc(clientDb(), 'users', landlordId))
+    const landlord = landlordSnap.data()
+    if (!landlord) return { error: 'Could not find that landlord.' }
+    if (landlord.verificationStatus !== 'verified') {
+      return { error: 'You need a verified account before you can message.' }
+    }
+
+    const ref = await addDoc(collection(clientDb(), 'conversations'), {
+      propertyId: '',
+      propertyTitle: 'Caretaking',
+      propertyImage: '',
+      landlordId,
+      landlordName: (landlord.fullName as string) ?? 'Landlord',
+      tenantId: '',
+      tenantName: '',
+      agentId: '',
+      agentName: '',
+      caretakerId: caretaker.uid,
+      caretakerName: caretaker.name,
+      participants: [landlordId, caretaker.uid],
+      lastMessage: '',
+      lastMessageTime: Timestamp.now(),
+      lastMessageSenderId: '',
+      unreadCounts: { [landlordId]: 0, [caretaker.uid]: 0 },
+      conversationType: 'caretaker_direct',
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     })
@@ -533,7 +604,15 @@ export function splitMentions(
 export function counterparty(c: Conversation, uid: string): string {
   // A pitch thread has no tenant — it is the agent and the landlord.
   if (c.agentId === uid) return c.landlordName || 'Landlord'
-  if (c.landlordId === uid) return c.agentName || c.tenantName || 'Tenant'
+  // The caretaker's counterpart is the tenant they manage for, or, on the
+  // landlord↔caretaker thread, which carries no tenant, the landlord who
+  // appointed them.
+  if (c.caretakerId && c.caretakerId === uid) {
+    return c.tenantName || c.landlordName || 'Landlord'
+  }
+  if (c.landlordId === uid) {
+    return c.tenantName || c.caretakerName || c.agentName || 'Tenant'
+  }
   if (c.tenantId === uid) return c.agentId ? c.agentName || c.landlordName : c.landlordName
   return c.tenantName || 'Tenant'
 }

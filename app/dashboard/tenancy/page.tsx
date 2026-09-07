@@ -459,6 +459,19 @@ export default function TenancyPage() {
                       </button>
                     )}
 
+                    {/* The caution deposit is NOT part of what ClearRent
+                        charges: the rent payment is rent + agent fee + deal
+                        fee and nothing else. Nothing on either client said so,
+                        so a tenant could pay in full here and still owe the
+                        landlord a deposit they had never been told about.
+                        Mirrors the app's payment breakdown and lease details. */}
+                    {r.cautionDeposit > 0 && (
+                      <p className="w-full text-xs text-content-secondary">
+                        Caution deposit {formatNaira(r.cautionDeposit)}, paid
+                        directly to your landlord, not through ClearRent.
+                      </p>
+                    )}
+
                     {r.rentPaymentStatus === 'paid' && r.status === 'active' && (
                       <button
                         className="btn-ghost px-5 py-2.5 text-sm"

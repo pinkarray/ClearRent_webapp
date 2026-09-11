@@ -11,6 +11,7 @@ import { startPayment } from '../../../lib/payments'
 import { InspectionActions } from '../../../components/InspectionActions'
 import { createRentalInterest, watchInterests } from '../../../lib/tenancy'
 import { cancelInspection } from '../../../lib/inspections'
+import { RescheduleActions } from '../../../components/RescheduleActions'
 
 type Row = {
   id: string
@@ -26,6 +27,8 @@ type Row = {
   handlerArrived: boolean
   tenantOnWay: boolean
   handlerOnWay: boolean
+  rescheduleProposal: unknown
+  rescheduleCount: number
   tenantConfirmedMet: boolean
   handlerConfirmedMet: boolean
   tenantRated: boolean
@@ -156,6 +159,8 @@ export default function TenantInspectionsPage() {
               handlerArrived: x.handlerArrived === true,
               tenantOnWay: x.tenantOnWay === true,
               handlerOnWay: x.handlerOnWay === true,
+              rescheduleProposal: x.rescheduleProposal ?? null,
+              rescheduleCount: (x.rescheduleCount as number) ?? 0,
               tenantConfirmedMet: x.tenantConfirmedMet === true,
               handlerConfirmedMet: x.handlerConfirmedMet === true,
               tenantRated: x.tenantRated === true,
@@ -258,6 +263,17 @@ export default function TenantInspectionsPage() {
                   role="tenant"
                   uid={user.uid}
                   onDone={() => setReloadKey((k) => k + 1)}
+                />
+
+                <RescheduleActions
+                  requestId={r.id}
+                  rescheduleProposal={r.rescheduleProposal}
+                  requestedDate={r.requestedDate}
+                  status={r.status}
+                  rescheduleCount={r.rescheduleCount}
+                  role="tenant"
+                  actorRole="tenant"
+                  uid={user.uid}
                 />
 
                 {/* Calling it off, only while it is still unpaid. Row 8 of

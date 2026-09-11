@@ -17,6 +17,7 @@ import {
   cancelInspection,
   declineInspection,
 } from '../../../lib/inspections'
+import { RescheduleActions } from '../../../components/RescheduleActions'
 import { InspectionActions } from '../../../components/InspectionActions'
 
 type Row = {
@@ -37,6 +38,8 @@ type Row = {
   handlerArrived: boolean
   tenantOnWay: boolean
   handlerOnWay: boolean
+  rescheduleProposal: unknown
+  rescheduleCount: number
   tenantConfirmedMet: boolean
   handlerConfirmedMet: boolean
   tenantRated: boolean
@@ -115,6 +118,8 @@ export default function HandlerRequestsPage() {
         handlerArrived: x.handlerArrived === true,
         tenantOnWay: x.tenantOnWay === true,
         handlerOnWay: x.handlerOnWay === true,
+        rescheduleProposal: x.rescheduleProposal ?? null,
+        rescheduleCount: (x.rescheduleCount as number) ?? 0,
         tenantConfirmedMet: x.tenantConfirmedMet === true,
         handlerConfirmedMet: x.handlerConfirmedMet === true,
         tenantRated: x.tenantRated === true,
@@ -311,6 +316,17 @@ export default function HandlerRequestsPage() {
                         uid={user.uid}
                         // Listeners keep the list current.
                         onDone={() => {}}
+                      />
+
+                      <RescheduleActions
+                        requestId={r.id}
+                        rescheduleProposal={r.rescheduleProposal}
+                        requestedDate={r.requestedDate}
+                        status={r.status}
+                        rescheduleCount={r.rescheduleCount}
+                        role="handler"
+                        actorRole={r.isAgentHandled ? 'agent' : 'landlord'}
+                        uid={user.uid}
                       />
 
                       {/* Row 21: the handler may call off a pending or an

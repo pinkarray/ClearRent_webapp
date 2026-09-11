@@ -68,7 +68,7 @@ export function isSlotStillBookable(dateISO: string, slot: string): boolean {
   return new Date(y, m - 1, d, hour).getTime() > Date.now() + BOOKING_LEAD_MS
 }
 
-function composeScheduledDateTime(date: Date, slot: string): Date {
+export function composeScheduledDateTime(date: Date, slot: string): Date {
   const hour = TIME_SLOT_START_HOUR[slot]
   const d = new Date(date.getFullYear(), date.getMonth(), date.getDate())
   if (hour !== undefined) d.setHours(hour, 0, 0, 0)

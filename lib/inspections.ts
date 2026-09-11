@@ -471,6 +471,80 @@ export async function markArrived(
 }
 
 /**
+ * Either side says they have set off.
+ *
+ * Purely informational, it changes no status and gates nothing. It exists so
+ * the other party knows someone is coming rather than sitting and wondering,
+ * which on web they could not be told at all until now.
+ *
+ * Field lists match firestore.rules Rows 22 and 23 exactly. Those rows allow
+ * ONLY these keys, so adding anything (even a harmless extra timestamp) makes
+ * the whole write fail the hasOnly check.
+ */
+export async function markOnWay(
+  requestId: string,
+  as: 'tenant' | 'handler',
+): Promise<string | null> {
+  const fields =
+    as === 'tenant'
+      ? { tenantOnWay: true, tenantOnWayAt: serverTimestamp() }
+      : { handlerOnWay: true, handlerOnWayAt: serverTimestamp() }
+  try {
+    await updateDoc(doc(clientDb(), 'inspection_requests', requestId), {
+      ...fields,
+      updatedAt: serverTimestamp(),
+    })
+    return null
+  } catch {
+    return 'Could not share that you are on the way. The inspection must be approved first.'
+  }
+}
+
+/**
+ * Call the inspection off.
+ *
+ * Two different rules, not one, because the two sides are not symmetric:
+ *
+ *   Tenant (Row 8)  only while still `pendingPayment`, and may write nothing
+ *                   but the status. Once they have paid it is no longer theirs
+ *                   to cancel unilaterally; that is a refund, not a cancel.
+ *   Handler (Row 21) from `pending` or `approved`, and MUST record who did it
+ *                   and why, because they are cancelling on somebody else's
+ *                   behalf. It also clears any live reschedule proposal, since
+ *                   a cancelled inspection cannot still be under negotiation.
+ *
+ * A paid cancellation is refunded server-side; nothing here moves money.
+ */
+export async function cancelInspection(
+  requestId: string,
+  as: 'tenant' | 'handler',
+  opts: { reason?: string } = {},
+): Promise<string | null> {
+  const ref = doc(clientDb(), 'inspection_requests', requestId)
+  try {
+    if (as === 'tenant') {
+      await updateDoc(ref, { status: 'cancelled', updatedAt: serverTimestamp() })
+      return null
+    }
+    const reason = opts.reason?.trim()
+    if (!reason) return 'Give a reason so the tenant knows why.'
+    await updateDoc(ref, {
+      status: 'cancelled',
+      cancelledBy: 'handler',
+      cancellationReason: reason,
+      cancelledAt: serverTimestamp(),
+      rescheduleProposal: null,
+      updatedAt: serverTimestamp(),
+    })
+    return null
+  } catch {
+    return as === 'tenant'
+      ? 'Could not cancel. Once payment has gone through this is a refund request, not a cancellation.'
+      : 'Could not cancel this inspection.'
+  }
+}
+
+/**
  * Each side confirms the meeting actually happened. Only possible once BOTH
  * arrival flags are set — a meeting needs two halves, and the rule checks both
  * before letting either party confirm.

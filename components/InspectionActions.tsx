@@ -5,6 +5,7 @@ import {
   completeInspection,
   confirmMet,
   markArrived,
+  markOnWay,
   rateInspection,
 } from '../lib/inspections'
 
@@ -16,6 +17,9 @@ export type InspectionState = {
   requestedDate: Date | null
   tenantArrived: boolean
   handlerArrived: boolean
+  /** Purely informational: someone has set off. Gates nothing. */
+  tenantOnWay: boolean
+  handlerOnWay: boolean
   tenantConfirmedMet: boolean
   handlerConfirmedMet: boolean
   tenantRated: boolean
@@ -94,6 +98,8 @@ export function InspectionActions({
   const resident = state.handlerIsResident === true &&
     state.handlerType === 'landlord'
   const iArrived = mine ? state.tenantArrived : state.handlerArrived
+  const iOnWay = mine ? state.tenantOnWay : state.handlerOnWay
+  const theyOnWay = mine ? state.handlerOnWay : state.tenantOnWay
   const theyArrived = mine ? state.handlerArrived : state.tenantArrived
   const iConfirmed = mine ? state.tenantConfirmedMet : state.handlerConfirmedMet
   const bothArrived = state.tenantArrived && state.handlerArrived
@@ -140,6 +146,34 @@ export function InspectionActions({
           <p className="text-xs font-semibold uppercase tracking-wide text-content-hint">
             On the day
           </p>
+
+          {/* On the way, before arrival. It changes no status and unlocks
+              nothing; it exists so the other party is not left wondering
+              whether anyone is coming. Hidden once you have arrived, since
+              saying you are on the way then is nonsense, and hidden for a
+              resident landlord, who is not travelling anywhere. */}
+          {!iArrived && !(resident && !mine) && (
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              {!iOnWay ? (
+                <button
+                  className="btn-ghost px-5 py-2.5 text-sm"
+                  disabled={busy}
+                  onClick={() => run(() => markOnWay(state.id, role))}
+                >
+                  I&apos;m on my way
+                </button>
+              ) : (
+                <span className="text-sm text-content-secondary">
+                  ✓ You said you are on the way
+                </span>
+              )}
+              {theyOnWay && !theyArrived && (
+                <span className="text-sm text-content-secondary">
+                  ✓ {mine ? 'Tenant' : 'Handler'} is on the way
+                </span>
+              )}
+            </div>
+          )}
 
           <div className="mt-2 flex flex-wrap items-center gap-3">
             {!iArrived ? (

@@ -10,6 +10,7 @@ import { clientDb } from '../../../lib/firebase-client'
 import { startPayment } from '../../../lib/payments'
 import { InspectionActions } from '../../../components/InspectionActions'
 import { createRentalInterest, watchInterests } from '../../../lib/tenancy'
+import { cancelInspection } from '../../../lib/inspections'
 
 type Row = {
   id: string
@@ -23,6 +24,8 @@ type Row = {
   totalFee: number
   tenantArrived: boolean
   handlerArrived: boolean
+  tenantOnWay: boolean
+  handlerOnWay: boolean
   tenantConfirmedMet: boolean
   handlerConfirmedMet: boolean
   tenantRated: boolean
@@ -59,6 +62,18 @@ export default function TenantInspectionsPage() {
   const [payingId, setPayingId] = useState<string | null>(null)
   const [payError, setPayError] = useState<string | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
+  const [cancelling, setCancelling] = useState<string | null>(null)
+
+  async function cancelRequest(id: string) {
+    if (!window.confirm('Cancel this inspection request?')) return
+    setCancelling(id)
+    const err = await cancelInspection(id, 'tenant')
+    setCancelling(null)
+    // setPayError is this page's only error banner. The name predates this
+    // button; reusing it beats adding a second banner for one message.
+    if (err) setPayError(err)
+    else setReloadKey((k) => k + 1)
+  }
   const [interestId, setInterestId] = useState<string | null>(null)
   // Properties this tenant has ALREADY claimed. Without it the card kept
   // offering "I want to rent this" for a place they had already rented —
@@ -139,6 +154,8 @@ export default function TenantInspectionsPage() {
               totalFee: (x.totalFee as number) ?? 0,
               tenantArrived: x.tenantArrived === true,
               handlerArrived: x.handlerArrived === true,
+              tenantOnWay: x.tenantOnWay === true,
+              handlerOnWay: x.handlerOnWay === true,
               tenantConfirmedMet: x.tenantConfirmedMet === true,
               handlerConfirmedMet: x.handlerConfirmedMet === true,
               tenantRated: x.tenantRated === true,
@@ -242,6 +259,23 @@ export default function TenantInspectionsPage() {
                   uid={user.uid}
                   onDone={() => setReloadKey((k) => k + 1)}
                 />
+
+                {/* Calling it off, only while it is still unpaid. Row 8 of
+                    firestore.rules allows the tenant nothing else: once the
+                    fee has gone through this is a refund, which is a different
+                    conversation and not a button. Web had no way to cancel at
+                    all, so an abandoned request just sat there. */}
+                {r.status === 'pendingPayment' && (
+                  <div className="mt-4 border-t border-divider pt-4">
+                    <button
+                      className="btn-ghost px-5 py-2.5 text-sm text-error"
+                      disabled={cancelling === r.id}
+                      onClick={() => void cancelRequest(r.id)}
+                    >
+                      {cancelling === r.id ? 'Cancelling…' : 'Cancel this request'}
+                    </button>
+                  </div>
+                )}
 
                 {/* The step nobody found. It is not a footnote on a finished
                     inspection - it is how a tenancy starts, and nothing else

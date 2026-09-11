@@ -12,7 +12,11 @@ import {
 } from 'firebase/firestore'
 import { useAuth } from '../../../components/AuthProvider'
 import { clientDb } from '../../../lib/firebase-client'
-import { approveInspection, declineInspection } from '../../../lib/inspections'
+import {
+  approveInspection,
+  cancelInspection,
+  declineInspection,
+} from '../../../lib/inspections'
 import { InspectionActions } from '../../../components/InspectionActions'
 
 type Row = {
@@ -31,6 +35,8 @@ type Row = {
   isAgentHandled: boolean
   tenantArrived: boolean
   handlerArrived: boolean
+  tenantOnWay: boolean
+  handlerOnWay: boolean
   tenantConfirmedMet: boolean
   handlerConfirmedMet: boolean
   tenantRated: boolean
@@ -59,6 +65,24 @@ export default function HandlerRequestsPage() {
   const [asAgent, setAsAgent] = useState<Row[] | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [cancelling, setCancelling] = useState<string | null>(null)
+
+  /// The handler calls off an inspection the tenant is expecting.
+  ///
+  /// A reason is required, not optional: this is being done on somebody
+  /// else's behalf, and Row 21 of firestore.rules writes cancelledBy and
+  /// cancellationReason precisely so the tenant can be told why. A paid
+  /// inspection is refunded server-side.
+  async function callOff(id: string) {
+    const reason = window.prompt(
+      'Why are you cancelling? The tenant will be told.',
+    )
+    if (reason === null) return
+    setCancelling(id)
+    const err = await cancelInspection(id, 'handler', { reason })
+    setCancelling(null)
+    if (err) setError(err)
+  }
 
   /**
    * Both queries are LIVE. A tenant booking an inspection has to appear here
@@ -89,6 +113,8 @@ export default function HandlerRequestsPage() {
         isAgentHandled: x.agentId === user?.uid,
         tenantArrived: x.tenantArrived === true,
         handlerArrived: x.handlerArrived === true,
+        tenantOnWay: x.tenantOnWay === true,
+        handlerOnWay: x.handlerOnWay === true,
         tenantConfirmedMet: x.tenantConfirmedMet === true,
         handlerConfirmedMet: x.handlerConfirmedMet === true,
         tenantRated: x.tenantRated === true,
@@ -286,6 +312,22 @@ export default function HandlerRequestsPage() {
                         // Listeners keep the list current.
                         onDone={() => {}}
                       />
+
+                      {/* Row 21: the handler may call off a pending or an
+                          approved inspection. Web offered no way to, so a
+                          handler who could not make it had to leave the tenant
+                          waiting. */}
+                      {(r.status === 'pending' || r.status === 'approved') && (
+                        <button
+                          className="btn-ghost mt-3 px-5 py-2.5 text-sm text-error"
+                          disabled={cancelling === r.id}
+                          onClick={() => void callOff(r.id)}
+                        >
+                          {cancelling === r.id
+                            ? 'Cancelling…'
+                            : 'Cancel this inspection'}
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}

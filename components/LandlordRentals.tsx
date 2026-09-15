@@ -7,7 +7,13 @@ import AgreementUpload from './AgreementUpload'
 import { useAuth } from './AuthProvider'
 import { formatDate } from '../lib/format'
 import { getOrCreatePropertyConversation } from '../lib/chat'
-import { confirmMoveOut, watchActiveRentals, type ActiveRental } from '../lib/tenancy'
+import {
+  confirmMoveOut,
+  handoverConfirmCondition,
+  handoverSettle,
+  watchActiveRentals,
+  type ActiveRental,
+} from '../lib/tenancy'
 import { useScrollToHash } from '../lib/use-scroll-to-hash'
 
 function formatNaira(n: number): string {
@@ -53,6 +59,8 @@ export default function LandlordRentals() {
   const [deduction, setDeduction] = useState<
     Record<string, { amount?: string; reason?: string }>
   >({})
+  const [conditionNotes, setConditionNotes] = useState<Record<string, string>>({})
+  const [proof, setProof] = useState<Record<string, File | null>>({})
 
   const uid = user?.uid
 
@@ -99,6 +107,29 @@ export default function LandlordRentals() {
     const err = await confirmMoveOut(rentalId, {
       cautionDeductionAmount: d.amount ? Number(d.amount) : 0,
       cautionDeductionReason: d.reason,
+    })
+    setBusyId(null)
+    if (err) setError(err)
+  }
+
+  async function confirmCondition(rentalId: string) {
+    setError(null)
+    setBusyId(rentalId)
+    const err = await handoverConfirmCondition(rentalId, conditionNotes[rentalId] ?? '')
+    setBusyId(null)
+    if (err) setError(err)
+  }
+
+  async function settle(r: ActiveRental) {
+    if (!user) return
+    setError(null)
+    setBusyId(r.id)
+    // Prefilled from what was declared at move-out, so an untouched form keeps it.
+    const d = deduction[r.id] ?? {}
+    const err = await handoverSettle(r.id, user.uid, {
+      deductionAmount: Number(d.amount ?? r.cautionDeductionAmount ?? 0),
+      deductionReason: d.reason ?? r.cautionDeductionReason ?? '',
+      proof: proof[r.id] ?? null,
     })
     setBusyId(null)
     if (err) setError(err)
@@ -249,6 +280,90 @@ export default function LandlordRentals() {
                     send us proof of the transfer.
                   </p>
                 )}
+                {r.handoverStage === 'awaiting_condition' && (
+                  <div className="mt-3">
+                    <textarea
+                      className="input-field px-3 py-2.5 text-sm"
+                      rows={2}
+                      placeholder="What you found (optional)"
+                      value={conditionNotes[r.id] ?? ''}
+                      onChange={(e) =>
+                        setConditionNotes((n) => ({ ...n, [r.id]: e.target.value }))
+                      }
+                    />
+                    <button
+                      className="btn-primary mt-2 px-5 py-2.5 text-sm"
+                      disabled={busyId === r.id}
+                      onClick={() => void confirmCondition(r.id)}
+                    >
+                      {busyId === r.id ? 'Saving…' : 'I have checked the unit'}
+                    </button>
+                  </div>
+                )}
+
+                {/* The app's settle sheet, on web. Without it the stage text
+                    asked for proof of transfer and offered no way to give it,
+                    which is exactly the "I never got my deposit" back and forth
+                    the proof exists to stop. */}
+                {r.handoverStage === 'awaiting_settlement' && (
+                  <div className="mt-3 space-y-2">
+                    <p className="text-sm text-content-secondary">
+                      Deposit on record: {formatNaira(r.cautionDeposit)}. Returned in full
+                      unless you declare a deduction.
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      <input
+                        type="number"
+                        min={0}
+                        max={r.cautionDeposit}
+                        placeholder="Kept (₦0)"
+                        className="input-field w-40 px-3 py-2 text-sm"
+                        value={deduction[r.id]?.amount ?? String(r.cautionDeductionAmount || '')}
+                        onChange={(e) =>
+                          setDeduction((d) => ({
+                            ...d,
+                            [r.id]: { ...d[r.id], amount: e.target.value },
+                          }))
+                        }
+                      />
+                      <input
+                        type="text"
+                        placeholder="Why (your former tenant sees this)"
+                        className="input-field min-w-0 flex-1 px-3 py-2 text-sm"
+                        value={deduction[r.id]?.reason ?? r.cautionDeductionReason ?? ''}
+                        onChange={(e) =>
+                          setDeduction((d) => ({
+                            ...d,
+                            [r.id]: { ...d[r.id], reason: e.target.value },
+                          }))
+                        }
+                      />
+                    </div>
+                    <label className="btn-ghost inline-block cursor-pointer px-4 py-2 text-sm">
+                      {proof[r.id] ? `Proof attached: ${proof[r.id]?.name}` : 'Attach proof of transfer'}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) =>
+                          setProof((p) => ({ ...p, [r.id]: e.target.files?.[0] ?? null }))
+                        }
+                      />
+                    </label>
+                    <p className="text-xs text-content-hint">
+                      Without proof, a tenant who never replies leaves this open and the
+                      property stays off the market.
+                    </p>
+                    <button
+                      className="btn-primary px-5 py-2.5 text-sm"
+                      disabled={busyId === r.id}
+                      onClick={() => void settle(r)}
+                    >
+                      {busyId === r.id ? 'Recording…' : 'Record settlement'}
+                    </button>
+                  </div>
+                )}
+
                 {/* "Settle it with your tenant" is useless advice without a way
                     to reach them. The tenancy is over, so the rental card is
                     the only place that still knows who they were. */}

@@ -535,6 +535,78 @@ export async function confirmMoveOut(
 }
 
 /**
+ * The landlord attests they have physically checked the unit. This is the
+ * relist lever: nothing frees the property until someone has looked at it.
+ * Same write as the app's handoverConfirmCondition.
+ */
+export async function handoverConfirmCondition(
+  rentalId: string,
+  notes: string,
+): Promise<string | null> {
+  try {
+    await updateDoc(doc(clientDb(), 'active_rentals', rentalId), {
+      handoverStage: 'awaiting_settlement',
+      handoverConditionConfirmedAt: serverTimestamp(),
+      handoverConditionNotes: notes.trim() || null,
+      updatedAt: serverTimestamp(),
+    })
+    return null
+  } catch {
+    return 'Could not record that. Try again.'
+  }
+}
+
+/**
+ * The landlord declares what they returned and attaches proof of the transfer.
+ * Same write as the app's handoverSettle. The proof is what ends "I never got
+ * it": the tenant can open it, and with it attached the handover closes itself
+ * after 7 days of silence.
+ *
+ * Uploaded under the landlord's own uid, the only path Storage lets them write;
+ * the tenant reads it through handoverProofLink, which checks membership.
+ */
+export async function handoverSettle(
+  rentalId: string,
+  uid: string,
+  opts: { deductionAmount: number; deductionReason: string; proof: File | null },
+): Promise<string | null> {
+  try {
+    const snap = await getDoc(doc(clientDb(), 'active_rentals', rentalId))
+    if (!snap.exists()) return 'That rental no longer exists.'
+    const deposit = Number(snap.data().cautionDeposit ?? 0)
+    const deducted = Math.min(Math.max(0, opts.deductionAmount), deposit)
+    if (deducted > 0 && !opts.deductionReason.trim()) {
+      return 'Give a reason for withholding part of the deposit.'
+    }
+
+    let proofPath: string | null = null
+    if (opts.proof) {
+      // The extension comes off the file NAME only, never a path, and is
+      // reduced to letters and digits so it cannot inject a slash.
+      const ext = (opts.proof.name.split('.').pop() ?? '').replace(/[^a-z0-9]/gi, '') || 'jpg'
+      proofPath = `condition/${uid}/${rentalId}/proof_${Date.now()}.${ext}`
+      await uploadBytes(ref(getStorage(clientApp()), proofPath), opts.proof)
+    }
+
+    await updateDoc(doc(clientDb(), 'active_rentals', rentalId), {
+      handoverStage: 'awaiting_confirm',
+      cautionDeductionAmount: deducted,
+      cautionDeductionReason: deducted > 0 ? opts.deductionReason.trim() : null,
+      cautionDeclaredAt: serverTimestamp(),
+      handoverSettlementMethod: 'off_platform_transfer',
+      handoverSettledAt: serverTimestamp(),
+      ...(proofPath
+        ? { handoverProofUrl: proofPath, handoverProofUploadedAt: serverTimestamp() }
+        : {}),
+      updatedAt: serverTimestamp(),
+    })
+    return null
+  } catch {
+    return 'Could not record the settlement.'
+  }
+}
+
+/**
  * The tenant raises a concern instead of accepting. This is the other half of
  * [acceptAgreement] - without it a tenant who disagrees with the agreement has
  * only two options, accept it or stall, and the landlord is never told why.

@@ -23,7 +23,7 @@ export const DEFAULT_DEAL_FEE = 5000
  * change does not need a deploy (`functions/src/pricing.ts:38` holds the same
  * default). `config/*` is readable by any signed-in user.
  *
- * This is for display only — `resolveServerAmount` recomputes
+ * This is for display only - `resolveServerAmount` recomputes
  * `rentAmount + dealFee` from the source document, so a tampered client total
  * cannot change what is charged.
  */

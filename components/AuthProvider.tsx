@@ -45,15 +45,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     //
     // This was `getUserProfile` once per sign-in, so the profile a page saw
     // was whatever was true when the tab loaded. Anything the SERVER changed
-    // afterwards was invisible until a full reload — and the case that bit
+    // afterwards was invisible until a full reload - and the case that bit
     // was verification: finalizeWebVerification sets verificationStatus to
     // 'pending', the cached profile still said nothing, so the verification
     // page fell back to 'none', re-rendered the empty form, and invited a
     // second NIN submission and a SECOND payment for an application that was
     // already paid for and queued.
     //
-    // Every page reading `profile` benefits — verification status, account
-    // type, bank-details flag — so this is fixed here rather than per screen.
+    // Every page reading `profile` benefits - verification status, account
+    // type, bank-details flag - so this is fixed here rather than per screen.
     let unsubProfile: (() => void) | null = null
     const unsubAuth = onAuthStateChanged(clientAuth(), (u) => {
       setUser(u)
@@ -99,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
       signOut: async () => {
         // Detach this browser's push token FIRST, while the user is still
-        // authenticated — the users-doc write needs their auth. Skipping it
+        // authenticated - the users-doc write needs their auth. Skipping it
         // would leave a shared device receiving the previous user's
         // notifications forever.
         if (user) await disablePush(user.uid)

@@ -16,8 +16,8 @@ function formatNaira(n: number): string {
 }
 
 /**
- * Files a rent change against one tenancy. The landlord cannot approve it —
- * `firestore.rules:1101` reserves that for an admin — so this form ends at
+ * Files a rent change against one tenancy. The landlord cannot approve it -
+ * `firestore.rules:1101` reserves that for an admin - so this form ends at
  * "submitted for review", which is the honest outcome.
  */
 export default function RentChangePage() {

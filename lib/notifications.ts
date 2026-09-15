@@ -35,7 +35,7 @@ export type AppNotification = {
   createdAt: Date | null
 }
 
-// Filter by userId only and sort in memory — the composite index for a
+// Filter by userId only and sort in memory - the composite index for a
 // server-side orderBy alongside this where() is not provisioned, and a
 // missing index throws rather than degrading.
 function myNotificationsQuery(uid: string) {
@@ -97,7 +97,7 @@ export async function markAllRead(rows: AppNotification[]): Promise<void> {
  * them to their web equivalent.
  *
  * Every route the functions actually emit is mapped. It was five before, four
- * of which were real — `/tenant/home` is not emitted by anything — so the
+ * of which were real - `/tenant/home` is not emitted by anything - so the
  * highest-volume landlord notifications (`/landlord/rentals`, tied for most
  * emitted) and a caretaker's invitation all rendered as dead text.
  *
@@ -105,7 +105,7 @@ export async function markAllRead(rows: AppNotification[]): Promise<void> {
  * already branches on accountType: `/dashboard/rentals`, `/dashboard/issues`
  * and `/dashboard/tenancy` each serve both sides.
  *
- * Kept in sync with `webPath()` in `app/firebase-messaging-sw.js/route.ts` —
+ * Kept in sync with `webPath()` in `app/firebase-messaging-sw.js/route.ts` -
  * the service worker resolves the same payload when the tab is closed.
  */
 const ROUTES: Record<string, string> = {

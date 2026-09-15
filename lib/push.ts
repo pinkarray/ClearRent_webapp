@@ -31,7 +31,7 @@ export type PushState = 'unsupported' | 'denied' | 'default' | 'granted'
 /**
  * Whether this browser can do web push at all.
  *
- * On iOS this returns false in a normal Safari tab regardless of version —
+ * On iOS this returns false in a normal Safari tab regardless of version -
  * Apple only exposes push to a site installed to the Home Screen (iOS 16.4+).
  * That is not a bug; it is why the UI prompts to install first.
  */
@@ -67,7 +67,7 @@ export function currentPermission(): PushState {
 /**
  * Asks for permission, mints a token, and stores it against this user.
  *
- * Must be called from a user gesture — browsers ignore the prompt otherwise,
+ * Must be called from a user gesture - browsers ignore the prompt otherwise,
  * and Safari permanently denies a site that asks without one.
  *
  * Returns null on success, or a message to show.
@@ -125,7 +125,7 @@ export async function enablePush(uid: string): Promise<string | null> {
  * notifications indefinitely. The Flutter app does the same on logout
  * (`notification_service.dart:137`).
  *
- * Best-effort throughout — a failure here must never block sign-out, so every
+ * Best-effort throughout - a failure here must never block sign-out, so every
  * step swallows its error.
  */
 export async function disablePush(uid: string): Promise<void> {
@@ -139,7 +139,7 @@ export async function disablePush(uid: string): Promise<void> {
     if (!registration) return
 
     const messaging = getMessaging(clientApp())
-    // Read the current token before deleting it — that is the value to pull
+    // Read the current token before deleting it - that is the value to pull
     // off the user document.
     const token = await getToken(messaging, {
       vapidKey,

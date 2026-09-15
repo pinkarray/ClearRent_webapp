@@ -10,8 +10,8 @@ import { phoneToE164 } from './phone'
  * This is NOT cosmetic. `initializePayment` reads `request.auth.token.email`
  * and rejects with `failed-precondition` ("No email on your account") when it
  * is absent. A phone-only Firebase user has no email on their token no matter
- * what the Firestore user doc says, so without this link every payment — the
- * inspection fee, rent, renewals — fails at the first step.
+ * what the Firestore user doc says, so without this link every payment - the
+ * inspection fee, rent, renewals - fails at the first step.
  *
  * Returns null on success, or a message to show the user.
  */
@@ -36,7 +36,7 @@ export async function linkEmailPassword(
     return err instanceof Error ? err.message : 'Could not link that email.'
   }
 
-  // Best-effort, same as the app — never fail signup because the mail bounced.
+  // Best-effort, same as the app - never fail signup because the mail bounced.
   try {
     await sendEmailVerification(user)
   } catch {
@@ -62,7 +62,7 @@ export type UserProfile = {
   /**
    * Set by NIN verification, NOT by onboarding. `firestore.rules` requires
    * 'verified' before a landlord may create a property, so a freshly
-   * onboarded landlord cannot list yet — by design, on both surfaces.
+   * onboarded landlord cannot list yet - by design, on both surfaces.
    */
   verificationStatus?: string
   totalListingsCreated?: number
@@ -124,7 +124,7 @@ export async function saveUserProfile(uid: string, input: ProfileInput): Promise
   if (input.accountType === 'agent') {
     if (input.baseLocation) data.baseLocation = input.baseLocation
     if (input.serviceAreas?.length) data.serviceAreas = input.serviceAreas
-    // Agents start unverified — an admin verifies them later.
+    // Agents start unverified - an admin verifies them later.
     data.isVerified = false
     data.totalInspections = 0
   }
@@ -134,7 +134,7 @@ export async function saveUserProfile(uid: string, input: ProfileInput): Promise
   // Rules reserve those fields to the rating Cloud Function, and the
   // owner-update clause refuses ANY write that touches them. `saveAccountType`
   // already created users/{uid} before this runs, so this merge is an UPDATE,
-  // not a create — which made the whole profile save fail and left landlords
+  // not a create - which made the whole profile save fail and left landlords
   // and agents unable to finish signing up at all. Tenants were unaffected
   // only because they seed neither field. Every reader defaults a missing
   // rating to 0. Same fix as auth_service.dart in the app.

@@ -19,7 +19,7 @@ type ManagedProperty = { id: string; title: string; area: string }
   already manage.
 
   Deliberately NOT a nav tab. A caretaker is an existing tenant, landlord or
-  agent — accountType still decides which capsule they get — so this hangs off
+  agent - accountType still decides which capsule they get - so this hangs off
   Profile, the one surface every role shares. Same reasoning as the app, where
   it lives in Settings.
 

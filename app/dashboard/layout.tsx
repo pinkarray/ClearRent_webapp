@@ -31,7 +31,7 @@ const titles: Record<string, string> = {
 }
 
 /**
- * Titles for deeper routes, where the nearest parent's title would be wrong —
+ * Titles for deeper routes, where the nearest parent's title would be wrong -
  * `/rentals/{id}/renew` is "Renew tenancy", not "Rentals". `*` stands in for a
  * dynamic segment.
  */
@@ -54,7 +54,7 @@ const deepTitles: Record<string, string> = {
 function patterns(pathname: string): string[] {
   const parts = pathname.split('/')
   const out: string[] = []
-  // Segment 0 is empty, 1 is 'dashboard', 2 is the section — the first
+  // Segment 0 is empty, 1 is 'dashboard', 2 is the section - the first
   // candidate for a dynamic segment is 3.
   for (let i = 3; i < parts.length; i++) {
     out.push([...parts.slice(0, i), '*', ...parts.slice(i + 1)].join('/'))

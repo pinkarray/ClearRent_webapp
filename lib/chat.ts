@@ -57,7 +57,7 @@ export type Message = {
   timestamp: Date | null
   /** Set once the author rewrote it; null means never edited. */
   editedAt: Date | null
-  /** Soft delete — the doc survives with its text blanked. */
+  /** Soft delete - the doc survives with its text blanked. */
   deleted: boolean
   /** User ids the author @-mentioned. */
   mentions: string[]
@@ -108,7 +108,7 @@ function sortConversations(rows: Conversation[]): Conversation[] {
 /**
  * The inbox, live.
  *
- * The thread itself was already realtime, but the list around it was not — so
+ * The thread itself was already realtime, but the list around it was not - so
  * a conversation someone else started, and every unread count, only appeared
  * if you happened to navigate. Both are things the OTHER party changes.
  *
@@ -176,7 +176,7 @@ export function watchMessages(
  * open, so a message that lands while the thread is already on screen is
  * receipted too.
  *
- * Best-effort — a failed receipt is never worth surfacing to the reader.
+ * Best-effort - a failed receipt is never worth surfacing to the reader.
  */
 export async function markMessagesRead(
   conversationId: string,
@@ -223,7 +223,7 @@ export async function editMessage(
 }
 
 /**
- * Soft-delete a message the caller sent. The text must be blanked — the rules
+ * Soft-delete a message the caller sent. The text must be blanked - the rules
  * require it, because a `deleted` flag over intact text leaves the message
  * readable to anything reading the document directly.
  */
@@ -243,7 +243,7 @@ export async function deleteMessage(
 }
 
 /**
- * Keep the inbox preview honest after an edit or delete — without it the list
+ * Keep the inbox preview honest after an edit or delete - without it the list
  * would still show the text the author just replaced or removed.
  *
  * Deliberately does NOT touch `lastMessageTime` or the unread counts: editing
@@ -324,7 +324,7 @@ export async function clearUnread(conversationId: string, uid: string): Promise<
  *
  * Deduped on (landlordId, agentId, conversationType) so an agent pitching the
  * same landlord about a second property reuses the existing thread rather than
- * opening a parallel one — the pitch is about the agent, not the property,
+ * opening a parallel one - the pitch is about the agent, not the property,
  * which is why `propertyId` is deliberately empty.
  *
  * Both parties must be verified. The app checks this client-side before
@@ -456,7 +456,7 @@ export async function getOrCreateCaretakerConversation(
  *
  * Deduped on the (propertyId, landlordId, tenantId) tuple. The lookup queries
  * by the CALLER's own participation rather than by that tuple directly,
- * because the tightened list rule only accepts owner-scoped shapes — the
+ * because the tightened list rule only accepts owner-scoped shapes - the
  * caller's own conversation set is small, so filtering in memory is cheap and
  * needs no composite index.
  *
@@ -522,8 +522,8 @@ export async function getOrCreatePropertyConversation(input: {
 /**
  * Someone on the thread who can be @-mentioned.
  *
- * `handle` is a single token — the parser reads the word after '@' and full
- * names contain spaces — so it is the person's first name, falling back to
+ * `handle` is a single token - the parser reads the word after '@' and full
+ * names contain spaces - so it is the person's first name, falling back to
  * their role. Mirrors `_MentionTarget` in `chat_screen.dart`; the two must
  * agree or a mention typed on one surface won't highlight on the other.
  */
@@ -602,7 +602,7 @@ export function splitMentions(
 
 /** Who the other side is, for the inbox row and the thread header. */
 export function counterparty(c: Conversation, uid: string): string {
-  // A pitch thread has no tenant — it is the agent and the landlord.
+  // A pitch thread has no tenant - it is the agent and the landlord.
   if (c.agentId === uid) return c.landlordName || 'Landlord'
   // The caretaker's counterpart is the tenant they manage for, or, on the
   // landlord↔caretaker thread, which carries no tenant, the landlord who

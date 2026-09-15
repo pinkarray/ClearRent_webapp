@@ -9,19 +9,19 @@ import type { AccountType } from './user-profile'
  * Identity verification. Two separate things happen, and they are not
  * interchangeable:
  *
- *  1. `submitNin` — a callable that AES-256-GCM encrypts the NIN server-side
+ *  1. `submitNin` - a callable that AES-256-GCM encrypts the NIN server-side
  *     into `users/{uid}.nin`. The raw NIN must never be written from the
  *     client; the old client-side `updateUserProfile({'nin': …})` path was
  *     replaced precisely because it stored it in the clear.
  *  2. Document upload + a `verification_requests` doc for ADMIN review.
  *
  * Nobody self-verifies. `verificationStatus` goes to 'pending' here and only an
- * admin moves it to 'verified'. Every downstream gate — listing a property,
- * booking an inspection — reads that field as the source of truth.
+ * admin moves it to 'verified'. Every downstream gate - listing a property,
+ * booking an inspection - reads that field as the source of truth.
  *
  * EACH ROLE SUBMITS DIFFERENT DOCUMENTS. The storage folder, the
  * `verificationDocs` key and the `verification_requests` key all differ per
- * role, and the admin review UI reads those exact names — a tenant filed under
+ * role, and the admin review UI reads those exact names - a tenant filed under
  * `utilityBillUrl` is a record the reviewer cannot interpret.
  */
 
@@ -53,7 +53,7 @@ export async function submitNin(nin: string): Promise<string | null> {
 
 /**
  * Uploads one document to the private, versioned verification path.
- * Storage rules allow create-only (`resource == null`) — an approved document
+ * Storage rules allow create-only (`resource == null`) - an approved document
  * can never be replaced, so each submission gets its own timestamped path.
  * Returns the storage PATH, not a URL: these are identity documents and must
  * never sit behind a public link.
@@ -67,7 +67,7 @@ async function uploadDocument(uid: string, folder: string, file: File): Promise<
 /**
  * The second document each role must provide, alongside the NIN slip.
  * `folder` is the storage folder, `docKey` the `verificationDocs` field, and
- * `requestKey` the `verification_requests` field — all three are role-specific
+ * `requestKey` the `verification_requests` field - all three are role-specific
  * and must match what the app writes.
  */
 export const SECOND_DOCUMENT: Record<
@@ -126,8 +126,8 @@ export type VerificationInput = {
  *
  * Initial only, deliberately: web submits first-time applications exclusively
  * (`isRenewal: false` below), and annual renewal lives in the app. The server
- * charges the cheaper renewal price to anyone who has been verified before —
- * it decides from `verifiedAt`, not from anything sent from here — so a
+ * charges the cheaper renewal price to anyone who has been verified before -
+ * it decides from `verifiedAt`, not from anything sent from here - so a
  * returning user reaching this page would be quoted high and billed correctly.
  * The mismatch is logged by initializePayment. Renewal on web needs this to
  * become an {initial, renewal} pair, matching the app's RoleFee.
@@ -141,13 +141,13 @@ export const VERIFICATION_FEES: Record<AccountType, number> = {
 /**
  * Uploads a first-time verification and queues it AWAITING PAYMENT.
  *
- * Web used to write `status: 'pending'` here and stop, on the belief — stated
- * in this function's own comment — that the verification fee had been removed.
+ * Web used to write `status: 'pending'` here and stop, on the belief - stated
+ * in this function's own comment - that the verification fee had been removed.
  * It had not: the fee is still priced server-side per role, so every web
  * signup was verified for free while the app charged for the same thing.
  *
  * Payment cannot happen before this, because paying redirects to Paystack and
- * back through a different origin — the chosen `File` objects would not
+ * back through a different origin - the chosen `File` objects would not
  * survive the trip. So the documents are stored first and the request is
  * parked at `awaiting_payment`, which the admin queue (`status == 'pending'`)
  * deliberately does not show. `finalizeVerificationPayment` promotes it once
@@ -254,7 +254,7 @@ export async function finalizeVerificationPayment(
   // Was two client updateDoc calls, which could never have worked:
   // `verification_requests` is `allow update: if isAdmin()`, so every web
   // payment was taken and then denied at this exact line, leaving the
-  // application stuck at 'awaiting_payment' — a state the admin queue hides.
+  // application stuck at 'awaiting_payment' - a state the admin queue hides.
   // It has to be server-side regardless: a client that could promote its own
   // request could skip the fee entirely, which is what 'awaiting_payment'
   // exists to stop. The callable re-verifies the charge with Paystack.

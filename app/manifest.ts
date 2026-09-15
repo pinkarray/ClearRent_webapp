@@ -4,7 +4,7 @@ import type { MetadataRoute } from 'next'
  * Makes ClearRent installable.
  *
  * This is load-bearing for the iOS strategy, not decoration. There is no Apple
- * build, so iPhone users get the product through the browser — and iOS only
+ * build, so iPhone users get the product through the browser - and iOS only
  * exposes the Web Push API to a site added to the Home Screen (iOS 16.4+). In a
  * normal Safari tab the permission prompt is not even offered, so without this
  * manifest an iPhone user can never be notified of anything.

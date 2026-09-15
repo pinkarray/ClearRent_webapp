@@ -21,7 +21,7 @@ export function cloudinaryLoader({ src, width, quality }: ImageLoaderProps): str
   const marker = '/upload/'
   const at = src.indexOf(marker)
 
-  // Not a Cloudinary upload URL — hand it back untouched rather than building
+  // Not a Cloudinary upload URL - hand it back untouched rather than building
   // a broken transformation.
   if (at === -1) return src
 

@@ -2,13 +2,13 @@ import { doc, onSnapshot } from 'firebase/firestore'
 import { clientDb } from './firebase-client'
 
 /**
- * Money owed back to a tenant — a cancelled or declined inspection, or a rental
+ * Money owed back to a tenant - a cancelled or declined inspection, or a rental
  * interest that lost the property to someone else.
  *
  * Records are created SERVER-SIDE by triggers (`admin_money_ops.ts`) with
  * `status: 'pending'` and the beneficiary's bank details, then settled by an
- * admin via `markRefundPaid`. Clients never create or mutate them — the rules
- * allow `create: if false` — so this is read-only by design.
+ * admin via `markRefundPaid`. Clients never create or mutate them - the rules
+ * allow `create: if false` - so this is read-only by design.
  *
  * Doc id is the SOURCE id: `refunds/{inspectionRequestId}` for an inspection,
  * `refunds/{rentalInterestId}` for a losing interest. That is why this is a

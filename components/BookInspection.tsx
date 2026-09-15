@@ -31,8 +31,8 @@ function formatNaira(n: number): string {
  *
  * The page itself is server-rendered from the PUBLIC projection, which
  * deliberately omits landlordId, the fee fields and the inspection schedule.
- * Rather than widen that projection — it is the access control for anonymous
- * visitors — this component reads the full property doc itself once the user is
+ * Rather than widen that projection - it is the access control for anonymous
+ * visitors - this component reads the full property doc itself once the user is
  * signed in, which `properties` rules already permit for any authenticated user.
  */
 export function BookInspection({ propertyId }: { propertyId: string }) {
@@ -45,7 +45,7 @@ export function BookInspection({ propertyId }: { propertyId: string }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [requestId, setRequestId] = useState<string | null>(null)
-  // Earliest bookable day. Resolved on mount rather than during render — the
+  // Earliest bookable day. Resolved on mount rather than during render - the
   // clock is not a pure input.
   const [minDate, setMinDate] = useState('')
   // Slots the SERVER says are free for the chosen date. null = not resolved
@@ -186,14 +186,14 @@ export function BookInspection({ propertyId }: { propertyId: string }) {
   // On today, a slot that has already started (or is inside the lead time) is
   // not offered. Any future date leaves the list untouched.
   // Server list ∩ still-bookable-today. When the server call has not resolved
-  // (or failed) we show NOTHING rather than the unfiltered list — offering a
+  // (or failed) we show NOTHING rather than the unfiltered list - offering a
   // slot we cannot vouch for is what caused the pay-then-refund bug.
   const slots = !date
     ? []
     : (freeSlots ?? []).filter((s) => isSlotStillBookable(date, s))
 
   // The calendar only offers days the handler shows on, so a selected date is
-  // valid by construction — this is just for the confirmation line.
+  // valid by construction - this is just for the confirmation line.
   const prettyDate = date
     ? new Date(`${date}T00:00:00`).toLocaleDateString('en-NG', {
         weekday: 'long',
@@ -269,7 +269,7 @@ export function BookInspection({ propertyId }: { propertyId: string }) {
             <p className="text-sm text-content-secondary">Checking what is free…</p>
           ) : freeSlots === null ? (
             // The availability call failed. Say so rather than showing the
-            // unchecked list — an offered slot we cannot vouch for is how a
+            // unchecked list - an offered slot we cannot vouch for is how a
             // tenant ends up paying for a booking that gets declined.
             <p className="text-sm text-error">
               Could not check availability. Please try again.

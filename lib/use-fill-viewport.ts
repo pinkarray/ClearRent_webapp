@@ -8,7 +8,7 @@ import { useEffect, useRef } from 'react'
  * Replaces subtracting AppShell's chrome by hand in CSS. That approach broke
  * the first time the chrome moved: the bottom padding went from pb-20 to pb-28
  * for the floating capsule nav, and a NextStep banner of variable height
- * appeared above the page content — neither of which a fixed rem figure can
+ * appeared above the page content - neither of which a fixed rem figure can
  * track.
  *
  * Measuring the element's own top instead means header height, banner

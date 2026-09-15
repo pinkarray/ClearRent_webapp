@@ -29,7 +29,7 @@ export default function CoveragePage() {
   const [error, setError] = useState<string | null>(null)
   /**
    * The selections as they are stored. Save stays disabled until the current
-   * selections differ from this — so the agent can tell at a glance whether
+   * selections differ from this - so the agent can tell at a glance whether
    * their work is committed, and cannot fire redundant writes by tapping Save
    * repeatedly.
    */

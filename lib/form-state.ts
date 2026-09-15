@@ -12,7 +12,7 @@
 */
 
 /**
- * A stable, comparable snapshot of form values. Order-sensitive — use it where
+ * A stable, comparable snapshot of form values. Order-sensitive - use it where
  * reordering IS a change (image order, list position).
  */
 export function fingerprint(value: unknown): string {
@@ -22,7 +22,7 @@ export function fingerprint(value: unknown): string {
 /**
  * Snapshot of one or more selection lists, ignoring order.
  *
- * For a set of chosen options — service areas, days, time slots — the sequence
+ * For a set of chosen options - service areas, days, time slots - the sequence
  * the user tapped in is not a change worth enabling Save for.
  */
 export function sortedFingerprint(...lists: string[][]): string {

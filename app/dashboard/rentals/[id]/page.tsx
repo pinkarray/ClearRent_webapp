@@ -25,7 +25,7 @@ function Row({ label, value }: { label: string; value: string }) {
   )
 }
 
-/** The app's Lease Details screen — the terms of one tenancy, plus its agreement. */
+/** The app's Lease Details screen - the terms of one tenancy, plus its agreement. */
 export default function LeaseDetailsPage() {
   const { user } = useAuth()
   const params = useParams<{ id: string }>()

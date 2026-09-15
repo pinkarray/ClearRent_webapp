@@ -9,7 +9,7 @@ import { landlordFeed, type FeedItem } from '../../../lib/landlord'
 /**
  * A glyph per event type, so the feed scans without reading every line.
  *
- * Keyed on types from BOTH logs now — the activity types written by the
+ * Keyed on types from BOTH logs now - the activity types written by the
  * clients and the notification types written by the Cloud Functions. Anything
  * unmapped falls back to a dot rather than disappearing.
  */

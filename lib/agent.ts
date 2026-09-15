@@ -149,7 +149,7 @@ export type HandledProperty = {
   readyForInspections: boolean
   /**
    * The EFFECTIVE status, already resolved through the building for grouped
-   * units. Never read the raw field off a property for a gate — 'inherited' is
+   * units. Never read the raw field off a property for a gate - 'inherited' is
    * a marker, not an approval, and a raw check reports reviewed units as
    * awaiting review.
    */
@@ -212,7 +212,7 @@ export async function handledProperties(uid: string): Promise<HandledProperty[]>
  * Live version of [handledProperties].
  *
  * Only the landlord can assign an agent (`property_service.dart:945`), so an
- * agent watching this list is by definition waiting on someone else — a
+ * agent watching this list is by definition waiting on someone else - a
  * one-time read meant a new assignment never appeared.
  *
  * Each snapshot needs an async status resolution, so responses are sequenced:
@@ -241,7 +241,7 @@ export function watchHandledProperties(
  * a rejected ownership document. It is two round trips because Firestore has no
  * join, and `in` is capped at 30 values so the landlord ids are chunked.
  *
- * Note this is a LEAD list, not a claim list — an agent cannot assign
+ * Note this is a LEAD list, not a claim list - an agent cannot assign
  * themselves. Only the landlord can (`property_service.dart:945`), so the
  * action here is to pitch, which is what the app does too.
  */
@@ -293,7 +293,7 @@ export const READINESS_CHECKLIST: Record<string, string> = {
 }
 
 /**
- * Vets a property and makes it bookable. Every item must be confirmed — the app
+ * Vets a property and makes it bookable. Every item must be confirmed - the app
  * enforces the same, and a half-vetted listing is the thing this gate exists to
  * prevent.
  */
@@ -307,7 +307,7 @@ export async function confirmReadiness(
     return 'Confirm every item before marking the property ready.'
   }
   try {
-    // Exactly the five keys the readiness rule allows — no more.
+    // Exactly the five keys the readiness rule allows - no more.
     await updateDoc(doc(clientDb(), 'properties', propertyId), {
       readyForInspections: true,
       readinessCheckedAt: serverTimestamp(),

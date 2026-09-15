@@ -18,7 +18,7 @@ export type ResolvedAccount = { accountName: string }
 
 /**
  * Validates an account number against a bank via Paystack, server-side.
- * `resolveAccount` enforces App Check and holds the Paystack secret — the
+ * `resolveAccount` enforces App Check and holds the Paystack secret - the
  * browser never sees it.
  */
 export async function resolveAccount(
@@ -83,7 +83,7 @@ export async function saveBankDetails(uid: string, bank: BankDetails): Promise<s
 }
 
 /**
- * The common Nigerian banks with their Paystack codes. Kept short on purpose —
+ * The common Nigerian banks with their Paystack codes. Kept short on purpose -
  * Paystack's /bank list is long and the resolve call is the real validation.
  */
 export const BANKS: { code: string; name: string }[] = [

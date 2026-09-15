@@ -36,7 +36,7 @@ yarn-error.log*
 # vercel
 .vercel
 
-# Claude Code local permission cache — machine-specific absolute paths, not
+# Claude Code local permission cache - machine-specific absolute paths, not
 # project configuration.
 .claude
 
@@ -44,5 +44,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Local agent notes — contains machine paths and internal architecture detail.
+# Local agent notes - contains machine paths and internal architecture detail.
 CLAUDE.md

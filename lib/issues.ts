@@ -67,7 +67,7 @@ export type ReportIssueInput = {
 export async function reportIssue(input: ReportIssueInput): Promise<string | null> {
   try {
     await addDoc(collection(clientDb(), 'issues'), {
-      // The app writes an empty rentalId here too — issues are keyed to the
+      // The app writes an empty rentalId here too - issues are keyed to the
       // property, not the rental term.
       rentalId: '',
       propertyId: input.propertyId,
@@ -89,7 +89,7 @@ export async function reportIssue(input: ReportIssueInput): Promise<string | nul
       updatedAt: serverTimestamp(),
     })
 
-    // The landlord's activity feed is how they learn about this — the app
+    // The landlord's activity feed is how they learn about this - the app
     // writes the same record, so both surfaces produce one feed.
     await addDoc(collection(clientDb(), 'activities'), {
       landlordId: input.landlordId,
@@ -135,7 +135,7 @@ function toIssue(d: QueryDocumentSnapshot): Issue {
  * The tenant's own issues, live.
  *
  * The landlord resolves an issue from their own queue, so the tenant who
- * reported it is exactly the party with no reason to reload — a one-time read
+ * reported it is exactly the party with no reason to reload - a one-time read
  * left them staring at "open" long after it was fixed.
  *
  * Returns the unsubscribe function.
@@ -152,7 +152,7 @@ export function watchTenantIssues(
 /**
  * The tenant closes the loop after the landlord says it is fixed.
  *
- * An issue does NOT go straight to resolved on the landlord's word — it lands
+ * An issue does NOT go straight to resolved on the landlord's word - it lands
  * on 'pending_confirmation' and waits for the person who actually lives with
  * the problem. `issuePendingConfirmationReminders` nags from the server if
  * they go quiet. Web had no action for this step, so a tenant could see
@@ -188,7 +188,7 @@ export async function disputeIssueResolution(
       // `disputeReason`, NOT `tenantDisputeReason`. The app's landlord screen
       // reads `disputeReason` (`landlord_issues_screen.dart:761`); web and the
       // app's issue-history screen were writing the other name, so a dispute
-      // raised from either simply never appeared — the landlord saw the issue
+      // raised from either simply never appeared - the landlord saw the issue
       // reopen with no reason and no sign a dispute had happened.
       // `tenantDisputeReason` also means something else entirely on
       // active_rentals (an AGREEMENT dispute), which is how the names drifted.

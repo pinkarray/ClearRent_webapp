@@ -66,7 +66,7 @@ export type SavedProperty = {
  * A signed-in client may read `/properties` (`firestore.rules:177` is
  * `allow read: if request.auth != null`), which is why this does not need the
  * server-rendered path that public browse uses. Only the display fields are
- * lifted out — the raw document also carries landlordId and payout data that no
+ * lifted out - the raw document also carries landlordId and payout data that no
  * screen here has a reason to hold.
  *
  * `documentId() in [...]` is capped at 30 values per query, so ids are chunked.
@@ -96,7 +96,7 @@ export async function loadSavedProperties(ids: string[]): Promise<SavedProperty[
       out.push({
         id: d.id,
         title: (x.title as string) ?? '(untitled)',
-        // Same area-level string the public pages show — never the street.
+        // Same area-level string the public pages show - never the street.
         approximateAddress: [lga, city, state].filter(Boolean).join(', '),
         rent: (x.rent as number) ?? 0,
         rentFrequency: (x.rentFrequency as string) ?? 'yearly',

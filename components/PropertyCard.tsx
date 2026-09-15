@@ -50,7 +50,7 @@ export function PropertyCard({ property }: { property: PublicProperty }) {
           {property.title}
         </h3>
 
-        {/* Which unit, when it's one of several in a building — two identical
+        {/* Which unit, when it's one of several in a building - two identical
             flats in one compound are otherwise the same card twice. */}
         {unit && (
           <p className="mt-0.5 line-clamp-1 text-xs text-content-hint">{unit}</p>
@@ -60,7 +60,7 @@ export function PropertyCard({ property }: { property: PublicProperty }) {
           {property.approximateAddress}
         </p>
 
-        {/* A single space has no meaningful room count — "1 bed · 1 bath" made
+        {/* A single space has no meaningful room count - "1 bed · 1 bath" made
             a shared room identical to a self-contained one-bedroom flat. What
             it comes with is the real spec. A multi-room unit keeps its counts
             but still says what it shares: counts alone would read as fully

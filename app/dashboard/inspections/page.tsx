@@ -79,7 +79,7 @@ export default function TenantInspectionsPage() {
   }
   const [interestId, setInterestId] = useState<string | null>(null)
   // Properties this tenant has ALREADY claimed. Without it the card kept
-  // offering "I want to rent this" for a place they had already rented —
+  // offering "I want to rent this" for a place they had already rented -
   // createRentalInterest is idempotent so it was not a double-charge, but being
   // asked to start a tenancy you are already in reads as the app not knowing
   // who you are.
@@ -105,7 +105,7 @@ export default function TenantInspectionsPage() {
     }
     setInterestId(res.interestId)
     // Take them where the next step actually happens. Telling someone to "go
-    // to Tenancy" only works if they know where that is — and Tenancy is not
+    // to Tenancy" only works if they know where that is - and Tenancy is not
     // in the tenant's bottom nav.
     router.push('/dashboard/tenancy')
   }
@@ -114,7 +114,7 @@ export default function TenantInspectionsPage() {
     setPayError(null)
     setPayingId(r.id)
     try {
-      // The amount is display-only — resolveServerAmount recomputes the real
+      // The amount is display-only - resolveServerAmount recomputes the real
       // charge from the payment type, so a tampered client cannot underpay.
       await startPayment('inspection', r.totalFee, '/dashboard/inspections', {
         requestId: r.id,
@@ -134,7 +134,7 @@ export default function TenantInspectionsPage() {
   useEffect(() => {
     if (!user) return
     // Rules scope list access to a party on the request, so this query must
-    // filter by tenantId — an unscoped read is rejected.
+    // filter by tenantId - an unscoped read is rejected.
     return onSnapshot(
       query(
         collection(clientDb(), 'inspection_requests'),
@@ -165,7 +165,7 @@ export default function TenantInspectionsPage() {
               handlerConfirmedMet: x.handlerConfirmedMet === true,
               tenantRated: x.tenantRated === true,
               // The handler is the assigned agent when there is one, else the
-              // landlord — that is who the tenant rates.
+              // landlord - that is who the tenant rates.
               handlerId: (x.agentId as string) ?? (x.landlordId as string) ?? '',
               handlerName:
                 (x.agentName as string) ?? (x.landlordName as string) ?? 'the handler',

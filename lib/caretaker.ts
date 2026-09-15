@@ -5,8 +5,8 @@ import { clientApp, clientDb, initAppCheck } from './firebase-client'
 /**
  * Caretakers: who manages a listing day to day.
  *
- * A caretaker stands in for the landlord on the management surfaces — issues,
- * maintenance, and the tenant thread — and nowhere near the money. They can
+ * A caretaker stands in for the landlord on the management surfaces - issues,
+ * maintenance, and the tenant thread - and nowhere near the money. They can
  * never change rent, payout details, agreement terms or a deposit settlement,
  * because the rules give them no clause at all on the collections those live
  * in, not because a guard says no.
@@ -14,7 +14,7 @@ import { clientApp, clientDb, initAppCheck } from './firebase-client'
  * `properties.caretakerId` is written ONLY by the Cloud Functions on the admin
  * SDK. The owner-update rule lets a landlord CLEAR it (revoking is theirs to
  * do) and never set it, so an appointment always requires the invitee to agree.
- * Everything here therefore goes through a callable — there is no client write.
+ * Everything here therefore goes through a callable - there is no client write.
  */
 
 export type CaretakerInvite = {
@@ -40,7 +40,7 @@ function toInvite(id: string, x: Record<string, unknown>): CaretakerInvite {
     landlordName: (x.landlordName as string) ?? 'Your landlord',
     caretakerId: (x.caretakerId as string) ?? '',
     caretakerName: (x.caretakerName as string) ?? 'Your caretaker',
-    // `appliedPropertyIds` is what acceptance ACTUALLY wrote — a unit can drop
+    // `appliedPropertyIds` is what acceptance ACTUALLY wrote - a unit can drop
     // out between invite and accept (sold, deleted, re-caretakered), so an
     // accepted invite describes itself by what landed, not what was asked for.
     propertyIds: ((x.appliedPropertyIds ?? x.propertyIds ?? []) as string[]) ?? [],
@@ -68,7 +68,7 @@ export async function myInvites(uid: string): Promise<CaretakerInvite[]> {
 /**
  * Live version of {@link myInvites}, for the banner that is a caretaker's only
  * entry point. An invitation arrives because a LANDLORD acted, so it is by
- * definition never something this user's own navigation would surface — a
+ * definition never something this user's own navigation would surface - a
  * one-time read leaves them staring at a page that will not change.
  *
  * Returns the unsubscribe function.
@@ -102,7 +102,7 @@ export function watchManagedProperties(
 
 /**
  * Who does this number belong to? Called before {@link inviteCaretaker} so the
- * landlord confirms a NAME rather than trusting the digits they typed — one
+ * landlord confirms a NAME rather than trusting the digits they typed - one
  * mistyped digit would otherwise appoint a real stranger to a tenant's issues
  * and messages, and they could simply accept.
  *

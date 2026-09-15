@@ -29,7 +29,7 @@ export type InspectionState = {
   handlerType: 'agent' | 'landlord'
   /**
    * The landlord lives in the unit AND is handling it themselves, so they are
-   * already there. "I've arrived" reads as nonsense to them — see
+   * already there. "I've arrived" reads as nonsense to them - see
    * `handlerIsResident` in `inspection_request_model.dart`, which this
    * mirrors. An assigned agent still travels, whoever lives there.
    */
@@ -37,13 +37,13 @@ export type InspectionState = {
 }
 
 /**
- * Arrival opens two hours before the slot and stays open after it — the same
+ * Arrival opens two hours before the slot and stays open after it - the same
  * window the app enforces as `isWithinOnWayWindow`
  * (`inspection_request_model.dart`).
  *
  * Web used to open it for the whole calendar DAY. For a 3pm slot that let a
  * tenant here mark arrived from midnight, while the landlord on the app saw
- * no on-my-way or arrived control until 1pm — so the tenant stood "arrived"
+ * no on-my-way or arrived control until 1pm - so the tenant stood "arrived"
  * with nothing on the other side to meet them. Same rule both clients.
  */
 const ARRIVAL_WINDOW_MS = 2 * 60 * 60 * 1000
@@ -63,7 +63,7 @@ function opensAt(d: Date): Date {
  * The order is enforced by rules, not just by this UI:
  *   approved → both arrive → both confirm met → handler completes → tenant rates
  *
- * Each step is field-scoped so neither party can act for the other — a tenant
+ * Each step is field-scoped so neither party can act for the other - a tenant
  * cannot mark the handler arrived, and neither can complete a visit that both
  * have not confirmed happened.
  */
@@ -105,7 +105,7 @@ export function InspectionActions({
   const bothArrived = state.tenantArrived && state.handlerArrived
   const bothConfirmed = state.tenantConfirmedMet && state.handlerConfirmedMet
 
-  // Nothing to do until it is approved and (when chargeable) paid — and not
+  // Nothing to do until it is approved and (when chargeable) paid - and not
   // before the day itself. Without the date check a Sunday visitor could mark
   // arrived, confirm met and complete a Monday inspection, which is how a
   // visit that never happened ends up on the record backing the handler's
@@ -178,7 +178,7 @@ export function InspectionActions({
           {/* Arrival comes after saying you are on the way, exactly as the app
               orders it (an else-if chain there). Showing both at once let
               someone announce and arrive in the same breath, or skip straight
-              to arrived — a state the app can never produce. A resident
+              to arrived - a state the app can never produce. A resident
               landlord is travelling nowhere, so they go straight to ready. */}
           <div className="mt-2 flex flex-wrap items-center gap-3">
             {!iArrived ? (

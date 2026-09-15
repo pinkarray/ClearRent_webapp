@@ -48,7 +48,7 @@ export async function getPropertyAgreement(
       uploadedAt: x?.uploadedAt?.toDate?.() ?? null,
     }
   } catch {
-    // Rules deny anyone who is not the owner/agent/admin — treat as "none".
+    // Rules deny anyone who is not the owner/agent/admin - treat as "none".
     return null
   }
 }

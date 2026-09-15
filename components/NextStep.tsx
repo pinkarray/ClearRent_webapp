@@ -163,8 +163,8 @@ function tenantStep(
     }
   }
 
-  // Rating is not optional — createRentalInterest rejects an unrated
-  // inspection — so it is a step, not a nicety.
+  // Rating is not optional - createRentalInterest rejects an unrated
+  // inspection - so it is a step, not a nicety.
   const toRate = inspections.find((i) => i.status === 'completed' && !i.tenantRated)
   if (toRate) {
     return {
@@ -216,7 +216,7 @@ function tenantStep(
 
 /**
  * The landlord's turn. The agreement upload is the one that got lost, so it is
- * spelled out rather than labelled "Rentals" — the destination tab's name was
+ * spelled out rather than labelled "Rentals" - the destination tab's name was
  * never the problem, knowing to go there was.
  */
 function landlordStep(interests: RentalInterest[], rentals: ActiveRental[]): Step | null {
@@ -252,7 +252,7 @@ function landlordStep(interests: RentalInterest[], rentals: ActiveRental[]): Ste
 
   // The findability failure, stated as the instruction it is. Rent cannot be
   // paid until the tenant accepts an agreement, and no agreement exists until
-  // the landlord puts one here — so this blocks the whole rest of the flow.
+  // the landlord puts one here - so this blocks the whole rest of the flow.
   const needsAgreement = live.find((r) => !r.agreementUrl)
   if (needsAgreement) {
     return {
@@ -335,7 +335,7 @@ export default function NextStep() {
     return () => unsubs.forEach((u) => u())
   }, [uid, isLandlord, isTenant])
 
-  // Tenant only — the inspection is where "I want to rent this" is unlocked.
+  // Tenant only - the inspection is where "I want to rent this" is unlocked.
   // Single equality filter, deliberately unordered: no composite index needed.
   useEffect(() => {
     if (!uid || !isTenant) return
@@ -365,7 +365,7 @@ export default function NextStep() {
     : tenantStep(interests, rentals, inspections)
 
   if (!step) return null
-  // Already looking at the page that carries the action — the banner would just
+  // Already looking at the page that carries the action - the banner would just
   // be repeating the buttons underneath it.
   if (pathname === step.href) return null
 

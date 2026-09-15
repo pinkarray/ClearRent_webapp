@@ -6,7 +6,7 @@ import { useEffect } from 'react'
  * Publishes the real visible height, and whether the keyboard is up, to CSS.
  *
  * `interactiveWidget: 'resizes-content'` handles this on Chrome/Android, but
- * iOS Safari overlays the keyboard without resizing the layout viewport — dvh
+ * iOS Safari overlays the keyboard without resizing the layout viewport - dvh
  * does not move there. VisualViewport does, on both, so it is the reliable
  * signal.
  *

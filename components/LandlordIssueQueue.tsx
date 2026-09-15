@@ -20,9 +20,9 @@ function priorityTone(priority: string): string {
   return 'chip-pending'
 }
 
-/** The landlord's maintenance queue — the counterpart of the tenant's /issues. */
+/** The landlord's maintenance queue - the counterpart of the tenant's /issues. */
 /**
- * The owner's issue queue, and — with `propertyId` set — the caretaker's view
+ * The owner's issue queue, and - with `propertyId` set - the caretaker's view
  * of the same queue for the one unit they manage.
  *
  * The two differ ONLY in the query, because the rules evaluate a list against
@@ -90,7 +90,7 @@ export default function LandlordIssueQueue({ propertyId }: { propertyId?: string
         {/*
           The tenant sent it back. Without this the issue simply reappeared as
           'in progress' with a Mark fixed button and no indication anything had
-          been rejected, let alone why — which is the whole point of asking the
+          been rejected, let alone why - which is the whole point of asking the
           tenant. Shown only while the work is outstanding, as the app does.
         */}
         {i.status === 'in_progress' && i.disputeReason && (
@@ -120,7 +120,7 @@ export default function LandlordIssueQueue({ propertyId }: { propertyId?: string
               property says the work is done; the TENANT is the one who says it
               is fixed, via confirm/dispute in TenantIssueCentre. Writing
               'resolved' straight from here closed the issue over the tenant's
-              head — they were never asked, the reminder sweep (which queries
+              head - they were never asked, the reminder sweep (which queries
               'pending_confirmation') never chased anyone, and the Cloud
               Function sent a bare "resolved" notice instead of the
               confirm-or-dispute prompt. The app has only ever offered

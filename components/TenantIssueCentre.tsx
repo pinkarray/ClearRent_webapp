@@ -56,7 +56,7 @@ export default function TenantIssueCentre() {
       if (cancelled) return
       setRentals(r)
       // An issue must name a property, so default to the only one when there
-      // is exactly one — the common case.
+      // is exactly one - the common case.
       if (r.length === 1) setRentalId(r[0].id)
     })()
     return () => {

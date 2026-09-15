@@ -16,7 +16,7 @@ type Listing = {
   assignedAgentName: string
 }
 
-/** Assign an inspection handler to a listing — the app's Select Agent screen. */
+/** Assign an inspection handler to a listing - the app's Select Agent screen. */
 export default function SelectAgentPage() {
   const { user } = useAuth()
   const router = useRouter()

@@ -25,7 +25,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // the server and the saved theme on the client, and ThemeButton renders from
   // `theme`, so the markup would not match on hydration. Reading it after
   // mount is the correct trade, and the pre-paint script in app/layout.tsx
-  // already put the right theme on <html>, so this no longer causes a flash —
+  // already put the right theme on <html>, so this no longer causes a flash -
   // only the toggle's own icon settles a frame later.
   useEffect(() => {
     const saved = localStorage.getItem('clearrent-theme') as Theme | null

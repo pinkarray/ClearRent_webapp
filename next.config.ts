@@ -27,7 +27,7 @@ const securityHeaders = [
       "default-src 'self'",
       // www.google.com + gstatic are reCAPTCHA, which Firebase phone auth
       // requires on web (RecaptchaVerifier). Unlike App Check, this one is not
-      // optional — sign-in silently fails without it.
+      // optional - sign-in silently fails without it.
       "script-src 'self' 'unsafe-inline' https://www.google.com https://www.gstatic.com",
       "frame-src https://www.google.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
@@ -40,7 +40,7 @@ const securityHeaders = [
         // identitytoolkit + securetoken (auth), firestore, firebasestorage
         // (verification documents), firebaseappcheck AND
         // content-firebaseappcheck (App Check exchanges tokens on the latter).
-        // Listing them individually kept breaking as new ones appeared — each
+        // Listing them individually kept breaking as new ones appeared - each
         // failure being a silent CSP block that surfaced as a confusing 401
         // from an App Check gated callable. Scoped to Google's API domain over
         // TLS, which is a deliberate trade of a little precision for not

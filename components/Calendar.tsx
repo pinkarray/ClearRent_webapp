@@ -36,7 +36,7 @@ function firstWeekday(year: number, month: number): number {
  * and a library would still need that logic layered on top.
  *
  * [minISO] is required and supplied by the caller rather than read from the
- * clock here — reading the clock during render is impure, and the caller
+ * clock here - reading the clock during render is impure, and the caller
  * already resolves "tomorrow" on mount.
  */
 export function Calendar({

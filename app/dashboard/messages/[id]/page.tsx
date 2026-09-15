@@ -46,7 +46,7 @@ export default function ThreadPage() {
 
   /**
    * Matches the textarea's height to its content, capped by max-h-32 in the
-   * class list. Reset to 'auto' first or the box can only ever grow — a
+   * class list. Reset to 'auto' first or the box can only ever grow - a
    * scrollHeight read against an already-tall element never shrinks.
    */
   function grow() {
@@ -84,7 +84,7 @@ export default function ThreadPage() {
   /**
    * Recompute the mention picker from the caret. Only fires on an '@' that
    * starts a word, so an email address mid-sentence doesn't open it, and only
-   * while the token after it has no whitespace — handles are single words.
+   * while the token after it has no whitespace - handles are single words.
    */
   function syncMentions(value: string, caret: number) {
     const before = value.slice(0, caret)
@@ -99,7 +99,7 @@ export default function ThreadPage() {
       return
     }
     const hits = targets.filter((t) => t.handle.toLowerCase().startsWith(q.toLowerCase()))
-    // An exact, complete handle needs no picker — the user is done typing it.
+    // An exact, complete handle needs no picker - the user is done typing it.
     const done = hits.length === 1 && hits[0].handle.toLowerCase() === q.toLowerCase()
     setMentionMatches(done ? [] : hits)
   }
@@ -149,7 +149,7 @@ export default function ThreadPage() {
       setError(err)
       return
     }
-    // Keep the inbox preview honest — otherwise the list still shows the text
+    // Keep the inbox preview honest - otherwise the list still shows the text
     // that was just deleted.
     if (messages[messages.length - 1]?.id === m.id) {
       await patchConversationPreview(params.id, 'Message deleted')

@@ -26,7 +26,7 @@ type Phase = 'working' | 'done' | 'failed'
  *
  * Two steps happen here:
  *
- *  1. `verifyPayment` — asks the server to confirm with Paystack that the
+ *  1. `verifyPayment` - asks the server to confirm with Paystack that the
  *     transaction really succeeded. Landing on this URL proves nothing; anyone
  *     can navigate here with a made-up reference.
  *  2. The type-specific follow-up. For an inspection that is
@@ -35,7 +35,7 @@ type Phase = 'working' | 'done' | 'failed'
  *
  * Both are idempotent, so a refresh mid-flight is safe. Note the Paystack
  * webhook independently reconciles the charge into `payments/{reference}`, so
- * the money is recorded even if the user closes this page — but the reveal is
+ * the money is recorded even if the user closes this page - but the reveal is
  * triggered from here, which is why the page matters.
  */
 function PaymentCallback() {
@@ -83,7 +83,7 @@ function PaymentCallback() {
         return
       }
 
-      // Recovered from Firestore, not sessionStorage — the redirect crosses
+      // Recovered from Firestore, not sessionStorage - the redirect crosses
       // origins when a payment is started anywhere other than production.
       const p = await pendingPayment()
       setPending(p)
@@ -139,7 +139,7 @@ function PaymentCallback() {
           return
         }
         // A linked tenancy is promoted into a real rental; an active one is
-        // extended. Different callables — see lib/renewal.ts.
+        // extended. Different callables - see lib/renewal.ts.
         const err = await completeRenewal(sourceId, p.context?.isLinked === true, reference)
         if (err) {
           setPhase('failed')

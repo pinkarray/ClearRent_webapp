@@ -44,7 +44,7 @@ export function propertyTypeLabel(value: string): string {
 }
 
 /**
- * Types that are ONE space. They have no meaningful bedroom count — what
+ * Types that are ONE space. They have no meaningful bedroom count - what
  * separates them is which facilities are the tenant's own, so their spec is
  * [sharedFacilities], not "1 bed · 1 bath".
  */
@@ -73,7 +73,7 @@ export function sharedFacilities(p: {
   return parts.join(' · ')
 }
 
-/** BuildingModel.structures — what the whole building is. */
+/** BuildingModel.structures - what the whole building is. */
 const STRUCTURE_LABELS: Record<string, string> = {
   duplex: 'duplex',
   bungalow: 'bungalow',
@@ -94,7 +94,7 @@ const FLOOR_LABELS: Record<string, string> = {
 }
 
 /**
- * "Room 2 · 1st floor · in a duplex" — which unit this is, and what it sits in.
+ * "Room 2 · 1st floor · in a duplex" - which unit this is, and what it sits in.
  * Empty for a whole-property listing. The building's NAME is never included: it
  * routinely carries the street address the location gate exists to withhold.
  */
@@ -108,7 +108,7 @@ export function unitContext(p: {
   const parts: string[] = []
   if (p.unitLabel) parts.push(p.unitLabel)
   if (p.floor) parts.push(FLOOR_LABELS[p.floor] ?? `Floor ${p.floor}`)
-  // On a compound the site structure says only "compound" — the building the
+  // On a compound the site structure says only "compound" - the building the
   // tenant is renting in lives on the unit, since one C of O can cover a
   // duplex and a bungalow side by side.
   const own = p.unitBuildingStructure

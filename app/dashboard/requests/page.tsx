@@ -58,7 +58,7 @@ function formatNaira(n: number): string {
 /**
  * The handler's queue: inspection requests on properties this user handles.
  *
- * Two separate queries rather than one — Firestore has no OR across fields, and
+ * Two separate queries rather than one - Firestore has no OR across fields, and
  * rules scope list access to a party on the request, so each query must filter
  * by a field naming this user.
  */
@@ -89,7 +89,7 @@ export default function HandlerRequestsPage() {
 
   /**
    * Both queries are LIVE. A tenant booking an inspection has to appear here
-   * without the handler reloading — they are the one being waited on, and a
+   * without the handler reloading - they are the one being waited on, and a
    * request they never see is a booking that quietly expires.
    *
    * Each side is kept separately and merged on render, rather than re-fetching

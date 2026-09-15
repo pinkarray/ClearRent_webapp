@@ -38,7 +38,7 @@ function callables() {
  *
  * Server-side this derives every amount from the property and pricing config.
  * Two gates it enforces that are worth surfacing in the UI: the inspection must
- * be `completed`, and the tenant must have RATED it — the rating is what backs
+ * be `completed`, and the tenant must have RATED it - the rating is what backs
  * the handler's payment, so it is required, not optional.
  */
 export async function createRentalInterest(
@@ -98,7 +98,7 @@ function toInterest(d: QueryDocumentSnapshot): RentalInterest {
 /**
  * LIVE rental interests.
  *
- * Every step of a tenancy is one party waiting on the other — the tenant sits
+ * Every step of a tenancy is one party waiting on the other - the tenant sits
  * on this page after expressing interest while the landlord accepts elsewhere,
  * and acceptance is what unlocks the agreement and then rent. A one-time read
  * left whoever was waiting looking at a stale screen with no reason to reload.
@@ -116,7 +116,7 @@ export function watchInterests(
 }
 
 /**
- * The landlord accepts a tenant. Only the lifecycle fields are touched — every
+ * The landlord accepts a tenant. Only the lifecycle fields are touched - every
  * amount on the document is immutable by rule.
  */
 export async function acceptRentalInterest(interestId: string): Promise<string | null> {
@@ -148,7 +148,7 @@ export type ActiveRental = {
   /**
    * The landlord declared a mid-tenancy revision changes terms only, not the
    * rent. Shown to the tenant beside the declared figure so checking it is
-   * reading one number rather than auditing a document — and contradicting it
+   * reading one number rather than auditing a document - and contradicting it
    * raises an admin alert (`agreement_rent_mismatch`).
    */
   agreementRevisionTermsOnly: boolean
@@ -170,7 +170,7 @@ export type ActiveRental = {
   /**
    * How far the move-out handover has got: '' | 'awaiting_evidence' |
    * 'awaiting_condition' | 'awaiting_settlement' | 'awaiting_confirm' |
-   * 'closed'. The TENANCY is already over by the time any of this runs — what
+   * 'closed'. The TENANCY is already over by the time any of this runs - what
    * is unresolved is the caution deposit, and the PROPERTY stays off the
    * market until this reaches 'closed'.
    */
@@ -250,7 +250,7 @@ export async function activeRentals(
 }
 
 /**
- * LIVE active rentals — the agreement and rent steps both change under whoever
+ * LIVE active rentals - the agreement and rent steps both change under whoever
  * is waiting. Returns the unsubscribe function.
  */
 export function watchActiveRentals(
@@ -263,7 +263,7 @@ export function watchActiveRentals(
   )
 }
 
-/** Every rental this tenant has had, newest first — the app's "My rentals". */
+/** Every rental this tenant has had, newest first - the app's "My rentals". */
 export async function tenantRentalHistory(uid: string): Promise<ActiveRental[]> {
   const rentals = await activeRentals('tenantId', uid)
   return rentals.sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0))
@@ -278,7 +278,7 @@ export async function landlordRentals(uid: string): Promise<ActiveRental[]> {
 /**
  * Attaches an uploaded tenancy agreement to a rental.
  *
- * `agreementUrl` holds the STORAGE PATH, not a URL — the file is private and is
+ * `agreementUrl` holds the STORAGE PATH, not a URL - the file is private and is
  * only ever served through `getSignedAgreementUrl`, which checks rental
  * membership server-side (storage rules cannot: they cannot read Firestore).
  *
@@ -307,13 +307,13 @@ export async function attachAgreement(
  * The tenant accepts by uploading a copy they have SIGNED.
  *
  * Acceptance used to be a tap that wrote a status and a timestamp, leaving the
- * agreement itself untouched — so the only evidence a tenant agreed was a row
+ * agreement itself untouched - so the only evidence a tenant agreed was a row
  * in ClearRent's own database, which a tenant could simply deny. The signed
  * document is the acceptance now.
  *
  * The landlord signs their agreement ONCE, against the property, before any
  * tenant exists. So the copy a tenant downloads already carries the landlord's
- * signature, and the copy they upload back carries BOTH — that single document
+ * signature, and the copy they upload back carries BOTH - that single document
  * is the fully-executed agreement, which is why this finalizes outright. There
  * is deliberately no counter-sign round trip: it would have the landlord print
  * and re-upload the same document only to add a signature they could have
@@ -321,7 +321,7 @@ export async function attachAgreement(
  *
  * Uploads under the tenant's own uid, which Storage already permits. The
  * landlord reads it back via getSignedAgreementUrl (`which: 'tenantSigned'`),
- * which checks tenancy membership — a storage rule cannot.
+ * which checks tenancy membership - a storage rule cannot.
  *
  * Only allowlisted fields may be written; an extra one rejects the whole write.
  */
@@ -395,7 +395,7 @@ export async function requestMoveOut(
       // 'moveout_pending' is the canonical value, not a camelCase variant:
       // moveoutAutoConfirmSweep queries `status == 'moveout_pending'` and the
       // app's ActiveRentalStatus parses that exact string. Web previously wrote
-      // 'moveOutRequested', which nothing recognised — so a move-out started on
+      // 'moveOutRequested', which nothing recognised - so a move-out started on
       // web could neither be confirmed by the landlord nor auto-confirmed, and
       // the tenancy simply hung.
       status: 'moveout_pending',
@@ -413,8 +413,8 @@ export async function requestMoveOut(
 /**
  * A short-lived link to the landlord's proof of transfer.
  *
- * Storage rules only ever admit the uploader — they cannot read Firestore to
- * check who is party to a tenancy — so the counterparty's view has to go
+ * Storage rules only ever admit the uploader - they cannot read Firestore to
+ * check who is party to a tenancy - so the counterparty's view has to go
  * through the callable, which does that check server-side. Showing the tenant
  * the receipt turns most of this step from a dispute into a look.
  */
@@ -441,13 +441,13 @@ export async function handoverProofLink(
  * The outgoing tenant confirms the caution deposit reached them, which closes
  * the handover and releases the property for relisting.
  *
- * ClearRent never holds the deposit — the money moves landlord-to-tenant
- * off-platform — so this confirmation is the only signal that it arrived. The
+ * ClearRent never holds the deposit - the money moves landlord-to-tenant
+ * off-platform - so this confirmation is the only signal that it arrived. The
  * app writes exactly these two fields (ActiveRentalService.handoverConfirmPaid)
  * and both are in the active_rentals update allowlist.
  *
  * A silence sweep closes it after 7 days IF the landlord uploaded proof of
- * transfer, so a tenant who never answers does not trap the unit forever — but
+ * transfer, so a tenant who never answers does not trap the unit forever - but
  * a landlord who never paid cannot wait it out either.
  */
 export async function confirmDepositReceived(
@@ -495,7 +495,7 @@ export async function contestSettlement(
  * transition server-side if the landlord never acts, so this is a shortcut,
  * not a veto.
  *
- * A deduction of 0 means the deposit is returned in full — the default.
+ * A deduction of 0 means the deposit is returned in full - the default.
  * Anything withheld must carry a reason: the tenant gets their money back
  * unless the landlord says otherwise, on the record. ClearRent never holds
  * this money, so these fields are a declaration and an audit trail, not a
@@ -536,7 +536,7 @@ export async function confirmMoveOut(
 
 /**
  * The tenant raises a concern instead of accepting. This is the other half of
- * [acceptAgreement] — without it a tenant who disagrees with the agreement has
+ * [acceptAgreement] - without it a tenant who disagrees with the agreement has
  * only two options, accept it or stall, and the landlord is never told why.
  * The landlord re-uploads a revised copy, which returns it to 'pending_review'.
  */
@@ -561,8 +561,8 @@ export async function disputeAgreement(
  * The tenant contradicts the landlord's "terms only" declaration.
  *
  * Deliberately distinct from [disputeAgreement]: this asserts a specific,
- * checkable claim about the rent. It parks the agreement as disputed — which
- * is what stops it being signable — and the onAgreementReady trigger turns
+ * checkable claim about the rent. It parks the agreement as disputed - which
+ * is what stops it being signable - and the onAgreementReady trigger turns
  * `tenantFlaggedRentChange` into a critical admin alert carrying both the
  * landlord's declaration and this claim.
  */

@@ -70,7 +70,7 @@ export function servesArea(agent: Agent, area: string): boolean {
  *
  * Two consequences that are easy to miss and are deliberate:
  * - `readyForInspections` is reset to false. The handler changed, so the new
- *   agent must re-vet before the property is bookable again — assignment
+ *   agent must re-vet before the property is bookable again - assignment
  *   un-publishes the listing until they do.
  * - `savedAgentFee` is restored if a previous agent stepped away, so the
  *   landlord does not have to re-enter the fee.

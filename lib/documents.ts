@@ -16,7 +16,7 @@ export type PaymentRecord = {
 /**
  * A settled payment.
  *
- * The stored value is `completed` — written by `paystack_service.dart:306` and
+ * The stored value is `completed` - written by `paystack_service.dart:306` and
  * by every server-side path in `admin_money_ops` / `index.ts`. This page used
  * to test for `success`, which nothing writes, so every payment rendered as
  * pending no matter how long ago it cleared.
@@ -64,7 +64,7 @@ export function agreementStatusLabel(status: string): string {
  * The tenant's payment history.
  *
  * Filters by userId and sorts in memory rather than adding `orderBy('createdAt')`
- * — the composite index that would need is not provisioned, and when it is
+ * - the composite index that would need is not provisioned, and when it is
  * missing Firestore throws rather than degrading. In the app that surfaced as a
  * permanently empty Payments tab (`documents_screen.dart:85`). Same shape here
  * so web does not reintroduce the bug.
@@ -91,7 +91,7 @@ export async function tenantPayments(uid: string): Promise<PaymentRecord[]> {
 
 /**
  * A short-lived signed URL for a tenancy agreement. The document lives in
- * private storage, so it is never linked directly — the callable checks the
+ * private storage, so it is never linked directly - the callable checks the
  * caller is a party on the rental before signing.
  *
  * `getSignedAgreementUrl` is one of the App-Check-enforced callables, so it

@@ -4,7 +4,7 @@ import { clientApp, clientAuth, clientDb } from './firebase-client'
 
 /**
  * The readiness checklist, copied from `PropertyService.readinessChecklistItems`.
- * Order and keys must match — the stored `readinessChecklist` array is read by
+ * Order and keys must match - the stored `readinessChecklist` array is read by
  * the app and by admin tooling.
  */
 export const READINESS_ITEMS: { key: string; label: string }[] = [
@@ -56,13 +56,13 @@ export type EditableListing = {
   /**
    * Sitting tenants freeze the money terms. Rules reject any change to rent,
    * agentFee, cautionDeposit or cautionDepositRefundable once
-   * currentTenantsCount > 0 — that is the deal the tenant accepted. The form
+   * currentTenantsCount > 0 - that is the deal the tenant accepted. The form
    * disables those fields rather than letting the write fail opaquely.
    */
   currentTenantsCount: number
   /**
    * Whether the property is already vetted and bookable. The assigned agent can
-   * set this too, so the landlord's page must read it rather than assume — it
+   * set this too, so the landlord's page must read it rather than assume - it
    * previously always showed the checklist, hiding the agent's vetting from the
    * landlord and asking them to redo work that was already done.
    */
@@ -138,12 +138,12 @@ export async function saveListingEdits(
  *
  * Needed for two situations that had no path on web at all:
  *  - listings created before the upload step existed, which sit at status
- *    `'none'` — admin can neither verify nor reject those, so they are frozen
+ *    `'none'` - admin can neither verify nor reject those, so they are frozen
  *    out of public browse forever with nothing anyone can do about it;
  *  - a document an admin REJECTED, which the owner must be able to replace.
  *
  * Always lands on `'pending'`. rules:427 lets an owner move the status back to
- * review and nothing else — `'verified'` and `'rejected'` are the admin's, and
+ * review and nothing else - `'verified'` and `'rejected'` are the admin's, and
  * changing the file or the type forces the status back to `'pending'` so an
  * approval can never carry over to a document the admin never saw.
  */

@@ -7,16 +7,16 @@ import { clientAuth, clientDb, initAppCheck } from './firebase-client'
  *
  * The server calls `transaction/initialize` and hands back an
  * `authorizationUrl`, so the browser just navigates there. That means no
- * Paystack public key and no inline JS on the client — a smaller surface than
+ * Paystack public key and no inline JS on the client - a smaller surface than
  * the app's mobile SDK integration.
  *
  * Pricing is server-authoritative: `resolveServerAmount` recomputes the charge
  * from the payment type and metadata, and the client's `amount` is display-only
- * for everything except renewals. Do not "fix" a wrong total here — fix it in
+ * for everything except renewals. Do not "fix" a wrong total here - fix it in
  * the pricing resolver.
  *
  * Both callables enforce App Check, so `initAppCheck()` must have run. When it
- * has not, these fail with `unauthenticated` — which reads like an expired
+ * has not, these fail with `unauthenticated` - which reads like an expired
  * session and is not one.
  */
 
@@ -84,7 +84,7 @@ export async function startPayment(
     webReturnPath: returnPath,
   })
 
-  // What the callback page needs must survive the round trip — and the round
+  // What the callback page needs must survive the round trip - and the round
   // trip crosses ORIGINS: `initializePayment` hardcodes
   // callback_url = https://verealtytech.com/payment/callback, so a payment
   // started on localhost comes back on the production domain. sessionStorage
@@ -96,7 +96,7 @@ export async function startPayment(
       reference: init.reference,
       type,
       returnPath,
-      // e.g. { requestId } for an inspection — the callback needs it to call
+      // e.g. { requestId } for an inspection - the callback needs it to call
       // confirmInspectionPayment, and verifyPayment does not echo metadata back.
       context: metadata,
       startedAt: serverTimestamp(),
@@ -128,7 +128,7 @@ export async function clearPendingPayment(): Promise<void> {
   await deleteDoc(doc(clientDb(), 'users', uid, 'private', 'pendingPayment'))
 }
 
-/** True when the signed-in user can pay — the auth token must carry an email. */
+/** True when the signed-in user can pay - the auth token must carry an email. */
 export function canPay(): boolean {
   return Boolean(clientAuth().currentUser?.email)
 }

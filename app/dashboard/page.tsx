@@ -102,7 +102,7 @@ export default function DashboardPage() {
 
       {/*
         Above the role sections, because a caretaker keeps whatever accountType
-        they signed up with — the role decides their capsule, not this work.
+        they signed up with - the role decides their capsule, not this work.
         Renders nothing for everyone else.
       */}
       <CaretakerBanner />

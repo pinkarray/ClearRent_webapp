@@ -73,7 +73,7 @@ for (const doc of props.docs) {
   }
 }
 
-// Which properties this tenant already inspected — fix 5 deliberately blocks a
+// Which properties this tenant already inspected - fix 5 deliberately blocks a
 // second paid inspection on those, so a re-test needs an untouched one.
 const phone = process.argv[2]
 if (phone) {

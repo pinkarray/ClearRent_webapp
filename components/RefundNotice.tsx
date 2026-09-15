@@ -13,14 +13,14 @@ function formatNaira(n: number): string {
  *
  * Renders nothing unless a refund record exists, so it is safe to drop onto
  * every row. Refunds are settled by an admin out of band, so the honest thing
- * to show a tenant is that it is queued and for how much — not a promise about
+ * to show a tenant is that it is queued and for how much - not a promise about
  * when.
  */
 export function RefundNotice({ sourceId }: { sourceId: string }) {
   const [refund, setRefund] = useState<Refund | null>(null)
 
   useEffect(() => {
-    // Subscription built in an effect, not in render — a listener created
+    // Subscription built in an effect, not in render - a listener created
     // during render re-subscribes on every rebuild.
     const unsub = watchRefund(sourceId, setRefund)
     return () => unsub()

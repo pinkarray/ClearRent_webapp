@@ -36,7 +36,7 @@ function formatNaira(n: number): string {
 
 /**
  * The tenancy stage: interests awaiting acceptance, then the active rental
- * with its agreement, rent and move-out steps. Shown to both sides — a landlord
+ * with its agreement, rent and move-out steps. Shown to both sides - a landlord
  * sees interests to accept, a tenant sees what they owe and can do next.
  */
 export default function TenancyPage() {
@@ -68,7 +68,7 @@ export default function TenancyPage() {
 
   /** The rental an accepted interest produced. `onRentalInterestAccepted`
    *  creates it under the interest's own id, and also records the id in
-   *  rentalInterestId — either match identifies it. */
+   *  rentalInterestId - either match identifies it. */
   function rentalFor(interestId: string): ActiveRental | undefined {
     return (rentals ?? []).find(
       (r) => r.id === interestId || r.rentalInterestId === interestId,
@@ -282,7 +282,7 @@ export default function TenancyPage() {
                   </span>
                 </div>
 
-                {/* The handover. The TENANCY is already over here — what is
+                {/* The handover. The TENANCY is already over here - what is
                     unresolved is the caution deposit, and the PROPERTY stays
                     off the market until the tenant answers. Web had no surface
                     for this at all, so a tenant could only close it from the

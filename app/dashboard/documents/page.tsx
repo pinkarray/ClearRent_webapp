@@ -38,7 +38,7 @@ function formatDateTime(d: Date | null): string {
  * The app's Documents screen: agreements on one side, payment receipts on the
  * other.
  *
- * Kept deliberately at parity with `documents_screen.dart` — the same
+ * Kept deliberately at parity with `documents_screen.dart` - the same
  * agreements (including landlord-LINKED tenancies, which web used to omit
  * entirely), the same status wording, the same paid-total summary and the same
  * tappable receipt.

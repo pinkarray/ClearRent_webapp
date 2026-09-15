@@ -215,8 +215,8 @@ export default function PropertyHealthPage() {
             ))}
             {/*
               A caretaker MUST carry the property scope through. /dashboard/issues
-              branches on accountType, and a caretaker keeps their own — the live
-              one is a tenant — so an unscoped link dropped them on the
+              branches on accountType, and a caretaker keeps their own - the live
+              one is a tenant - so an unscoped link dropped them on the
               report-an-issue form instead of the triage the rules already allow.
             */}
             <Link

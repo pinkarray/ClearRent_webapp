@@ -17,7 +17,7 @@ import { trackInquiry } from './activity'
 /**
  * Booking an inspection.
  *
- * This is a plain Firestore write, NOT a callable — `createRentalInterest` is a
+ * This is a plain Firestore write, NOT a callable - `createRentalInterest` is a
  * different, later step (it runs after the inspection is completed and rated).
  * So no App Check is involved here; `firestore.rules` is the enforcement:
  *
@@ -76,7 +76,7 @@ export function composeScheduledDateTime(date: Date, slot: string): Date {
 }
 
 /**
- * The property fields booking needs. Read client-side by the signed-in tenant —
+ * The property fields booking needs. Read client-side by the signed-in tenant -
  * `properties` is readable by any authenticated user, so this does not need the
  * public projection (which deliberately omits landlordId and the fee fields).
  */
@@ -142,7 +142,7 @@ export async function loadBookableProperty(id: string): Promise<BookableProperty
   }
 }
 
-/** Statuses that count as an open request — one per tenant per property. */
+/** Statuses that count as an open request - one per tenant per property. */
 const ACTIVE_STATUSES = [
   'pending',
   'approved',
@@ -182,7 +182,7 @@ export type BookingResult = { requestId: string } | { error: string }
  *
  * Pay-after-approve: nothing is charged here. A fee-bearing request is born
  * 'unpaid' and the tenant pays once the handler approves; a free one is
- * 'not_required'. Status is always 'pending' — no money has moved.
+ * 'not_required'. Status is always 'pending' - no money has moved.
  *
  * Only the AREA-level address is stored on the request. The exact street
  * address stays in the gated `private/location` subdoc and is revealed to the
@@ -247,7 +247,7 @@ export async function createInspectionRequest(
       propertyId: property.id,
       propertyTitle: property.title,
       propertyImage: property.images[0] ?? '',
-      // Area level only — the street address is released on approval.
+      // Area level only - the street address is released on approval.
       propertyAddress: property.approximateAddress,
 
       tenantId,
@@ -318,7 +318,7 @@ export async function createInspectionRequest(
     })
 
     // Surfaces the booking on the landlord's recent-activity feed. Written by
-    // the client here because that is where the app writes it too — there is no
+    // the client here because that is where the app writes it too - there is no
     // trigger doing it server-side.
     await trackInquiry({
       landlordId: property.landlordId,
@@ -349,7 +349,7 @@ export async function createInspectionRequest(
  * and only from 'pending' / 'pendingVerification'. The handler must also have a
  * payout account on file, so an inspection payout has a destination.
  *
- * Nothing is charged here — the tenant pays after approval.
+ * Nothing is charged here - the tenant pays after approval.
  */
 export async function approveInspection(requestId: string): Promise<string | null> {
   try {
@@ -368,7 +368,7 @@ export async function approveInspection(requestId: string): Promise<string | nul
 
 /**
  * Declines. The target status differs by who is declining, and the two rule
- * clauses allow different field sets — an agent decline is `declinedByAgent`
+ * clauses allow different field sets - an agent decline is `declinedByAgent`
  * (the landlord may still override it), a landlord decline is final.
  */
 export async function declineInspection(
@@ -417,7 +417,7 @@ export async function declineInspection(
  * 'paid', copies the EXACT street address and coordinates from the gated
  * `private/location` subdoc onto the request, and writes the
  * `properties/{id}/reveals/{tenantId}` grant. That is why the tenant suddenly
- * sees a real address — the client never reads the private subdoc itself.
+ * sees a real address - the client never reads the private subdoc itself.
  *
  * Idempotent: replaying it on an already-paid request returns alreadyPaid.
  */
@@ -449,7 +449,7 @@ export async function confirmInspectionPayment(
 
 /**
  * Each side marks their own arrival. Rules field-scope these so neither party
- * can flip the other's flag — a tenant cannot claim the handler showed up.
+ * can flip the other's flag - a tenant cannot claim the handler showed up.
  */
 export async function markArrived(
   requestId: string,
@@ -546,7 +546,7 @@ export async function cancelInspection(
 
 /**
  * Each side confirms the meeting actually happened. Only possible once BOTH
- * arrival flags are set — a meeting needs two halves, and the rule checks both
+ * arrival flags are set - a meeting needs two halves, and the rule checks both
  * before letting either party confirm.
  */
 export async function confirmMet(
@@ -595,7 +595,7 @@ export async function completeInspection(
 }
 
 /**
- * The tenant rates the handler. Required before expressing rental interest —
+ * The tenant rates the handler. Required before expressing rental interest -
  * `createRentalInterest` rejects an unrated inspection, because the rating is
  * the tenant's confirmation the visit genuinely happened and is what backs the
  * handler's payment.
@@ -633,18 +633,18 @@ export async function rateInspection(
  *
  * MUST be server-side. Availability is the handler's offered slots minus the
  * times they are already booked for, and a tenant is not allowed to list
- * another handler's inspections to work that out — that would leak other
+ * another handler's inspections to work that out - that would leak other
  * tenants' bookings. The client query is silently denied, so every slot looks
  * free.
  *
  * Web was doing exactly that: filtering the property's raw `inspectionTimeSlots`
  * by time-of-day alone and never subtracting taken ones. A tenant could book a
  * slot someone else already held AND PAY for it, and only then would the
- * server's conflict guard decline the request — leaving a real charge to refund
+ * server's conflict guard decline the request - leaving a real charge to refund
  * by hand. The app has called this since the same bug was fixed there.
  *
  * Returns null when the call fails, which the caller must treat as "unknown"
- * rather than "all free" — falling back to the unfiltered list is what caused
+ * rather than "all free" - falling back to the unfiltered list is what caused
  * the problem in the first place.
  */
 export async function availableInspectionSlots(

@@ -55,7 +55,7 @@ export default function LandlordRentals() {
 
   const uid = user?.uid
 
-  // Live: every step shown here is the TENANT's move — accepting the
+  // Live: every step shown here is the TENANT's move - accepting the
   // agreement, disputing it, paying rent, giving move-out notice. A one-time
   // read meant the landlord sat on a stale card for all of them.
   useEffect(() => {

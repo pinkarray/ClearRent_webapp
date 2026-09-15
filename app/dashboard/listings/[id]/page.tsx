@@ -38,7 +38,7 @@ export default function EditListingPage() {
   const [confirmed, setConfirmed] = useState<Record<string, boolean>>({})
   /**
    * The form as it is stored. Save stays disabled until something differs, so
-   * "Saved" is visible state rather than a message that scrolls away — and a
+   * "Saved" is visible state rather than a message that scrolls away - and a
    * landlord cannot fire the same write twice by tapping again.
    */
   const [savedState, setSavedState] = useState<string | null>(null)
@@ -266,7 +266,7 @@ export default function EditListingPage() {
           A listing with no document (or a rejected one) is otherwise stuck for
           good: admin gates Verify/Reject on status 'pending', so 'none' offers
           them nothing to act on and the listing can never reach public browse.
-          'inherited' units are skipped — their document lives on the building.
+          'inherited' units are skipped - their document lives on the building.
         */}
         {listing.ownershipDocStatus !== 'inherited' &&
           listing.ownershipDocStatus !== 'verified' && (

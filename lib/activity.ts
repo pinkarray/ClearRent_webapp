@@ -4,7 +4,7 @@ import { clientDb } from './firebase-client'
 /**
  * The landlord's "recent activity" feed.
  *
- * These records are written by the CLIENT, not by a Cloud Function trigger —
+ * These records are written by the CLIENT, not by a Cloud Function trigger -
  * `ActivityService` in the Flutter app does it. So anything the web does
  * silently misses the feed unless the web writes them too, which is exactly
  * what happened: web-created listings and web-booked inspections never showed
@@ -50,7 +50,7 @@ export async function trackPropertyAdded(
     )
     if (!existing.empty) return
   } catch {
-    // If the dedup read fails, fall through and write — a duplicate entry is
+    // If the dedup read fails, fall through and write - a duplicate entry is
     // better than a missing one.
   }
 

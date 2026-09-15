@@ -7,7 +7,7 @@ import { isSaved, toggleSaved } from '../lib/saved'
 
 /**
  * The heart on a listing. Rendered from the server-side property page, so it
- * carries its own auth state — a signed-out visitor is sent to sign in rather
+ * carries its own auth state - a signed-out visitor is sent to sign in rather
  * than shown a control that silently does nothing.
  */
 export default function SaveButton({ propertyId }: { propertyId: string }) {

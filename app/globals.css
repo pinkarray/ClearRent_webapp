@@ -64,7 +64,7 @@
 }
 
 /*
-  Neutral, not green-tinted — matching the app's `_dark` palette. Primary is
+  Neutral, not green-tinted - matching the app's `_dark` palette. Primary is
   brightened to #0FA88F there for legibility on a dark ground; keeping the light
   #0A7B6C failed contrast against #121212.
 */
@@ -328,7 +328,7 @@ body {
   source of wasted space, so it goes, and its clearance goes with it.
 
   Element heights are NOT computed here. They were, by subtracting AppShell's
-  chrome in rem, and that broke as soon as the chrome moved — pb-20 became
+  chrome in rem, and that broke as soon as the chrome moved - pb-20 became
   pb-28 and a variable-height banner appeared above the page content. Anything
   needing to fill the screen uses useFillViewport, which measures instead.
 */

@@ -17,7 +17,7 @@ import {
 } from '../../../lib/property'
 
 /** Listings written before the access fields existed carry ''. Say so rather
- *  than guessing — "private" would overclaim, "shared" would undersell. */
+ *  than guessing - "private" would overclaim, "shared" would undersell. */
 function accessLabel(access: string): string {
   if (access === 'private') return 'Private'
   if (access === 'shared') return 'Shared'
@@ -175,7 +175,7 @@ export default async function PropertyDetailPage({ params }: Props) {
               <h2 className="text-lg font-semibold text-content">The space</h2>
               <div className="mt-3 grid grid-cols-2 gap-x-6 sm:grid-cols-3">
                 {/* Two independent questions. Counts say what is PRESENT, and
-                    are real for a whole property and a multi-room unit alike —
+                    are real for a whole property and a multi-room unit alike -
                     only a single space has nothing to count. Sharing says who
                     else uses it, which only arises inside a building and then
                     applies to every type. A two-bedroom flat in a compound has

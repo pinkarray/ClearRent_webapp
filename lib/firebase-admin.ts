@@ -6,7 +6,7 @@ import { getFirestore, type Firestore } from 'firebase-admin/firestore'
  *
  * Properties are NOT publicly readable (`firestore.rules`: `allow read: if
  * request.auth != null`), so anonymous browse has to be server-rendered through
- * the Admin SDK. The Admin SDK bypasses rules entirely — every field that
+ * the Admin SDK. The Admin SDK bypasses rules entirely - every field that
  * reaches the browser must go through `toPublicProperty` in ./property.
  *
  * Credentials belong to `clearrent-web-ssr@`, a service account scoped to

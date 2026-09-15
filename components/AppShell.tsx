@@ -59,7 +59,7 @@ function Icon({ name, className }: { name: keyof typeof icons; className?: strin
 function tabsFor(accountType: string | undefined): Tab[] {
   if (accountType === 'landlord') {
     // Rentals is where the tenancy agreement is uploaded and where a move-out
-    // is confirmed — the landlord's half of everything after an inspection.
+    // is confirmed - the landlord's half of everything after an inspection.
     // It was reachable only via a Home link, so anyone starting from the nav
     // hunted for it.
     return [
@@ -72,7 +72,7 @@ function tabsFor(accountType: string | undefined): Tab[] {
   }
   if (accountType === 'tenant') {
     // Tenancy earns a slot because it is where the agreement, the rent
-    // payment and move-out all live — the whole second half of the journey.
+    // payment and move-out all live - the whole second half of the journey.
     // Without it those were reachable only by typing the URL, since the
     // capsule is the only navigation on mobile. Inactive tabs render
     // icon-only, so a fifth costs ~45px.
@@ -85,7 +85,7 @@ function tabsFor(accountType: string | undefined): Tab[] {
     ]
   }
   if (accountType === 'agent') {
-    // Mirrors the app's agent tabs, plus Requests — approving and running
+    // Mirrors the app's agent tabs, plus Requests - approving and running
     // inspections IS the agent's job and the only place they earn, yet it
     // sat behind a Home link while Properties had a tab.
     return [
@@ -96,7 +96,7 @@ function tabsFor(accountType: string | undefined): Tab[] {
       { href: '/dashboard/profile', label: 'Profile', icon: 'user' },
     ]
   }
-  // No role set yet — Home carries the role picker.
+  // No role set yet - Home carries the role picker.
   return [
     { href: '/dashboard', label: 'Home', icon: 'home' },
     { href: '/dashboard/profile', label: 'Profile', icon: 'user' },

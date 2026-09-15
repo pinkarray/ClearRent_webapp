@@ -146,7 +146,7 @@ export default function ProfilePage() {
   }
 
   // Caretaking is role-independent: a caretaker can be a tenant, a landlord or
-  // an agent, so it cannot live in any one role's block above — nor in the nav
+  // an agent, so it cannot live in any one role's block above - nor in the nav
   // capsule, which is a fixed five tabs per role. Shown only to people who
   // actually have an arrangement, so it stays invisible to everyone else.
   if (hasCaretaking) {

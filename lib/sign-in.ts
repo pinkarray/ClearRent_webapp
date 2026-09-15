@@ -34,7 +34,7 @@ export function looksLikePhone(identifier: string): boolean {
  * Resolves a Nigerian phone number to the account's email.
  *
  * The server normalises the number itself (`normalizeNigerianPhone`), so
- * 0906…, 234906… and +234906… all resolve to the same account — which matters,
+ * 0906…, 234906… and +234906… all resolve to the same account - which matters,
  * because a user does not remember which form they signed up with.
  */
 async function emailForPhone(phone: string): Promise<string> {
@@ -72,7 +72,7 @@ export async function signInWithPassword(
 
     // Firebase returns invalid-credential for both a wrong password and an
     // unknown account, deliberately, so the message must not distinguish them
-    // either — saying "no such account" would confirm which numbers are
+    // either - saying "no such account" would confirm which numbers are
     // registered.
     if (
       code === 'auth/invalid-credential' ||

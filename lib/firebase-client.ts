@@ -6,7 +6,7 @@ import { getFirestore, type Firestore } from 'firebase/firestore'
 /**
  * Firebase Web SDK, used ONLY for the authenticated landlord flow.
  *
- * Public browse does not touch this — it is server-rendered through
+ * Public browse does not touch this - it is server-rendered through
  * firebase-admin, because properties are not publicly readable.
  *
  * Why the landlord writes from the client rather than through a server route:
@@ -38,7 +38,7 @@ const config = {
  *
  * They are inlined into the bundle by Next, so if the deploy environment is
  * missing them every value here is undefined and `initializeApp` throws. That
- * used to happen inside AuthProvider, which sits in the root layout — taking
+ * used to happen inside AuthProvider, which sits in the root layout - taking
  * down the marketing and legal pages, which need Firebase for nothing at all.
  * Callers check this and degrade instead.
  */
@@ -61,12 +61,12 @@ let appCheckStarted = false
 /**
  * Attaches App Check to every subsequent Firebase call.
  *
- * Must run in the browser and exactly once — initializeAppCheck throws if
+ * Must run in the browser and exactly once - initializeAppCheck throws if
  * called twice on the same app. Call it before anything that hits a gated
  * callable; it is safe to call repeatedly.
  *
  * When this is missing or fails, gated callables reject with `unauthenticated`,
- * which the Flutter app historically mislabelled "session expired" — a day was
+ * which the Flutter app historically mislabelled "session expired" - a day was
  * lost to that on Android. If a callable starts returning `unauthenticated` on
  * web, suspect this before suspecting the user's session.
  */

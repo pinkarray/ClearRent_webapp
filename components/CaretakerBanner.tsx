@@ -10,7 +10,7 @@ import {
 } from '../lib/caretaker'
 
 /**
- * The caretaker's way in, shown on the dashboard home whatever role they are —
+ * The caretaker's way in, shown on the dashboard home whatever role they are -
  * and shown to nobody else. Mirrors `caretaker_banner.dart`, including its
  * three states, in order:
  *

@@ -12,12 +12,12 @@ import { createListing, uploadImage, type ListingInput } from '../../lib/create-
 const LAGOS = 'Lagos'
 
 // The app's actual vocabulary (PropertyModel.selectableTypes). This list used
-// to read 'self_contain' / 'single_room' / 'shop' — values nothing else in the
+// to read 'self_contain' / 'single_room' / 'shop' - values nothing else in the
 // system understands, so a web-created listing rendered with a raw type string
 // in the app and matched no tenant filter. 'shop' is out until the commercial
 // branch exists, same as the app.
 // Web lists WHOLE properties only, so this mirrors
-// PropertyModel.wholePropertyTypes — 'room' is absent because a lone room is a
+// PropertyModel.wholePropertyTypes - 'room' is absent because a lone room is a
 // unit inside a building, which is the app's grouped flow.
 const PROPERTY_TYPES: Array<[value: string, label: string]> = [
   ['flat', 'Flat'],
@@ -154,7 +154,7 @@ export default function ListPropertyPage() {
     setCreatedId(null)
 
     // Required, as the app requires it. Without a document the listing is born
-    // 'none', which admin cannot verify OR reject — it just sits there.
+    // 'none', which admin cannot verify OR reject - it just sits there.
     if (!ownershipDoc) {
       setError('Attach proof of ownership - a C of O, deed, or other document.')
       return

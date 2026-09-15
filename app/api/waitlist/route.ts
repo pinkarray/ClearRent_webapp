@@ -90,7 +90,7 @@ async function sendNotificationEmail({
     }
   } catch (err) {
     console.error('❌ Failed to send notification email:', err)
-    // Don't throw — email failure shouldn't block the waitlist signup
+    // Don't throw - email failure shouldn't block the waitlist signup
   }
 }
 
@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
       source: 'webapp',
     })
 
-    // Send email notification — must await on Vercel (serverless kills after response)
+    // Send email notification - must await on Vercel (serverless kills after response)
     await sendNotificationEmail({
       name: name.trim(),
       email: email.toLowerCase().trim(),

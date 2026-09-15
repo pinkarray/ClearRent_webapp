@@ -40,11 +40,11 @@ export type ListingInput = {
   currentTenantsCount: number
   hasCaretaker: boolean
   caretakerLivesOnPremises: boolean
-  /** A flat can mix ceiling types, so this is a list — matches the app. */
+  /** A flat can mix ceiling types, so this is a list - matches the app. */
   ceilingTypes: string[]
   videoUrl: string | null
   /**
-   * Proof of ownership — a C of O, deed of assignment, or other document.
+   * Proof of ownership - a C of O, deed of assignment, or other document.
    *
    * REQUIRED, exactly as the app requires it (`add_property_screen.dart:1344`).
    * Web used to write `ownershipDocStatus: 'none'` and collect nothing, which
@@ -66,7 +66,7 @@ export type ListingInput = {
  * Three things this must not get wrong, all enforced by firestore.rules too:
  *  - `landlordId` is the caller's own uid.
  *  - `isVerified` is false. It is the ADMIN's badge, written by
- *    adminReviewPropertyDoc — a listing is born unreviewed.
+ *    adminReviewPropertyDoc - a listing is born unreviewed.
  *  - The exact address and coordinates never touch the parent doc; they go to
  *    `properties/{id}/private/location`, which rules gate to the owner, the
  *    assigned agent, an admin, or a tenant with an approved inspection.
@@ -77,7 +77,7 @@ export async function createListing(uid: string, input: ListingInput): Promise<s
   // Uploaded BEFORE the property doc is written: storage rules make
   // `ownership/{uid}/{docId}` write-once (`resource == null`), so a failed
   // upload must not leave behind a listing claiming a document it never got.
-  // The stored value is the PATH, not a download URL — the same as the app
+  // The stored value is the PATH, not a download URL - the same as the app
   // (`property_service.dart:91`), which is what the admin viewer resolves.
   const ext = input.ownershipDocFile.name.includes('.')
     ? input.ownershipDocFile.name.split('.').pop()
@@ -106,7 +106,7 @@ export async function createListing(uid: string, input: ListingInput): Promise<s
     kitchens: input.kitchens,
     images: input.images,
     // Area-level only. `address`, `latitude` and `longitude` are absent by
-    // construction — the parent doc is readable by every signed-in user.
+    // construction - the parent doc is readable by every signed-in user.
     city: input.city,
     state: input.state,
     lga: input.lga,
@@ -131,7 +131,7 @@ export async function createListing(uid: string, input: ListingInput): Promise<s
     // the accept-time slot guard keys off this number, so it is not the
     // landlord's to raise. firestore.rules pins it to 1.
     maxTenants: 1,
-    // Web lists WHOLE properties only — it writes no buildingId — so there is
+    // Web lists WHOLE properties only - it writes no buildingId - so there is
     // nobody to share with and the access fields do not apply. They are asked
     // and stored only for a unit inside a building, where every type can share
     // (a self contain in a compound still queues for the toilet). Public pages
@@ -155,7 +155,7 @@ export async function createListing(uid: string, input: ListingInput): Promise<s
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
     // Born awaiting review, with the document attached. rules:625 allows the
-    // owner to create at 'none' or 'pending' and nothing else — 'verified' is
+    // owner to create at 'none' or 'pending' and nothing else - 'verified' is
     // the admin's to write, via adminReviewPropertyDoc.
     ownershipDocStatus: 'pending',
     ownershipDocUrl: ownershipDocPath,
@@ -172,7 +172,7 @@ export async function createListing(uid: string, input: ListingInput): Promise<s
     updatedAt: serverTimestamp(),
   })
 
-  // Lifetime counter, only ever incremented — it decides whether the landlord
+  // Lifetime counter, only ever incremented - it decides whether the landlord
   // has already used their free first listing. Never fail the creation on it.
   try {
     await updateDoc(doc(db, 'users', uid), { totalListingsCreated: increment(1) })
@@ -180,7 +180,7 @@ export async function createListing(uid: string, input: ListingInput): Promise<s
     // Non-fatal, exactly as in the Flutter service.
   }
 
-  // The activity feed is written by the client, not by a trigger — without this
+  // The activity feed is written by the client, not by a trigger - without this
   // a web-created listing never appears in the landlord's recent activity.
   await trackPropertyAdded(uid, ref.id, input.title)
 

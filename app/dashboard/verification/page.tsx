@@ -75,7 +75,7 @@ export default function VerificationPage() {
 
     // Documents are stored; the application is parked at 'awaiting_payment'
     // and no reviewer sees it until this charge clears. The amount is
-    // display-only — the server prices verification from the account type.
+    // display-only - the server prices verification from the account type.
     try {
       await startPayment(
         'verification',

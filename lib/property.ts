@@ -7,7 +7,7 @@ import { adminDb } from './firebase-admin'
  * `longitude`, `landlordId`, `landlordName`, `landlordPhone`, `ownershipDocUrl`,
  * `ownershipDocStatus`, payout/earnings fields, and anything under the
  * `private/location` subdoc. Firestore rules cannot filter fields, which is the
- * whole reason these pages are server-rendered — the projection below IS the
+ * whole reason these pages are server-rendered - the projection below IS the
  * access control.
  */
 export type PublicProperty = {
@@ -37,7 +37,7 @@ export type PublicProperty = {
   recurringDues: { name?: string; amount?: number; frequency?: string }[]
   ceilingTypes: string[]
   /**
-   * Which unit this is inside its building — "Room 2", "Left flat" — and its
+   * Which unit this is inside its building - "Room 2", "Left flat" - and its
    * floor. Empty for a whole-property listing. Two units of the same shape in
    * one compound are otherwise the same card twice.
    */
@@ -47,12 +47,12 @@ export type PublicProperty = {
    * True when this listing is one unit inside a building, rather than a whole
    * property. It is what decides whether sharing is a question at all: only a
    * unit has other tenants to share with. `unitLabel` and `structure` cannot
-   * stand in for it — both are legitimately empty on a grouped unit.
+   * stand in for it - both are legitimately empty on a grouped unit.
    */
   grouped: boolean
   /**
    * What the tenant gets exclusively: 'private' | 'shared', and 'none' for a
-   * kitchen. Set for any GROUPED unit whatever its type — a self contain in a
+   * kitchen. Set for any GROUPED unit whatever its type - a self contain in a
    * face-me-I-face-you bungalow can still share the toilet, and a two-bedroom
    * flat in a compound can have its toilet outside. Empty on a whole-property
    * listing (nobody to share with) and on listings written before the fields.
@@ -98,7 +98,7 @@ function strList(v: unknown): string[] {
  * A flat can mix ceiling types (POP in the living room, slate in the bedroom),
  * so the current field is a list. Legacy docs carry a single `ceilingType`
  * string where 'false_ceiling' means 'pop'. Direct port of
- * `PropertyModel._parseCeilingTypes` — reading only the plural field would
+ * `PropertyModel._parseCeilingTypes` - reading only the plural field would
  * silently blank the ceiling on every older listing.
  */
 function parseCeilingTypes(d: RawProperty): string[] {
@@ -119,7 +119,7 @@ function approximateAddress(d: RawProperty): string {
 
 /**
  * Ownership-doc status that actually governs a listing. A unit grouped under a
- * building carries the literal 'inherited' as a MARKER, not an approval — the
+ * building carries the literal 'inherited' as a MARKER, not an approval - the
  * building holds the single document an admin reviews. Resolve through the
  * building or a grouped unit reads as un-reviewed-but-not-rejected and walks
  * straight past a check keyed on `!== 'rejected'`.
@@ -137,7 +137,7 @@ function effectiveDocStatus(d: RawProperty, buildings: Map<string, BuildingInfo>
 
 /**
  * The publication gate. ALL must hold before a listing is shown to the public.
- * Written as an allowlist on the literal 'verified' — the rules file documents
+ * Written as an allowlist on the literal 'verified' - the rules file documents
  * how a denylist let 'inherited' and 'not_uploaded' walk through every guard.
  */
 function isPublishable(d: RawProperty, buildings: Map<string, BuildingInfo>): boolean {
@@ -209,7 +209,7 @@ function toPublicProperty(
 
 /**
  * What a grouped unit needs from its building. The NAME is deliberately not
- * here — it routinely carries the street address (see PublicProperty.structure)
+ * here - it routinely carries the street address (see PublicProperty.structure)
  * and this object feeds public pages.
  */
 type BuildingInfo = {

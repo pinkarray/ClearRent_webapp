@@ -129,7 +129,7 @@ export type LandlordIssue = {
   createdAt: Date | null
   /**
    * Why the tenant said it was not fixed. Legacy rows carry the reason under
-   * `tenantDisputeReason`, so read both — the older name was written by web and
+   * `tenantDisputeReason`, so read both - the older name was written by web and
    * by the app's issue-history screen before they were aligned.
    */
   disputeReason: string
@@ -203,7 +203,7 @@ export async function caretakerIssues(propertyId: string): Promise<LandlordIssue
 
 /**
  * Moves an issue along. The tenant's notification is fired by a Firestore
- * trigger, not from here — clients cannot create notifications at all
+ * trigger, not from here - clients cannot create notifications at all
  * (`firestore.rules:1245`), and writing one would double up with the trigger.
  *
  * Mirrors `landlord_issues_screen.dart:463`, including the timestamp that goes
@@ -212,7 +212,7 @@ export async function caretakerIssues(propertyId: string): Promise<LandlordIssue
 export async function setIssueStatus(
   issueId: string,
   // Deliberately NOT 'resolved'. Only the tenant closes an issue, through
-  // confirmIssueResolved — see the note on the Mark fixed button in
+  // confirmIssueResolved - see the note on the Mark fixed button in
   // LandlordIssueQueue. Widening this again reopens that bypass.
   status: 'in_progress' | 'pending_confirmation',
 ): Promise<string | null> {
@@ -233,7 +233,7 @@ export async function setIssueStatus(
 /**
  * The activity feed, merged from BOTH logs.
  *
- * `activities` is written ad hoc by whichever client screen remembered to —
+ * `activities` is written ad hoc by whichever client screen remembered to -
  * nine event types in all, four of them from `activity_service.dart`.
  * `notifications` is written centrally by the Cloud Functions, and carries
  * nineteen landlord-facing types. Sixteen of those never reached the feed:
@@ -243,7 +243,7 @@ export async function setIssueStatus(
  * That gap is structural, not an oversight anyone can fix once. Every event
  * added since the feed was built went through the functions and skipped it,
  * and would keep doing so. Reading both is the only version that stays
- * complete — anything that notifies now appears here automatically.
+ * complete - anything that notifies now appears here automatically.
  *
  * `activities` still matters on its own: property VIEWS belong in a feed and
  * must never be a push.
@@ -261,7 +261,7 @@ export type FeedItem = {
 }
 
 export async function landlordFeed(uid: string): Promise<FeedItem[]> {
-  // Independent collections — one failing should not blank the whole feed.
+  // Independent collections - one failing should not blank the whole feed.
   const [activities, notifications] = await Promise.all([
     landlordActivities(uid).catch(() => [] as Activity[]),
     myNotifications(uid).catch(() => []),

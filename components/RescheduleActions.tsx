@@ -85,8 +85,17 @@ export function RescheduleActions({
   const theirs = proposal !== null && isReceiverOf(proposal, role)
   const mine = proposal !== null && !theirs
 
-  // Past the cutoff with nothing pending there is nothing useful to show.
-  if (!canStart && !proposal) return null
+  // Past the cutoff the button simply vanished, which reads as a bug rather
+  // than a rule. Say which rule closed it, and what to do instead.
+  if (!canStart && !proposal) {
+    return (
+      <p className="mt-3 text-sm text-content-secondary">
+        {rescheduleCount >= 2
+          ? 'This visit has been moved twice already. Cancel it if the time no longer works.'
+          : 'Too close to the slot to move it. Cancel it if you can no longer make it.'}
+      </p>
+    )
+  }
 
   const form = (
     <div className="mt-3 space-y-3">

@@ -175,15 +175,22 @@ export function InspectionActions({
             </div>
           )}
 
+          {/* Arrival comes after saying you are on the way, exactly as the app
+              orders it (an else-if chain there). Showing both at once let
+              someone announce and arrive in the same breath, or skip straight
+              to arrived — a state the app can never produce. A resident
+              landlord is travelling nowhere, so they go straight to ready. */}
           <div className="mt-2 flex flex-wrap items-center gap-3">
             {!iArrived ? (
-              <button
-                className="btn-primary px-5 py-2.5 text-sm"
-                disabled={busy}
-                onClick={() => run(() => markArrived(state.id, role))}
-              >
-                {resident && !mine ? "I'm at home and ready" : "I've arrived"}
-              </button>
+              (iOnWay || (resident && !mine)) && (
+                <button
+                  className="btn-primary px-5 py-2.5 text-sm"
+                  disabled={busy}
+                  onClick={() => run(() => markArrived(state.id, role))}
+                >
+                  {resident && !mine ? "I'm at home and ready" : "I've arrived"}
+                </button>
+              )
             ) : (
               <span className="text-sm text-content-secondary">
                 {resident && !mine ? '✓ You are ready' : '✓ You arrived'}

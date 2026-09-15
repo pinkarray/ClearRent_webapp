@@ -8,6 +8,7 @@ import { useAuth } from './AuthProvider'
 import { formatDate } from '../lib/format'
 import { getOrCreatePropertyConversation } from '../lib/chat'
 import { confirmMoveOut, watchActiveRentals, type ActiveRental } from '../lib/tenancy'
+import { useScrollToHash } from '../lib/use-scroll-to-hash'
 
 function formatNaira(n: number): string {
   return `₦${n.toLocaleString('en-NG')}`
@@ -69,15 +70,7 @@ export default function LandlordRentals() {
     )
   }, [uid])
 
-  // The next-step banner links to one rental's card. The cards arrive after
-  // navigation, so the browser's own jump to the #hash finds nothing; without
-  // this the landlord landed at the top and took the tap for the action itself.
-  const loaded = rows !== null
-  useEffect(() => {
-    if (!loaded) return
-    const target = window.location.hash.slice(1)
-    if (target) document.getElementById(target)?.scrollIntoView({ behavior: 'smooth' })
-  }, [loaded])
+  useScrollToHash(rows !== null)
 
   async function messageTenant(r: ActiveRental) {
     if (!user) return

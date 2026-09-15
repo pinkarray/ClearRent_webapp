@@ -22,6 +22,7 @@ import {
   type ActiveRental,
   type RentalInterest,
 } from '../../../lib/tenancy'
+import { useScrollToHash } from '../../../lib/use-scroll-to-hash'
 
 const INTEREST_COPY: Record<string, string> = {
   pending_acceptance: 'Waiting for the landlord to accept',
@@ -65,6 +66,8 @@ export default function TenancyPage() {
     ]
     return () => unsubs.forEach((u) => u())
   }, [user, isLandlord])
+
+  useScrollToHash(interests !== null && rentals !== null)
 
   /** The rental an accepted interest produced. `onRentalInterestAccepted`
    *  creates it under the interest's own id, and also records the id in
@@ -204,7 +207,7 @@ export default function TenancyPage() {
         ) : (
           <div className="mt-3 space-y-3">
             {interests.map((i) => (
-              <div key={i.id} className="card p-5">
+              <div key={i.id} id={`interest-${i.id}`} className="card scroll-mt-24 p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="font-semibold text-content">{i.propertyTitle}</p>
@@ -268,7 +271,7 @@ export default function TenancyPage() {
         ) : (
           <div className="mt-3 space-y-3">
             {rentals.map((r) => (
-              <div key={r.id} className="card p-5">
+              <div key={r.id} id={`rental-${r.id}`} className="card scroll-mt-24 p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="font-semibold text-content">{r.propertyTitle}</p>

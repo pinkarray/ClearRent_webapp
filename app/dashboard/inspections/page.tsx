@@ -12,6 +12,7 @@ import { InspectionActions } from '../../../components/InspectionActions'
 import { createRentalInterest, watchInterests } from '../../../lib/tenancy'
 import { cancelInspection } from '../../../lib/inspections'
 import { RescheduleActions } from '../../../components/RescheduleActions'
+import { useScrollToHash } from '../../../lib/use-scroll-to-hash'
 
 type Row = {
   id: string
@@ -62,6 +63,7 @@ export default function TenantInspectionsPage() {
   const { user } = useAuth()
   const router = useRouter()
   const [rows, setRows] = useState<Row[] | null>(null)
+  useScrollToHash(rows !== null)
   const [payingId, setPayingId] = useState<string | null>(null)
   const [payError, setPayError] = useState<string | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
@@ -200,7 +202,7 @@ export default function TenantInspectionsPage() {
         ) : (
           <div className="space-y-3">
             {rows.map((r) => (
-              <div key={r.id} className="card p-5">
+              <div key={r.id} id={`inspection-${r.id}`} className="card scroll-mt-24 p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
                     <Link

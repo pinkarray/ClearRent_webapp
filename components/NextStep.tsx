@@ -128,7 +128,7 @@ function tenantStep(
     return {
       title: 'Pay your rent',
       detail: `${payable.propertyTitle} - your agreement is finalized, so rent is now unlocked.`,
-      href: '/dashboard/tenancy',
+      href: `/dashboard/tenancy#rental-${payable.id}`,
       cta: 'Pay rent',
       tone: 'action',
     }
@@ -141,7 +141,7 @@ function tenantStep(
     return {
       title: 'Review your tenancy agreement',
       detail: `${toSign.propertyTitle} - read it, then accept. Accepting is what unlocks rent payment.`,
-      href: '/dashboard/tenancy',
+      href: `/dashboard/tenancy#rental-${toSign.id}`,
       cta: 'Open agreement',
       tone: 'action',
     }
@@ -157,7 +157,7 @@ function tenantStep(
     return {
       title: 'Want to rent it? Tell the landlord',
       detail: `You inspected ${rentable.propertyTitle}. Expressing interest is what starts the tenancy - the landlord cannot offer it to you until you do.`,
-      href: '/dashboard/inspections',
+      href: `/dashboard/inspections#inspection-${rentable.id}`,
       cta: 'I want to rent it',
       tone: 'action',
     }
@@ -170,7 +170,7 @@ function tenantStep(
     return {
       title: 'Rate your inspection',
       detail: `${toRate.propertyTitle} - required before you can say you want to rent it.`,
-      href: '/dashboard/inspections',
+      href: `/dashboard/inspections#inspection-${toRate.id}`,
       cta: 'Rate it',
       tone: 'action',
     }
@@ -183,7 +183,7 @@ function tenantStep(
     return {
       title: 'Pay to confirm your inspection',
       detail: `${toPayFor.propertyTitle} - approved. Paying confirms the visit and releases the exact address.`,
-      href: '/dashboard/inspections',
+      href: `/dashboard/inspections#inspection-${toPayFor.id}`,
       cta: 'Pay now',
       tone: 'action',
     }
@@ -194,7 +194,7 @@ function tenantStep(
     return {
       title: 'Your landlord accepted you',
       detail: `${accepted.propertyTitle} - they are preparing the tenancy agreement. You will get a notification when it is ready to sign.`,
-      href: '/dashboard/tenancy',
+      href: `/dashboard/tenancy#interest-${accepted.id}`,
       cta: 'View tenancy',
       tone: 'waiting',
     }
@@ -205,7 +205,7 @@ function tenantStep(
     return {
       title: 'Waiting for the landlord',
       detail: `${pending.propertyTitle} - they have been notified that you want to rent it.`,
-      href: '/dashboard/tenancy',
+      href: `/dashboard/tenancy#interest-${pending.id}`,
       cta: 'View tenancy',
       tone: 'waiting',
     }

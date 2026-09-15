@@ -66,6 +66,18 @@ export default function CaretakingPage() {
   }
 
   async function stepBack(invite: CaretakerInvite) {
+    // Same question the app asks: one tap should not hand a unit back.
+    const others = invite.propertyIds.length - 1
+    if (
+      !window.confirm(
+        `Step back from this property? You will stop managing ` +
+          `${invite.propertyTitles[0] || 'this property'}` +
+          `${others > 0 ? ` and ${others} other unit(s)` : ''}. ` +
+          `${invite.landlordName} will be told, and it goes back to them.`,
+      )
+    ) {
+      return
+    }
     setBusy(invite.id)
     setError(null)
     const err = await revokeCaretaker(invite.id)

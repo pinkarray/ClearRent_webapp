@@ -147,6 +147,33 @@ function tenantStep(
     }
   }
 
+  // The tenant's two handover turns. Scans `rentals`, not `live`, for the same
+  // reason the landlord branch does: a handover only ever sits on an ENDED
+  // tenancy, and a deposit waiting on the tenant was otherwise never mentioned.
+  const toRecord = rentals.find((r) => r.handoverStage === 'awaiting_evidence')
+  if (toRecord) {
+    return {
+      title: 'Record the condition you left it in',
+      detail: `${toRecord.propertyTitle} - your walkthrough is what protects your caution deposit.`,
+      href: `/dashboard/tenancy#rental-${toRecord.id}`,
+      cta: 'Record now',
+      tone: 'action',
+    }
+  }
+
+  const toConfirm = rentals.find(
+    (r) => r.handoverStage === 'awaiting_confirm' && !r.tenantContested,
+  )
+  if (toConfirm) {
+    return {
+      title: 'Were you paid your caution deposit?',
+      detail: `${toConfirm.propertyTitle} - your landlord says they have settled it. Confirm, or tell us something is wrong.`,
+      href: `/dashboard/tenancy#rental-${toConfirm.id}`,
+      cta: 'Answer',
+      tone: 'action',
+    }
+  }
+
   // Rated, completed, and no interest filed for that property yet. This is the
   // step nobody found: it is the entire point of having done the inspection.
   const claimed = new Set(interests.map((i) => i.propertyId))

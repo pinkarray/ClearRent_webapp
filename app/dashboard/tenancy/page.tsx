@@ -24,6 +24,7 @@ import {
 } from '../../../lib/tenancy'
 import { useScrollToHash } from '../../../lib/use-scroll-to-hash'
 import { openInNewTab } from '../../../lib/open-in-new-tab'
+import MoveOutConditionCapture from '../../../components/MoveOutConditionCapture'
 
 const INTEREST_COPY: Record<string, string> = {
   pending_acceptance: 'Waiting for the landlord to accept',
@@ -283,6 +284,10 @@ export default function TenancyPage() {
                     off the market until the tenant answers. Web had no surface
                     for this at all, so a tenant could only close it from the
                     app and the landlord's unit sat stranded. */}
+                {!isLandlord && r.handoverStage === 'awaiting_evidence' && user && (
+                  <MoveOutConditionCapture rentalId={r.id} uid={user.uid} />
+                )}
+
                 {!isLandlord &&
                   r.handoverStage === 'awaiting_confirm' &&
                   !r.tenantContested && (

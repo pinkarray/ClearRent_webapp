@@ -218,7 +218,7 @@ export default function ListingCaretakerPage() {
             <label className="block">
               <span className="text-sm text-content-secondary">Their phone number</span>
               <input
-                className="input mt-1 w-full"
+                className="input-field mt-1 px-3 py-2.5"
                 inputMode="tel"
                 placeholder="0803 123 4567"
                 value={phone}

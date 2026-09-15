@@ -101,12 +101,12 @@ export function RescheduleActions({
     <div className="mt-3 space-y-3">
       <input
         type="date"
-        className="input w-full"
+        className="input-field px-3 py-2.5"
         value={date}
         onChange={(e) => setDate(e.target.value)}
       />
       <select
-        className="input w-full"
+        className="input-field px-3 py-2.5"
         value={slot}
         onChange={(e) => setSlot(e.target.value)}
       >
@@ -118,7 +118,7 @@ export function RescheduleActions({
         ))}
       </select>
       <input
-        className="input w-full"
+        className="input-field px-3 py-2.5"
         placeholder="Why the change?"
         value={reason}
         onChange={(e) => setReason(e.target.value)}

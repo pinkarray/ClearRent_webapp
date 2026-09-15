@@ -23,6 +23,7 @@ import {
   type RentalInterest,
 } from '../../../lib/tenancy'
 import { useScrollToHash } from '../../../lib/use-scroll-to-hash'
+import { openInNewTab } from '../../../lib/open-in-new-tab'
 
 const INTEREST_COPY: Record<string, string> = {
   pending_acceptance: 'Waiting for the landlord to accept',
@@ -128,13 +129,9 @@ export default function TenancyPage() {
   async function viewProof(r: ActiveRental) {
     setError(null)
     setBusy(r.id)
-    const res = await handoverProofLink(r.id, r.handoverProofUrl)
+    const err = await openInNewTab(() => handoverProofLink(r.id, r.handoverProofUrl))
     setBusy(null)
-    if ('error' in res) {
-      setError(res.error)
-      return
-    }
-    window.open(res.url, '_blank', 'noopener,noreferrer')
+    if (err) setError(err)
   }
 
   async function dispute(r: ActiveRental) {
@@ -166,13 +163,9 @@ export default function TenancyPage() {
   async function openAgreement(rentalId: string) {
     setError(null)
     setBusy(rentalId)
-    const res = await agreementUrl('active_rentals', rentalId)
+    const err = await openInNewTab(() => agreementUrl('active_rentals', rentalId))
     setBusy(null)
-    if ('error' in res) {
-      setError(res.error)
-      return
-    }
-    window.open(res.url, '_blank', 'noopener')
+    if (err) setError(err)
   }
 
   if (!user) return null

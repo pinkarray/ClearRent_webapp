@@ -13,6 +13,7 @@ import {
 } from '../../../lib/documents'
 import { tenantRentalHistory, type ActiveRental } from '../../../lib/tenancy'
 import { tenantLinks, type TenancyLink } from '../../../lib/renewal'
+import { openInNewTab } from '../../../lib/open-in-new-tab'
 
 function formatNaira(n: number): string {
   return `₦${n.toLocaleString('en-NG')}`
@@ -73,13 +74,9 @@ export default function DocumentsPage() {
   async function open(collectionName: 'active_rentals' | 'tenancy_links', id: string) {
     setError(null)
     setBusyId(id)
-    const res = await agreementUrl(collectionName, id)
+    const err = await openInNewTab(() => agreementUrl(collectionName, id))
     setBusyId(null)
-    if ('error' in res) {
-      setError(res.error)
-      return
-    }
-    window.open(res.url, '_blank', 'noopener,noreferrer')
+    if (err) setError(err)
   }
 
   async function share(collectionName: 'active_rentals' | 'tenancy_links', id: string, title: string) {

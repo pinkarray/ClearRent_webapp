@@ -6,6 +6,7 @@ import { useAuth } from './AuthProvider'
 import { clientApp } from '../lib/firebase-client'
 import { agreementUrl } from '../lib/documents'
 import { attachAgreement, type ActiveRental } from '../lib/tenancy'
+import { openInNewTab } from '../lib/open-in-new-tab'
 
 /*
   The landlord's half of the agreement, as a self-contained block.
@@ -69,13 +70,9 @@ export default function AgreementUpload({ rental }: { rental: ActiveRental }) {
   async function open() {
     setError(null)
     setBusy('open')
-    const res = await agreementUrl('active_rentals', rental.id)
+    const err = await openInNewTab(() => agreementUrl('active_rentals', rental.id))
     setBusy(null)
-    if ('error' in res) {
-      setError(res.error)
-      return
-    }
-    window.open(res.url, '_blank', 'noopener,noreferrer')
+    if (err) setError(err)
   }
 
   const missing = !rental.agreementUrl

@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation'
 import { useAuth } from '../../../../components/AuthProvider'
 import { agreementUrl } from '../../../../lib/documents'
 import { tenantRentalHistory, type ActiveRental } from '../../../../lib/tenancy'
+import { openInNewTab } from '../../../../lib/open-in-new-tab'
 
 function formatNaira(n: number): string {
   return `₦${n.toLocaleString('en-NG')}`
@@ -46,13 +47,9 @@ export default function LeaseDetailsPage() {
   async function openAgreement() {
     setError(null)
     setBusy(true)
-    const res = await agreementUrl('active_rentals', params.id)
+    const err = await openInNewTab(() => agreementUrl('active_rentals', params.id))
     setBusy(false)
-    if ('error' in res) {
-      setError(res.error)
-      return
-    }
-    window.open(res.url, '_blank', 'noopener,noreferrer')
+    if (err) setError(err)
   }
 
   if (!user) return null

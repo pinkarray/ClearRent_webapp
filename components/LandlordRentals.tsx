@@ -69,6 +69,16 @@ export default function LandlordRentals() {
     )
   }, [uid])
 
+  // The next-step banner links to one rental's card. The cards arrive after
+  // navigation, so the browser's own jump to the #hash finds nothing; without
+  // this the landlord landed at the top and took the tap for the action itself.
+  const loaded = rows !== null
+  useEffect(() => {
+    if (!loaded) return
+    const target = window.location.hash.slice(1)
+    if (target) document.getElementById(target)?.scrollIntoView({ behavior: 'smooth' })
+  }, [loaded])
+
   async function messageTenant(r: ActiveRental) {
     if (!user) return
     setError(null)
@@ -123,7 +133,7 @@ export default function LandlordRentals() {
         </div>
       ) : (
         rows.map((r) => (
-          <div key={r.id} className="card p-5">
+          <div key={r.id} id={`rental-${r.id}`} className="card scroll-mt-24 p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="truncate font-semibold text-content">{r.propertyTitle}</p>

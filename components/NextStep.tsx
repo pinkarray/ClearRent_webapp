@@ -219,6 +219,11 @@ function tenantStep(
  * spelled out rather than labelled "Rentals" - the destination tab's name was
  * never the problem, knowing to go there was.
  */
+/** One rental's card on the rentals page, not the top of the list. */
+function rentalHref(r: ActiveRental): string {
+  return `/dashboard/rentals#rental-${r.id}`
+}
+
 function landlordStep(interests: RentalInterest[], rentals: ActiveRental[]): Step | null {
   const pending = interests.filter((i) => i.status === 'pending_acceptance')
   if (pending.length > 0) {
@@ -244,7 +249,7 @@ function landlordStep(interests: RentalInterest[], rentals: ActiveRental[]): Ste
       detail: `${disputed.propertyTitle} - your tenant sent the agreement back${
         disputed.tenantDisputeReason ? `: “${disputed.tenantDisputeReason}”` : '.'
       }`,
-      href: '/dashboard/rentals',
+      href: rentalHref(disputed),
       cta: 'Upload corrected copy',
       tone: 'action',
     }
@@ -258,7 +263,7 @@ function landlordStep(interests: RentalInterest[], rentals: ActiveRental[]): Ste
     return {
       title: 'Upload the tenancy agreement',
       detail: `${needsAgreement.propertyTitle} - your tenant is waiting on this. They cannot accept, and cannot pay rent, until you upload it.`,
-      href: '/dashboard/rentals',
+      href: rentalHref(needsAgreement),
       cta: 'Upload agreement',
       tone: 'action',
     }
@@ -269,7 +274,7 @@ function landlordStep(interests: RentalInterest[], rentals: ActiveRental[]): Ste
     return {
       title: 'Confirm a move-out',
       detail: `${moveout.propertyTitle} - confirm once you have the keys back. It confirms itself after the notice period if you do nothing.`,
-      href: '/dashboard/rentals',
+      href: rentalHref(moveout),
       cta: 'Confirm move-out',
       tone: 'action',
     }
@@ -288,7 +293,7 @@ function landlordStep(interests: RentalInterest[], rentals: ActiveRental[]): Ste
     return {
       title: step.title,
       detail: `${handover.propertyTitle} - ${step.detail}`,
-      href: '/dashboard/rentals',
+      href: rentalHref(handover),
       cta: step.cta,
       tone: 'action',
     }
@@ -301,7 +306,7 @@ function landlordStep(interests: RentalInterest[], rentals: ActiveRental[]): Ste
     return {
       title: 'Waiting on your tenant',
       detail: `${awaiting.propertyTitle} - they are reviewing the agreement. Rent unlocks the moment they accept it.`,
-      href: '/dashboard/rentals',
+      href: rentalHref(awaiting),
       cta: 'View rental',
       tone: 'waiting',
     }
@@ -367,7 +372,7 @@ export default function NextStep() {
   if (!step) return null
   // Already looking at the page that carries the action - the banner would just
   // be repeating the buttons underneath it.
-  if (pathname === step.href) return null
+  if (pathname === step.href.split('#')[0]) return null
 
   const action = step.tone === 'action'
 

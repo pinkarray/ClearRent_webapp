@@ -277,7 +277,7 @@ export default function TenantIssueCentre() {
                 {i.status === 'pending_confirmation' && (
                   <div className="mt-4 border-t border-divider pt-4">
                     <p className="text-sm text-content">
-                      Your landlord marked this fixed. Is it sorted?
+                      This was marked fixed. Is it sorted?
                     </p>
                     <div className="mt-3 flex flex-wrap gap-3">
                       <button

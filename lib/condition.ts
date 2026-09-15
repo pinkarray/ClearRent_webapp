@@ -127,3 +127,25 @@ export async function submitMoveOutCondition(opts: {
   }
   return 'success'
 }
+
+export type WalkthroughRecord = { videoPaths: string[]; imagePaths: string[]; notes: string }
+
+/**
+ * One party's SEALED move-out record, or null if there is none yet. A pending
+ * record is not evidence - its upload may never have landed - so it is skipped.
+ */
+export async function sealedMoveOutRecord(
+  rentalId: string,
+  partyId: string,
+): Promise<WalkthroughRecord | null> {
+  const snap = await getDoc(
+    doc(clientDb(), 'active_rentals', rentalId, 'condition', 'move_out', 'parties', partyId),
+  )
+  const x = snap.data()
+  if (!x?.capturedAt) return null
+  return {
+    videoPaths: (x.videoPaths as string[]) ?? [],
+    imagePaths: (x.imagePaths as string[]) ?? [],
+    notes: (x.notes as string) ?? '',
+  }
+}

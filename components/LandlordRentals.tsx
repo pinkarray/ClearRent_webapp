@@ -15,6 +15,7 @@ import {
   type ActiveRental,
 } from '../lib/tenancy'
 import { useScrollToHash } from '../lib/use-scroll-to-hash'
+import TenantWalkthrough from './TenantWalkthrough'
 
 function formatNaira(n: number): string {
   return `₦${n.toLocaleString('en-NG')}`
@@ -280,6 +281,10 @@ export default function LandlordRentals() {
                     send us proof of the transfer.
                   </p>
                 )}
+                {r.handoverStage !== 'awaiting_evidence' && (
+                  <TenantWalkthrough rentalId={r.id} tenantId={r.tenantId} />
+                )}
+
                 {r.handoverStage === 'awaiting_condition' && (
                   <div className="mt-3">
                     <textarea

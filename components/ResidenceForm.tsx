@@ -86,7 +86,9 @@ export default function ResidenceForm({ onSaved }: { onSaved: (r: Residence) => 
               setKind(value)
               setSaved(false)
             }}
-            className={`card block w-full p-4 text-left ${kind === value ? 'border-primary' : ''}`}
+            className="card block w-full p-4 text-left"
+            // Inline: the .card rule's own border would override a utility class.
+            style={kind === value ? { borderColor: 'var(--primary)', borderWidth: 2 } : undefined}
           >
             <p className={`font-medium ${kind === value ? 'text-primary' : 'text-content'}`}>{label}</p>
             <p className="mt-1 text-sm text-content-secondary">{hint}</p>

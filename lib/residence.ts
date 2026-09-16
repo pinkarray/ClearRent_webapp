@@ -33,6 +33,10 @@ export type Residence = {
   /** The listed building marked "I live here". Only ever set for 'own'. */
   homeBuildingId: string | null
   homeBuildingName: string | null
+  /** Utility bill for the home building: 'pending' | 'accepted' | 'rejected'. Set in the app. */
+  homeProofPath: string | null
+  homeProofStatus: string | null
+  homeProofRejectionReason: string | null
 }
 
 export const NIGERIAN_STATES = [
@@ -56,6 +60,9 @@ function fromData(x: Record<string, unknown> | undefined): Residence | null {
     country: (x.country as string) ?? null,
     homeBuildingId: (x.homeBuildingId as string) ?? null,
     homeBuildingName: (x.homeBuildingName as string) ?? null,
+    homeProofPath: (x.homeProofPath as string) ?? null,
+    homeProofStatus: (x.homeProofStatus as string) ?? null,
+    homeProofRejectionReason: (x.homeProofRejectionReason as string) ?? null,
   }
 }
 
@@ -80,12 +87,20 @@ export function residenceSummary(r: Residence): string {
 
 /** Same derivation as LandlordResidence.listingFields in the app. */
 function listingFields(r: Residence, buildingId: string | null) {
-  const onPremises = r.kind === 'own' && !!buildingId && buildingId === r.homeBuildingId
+  // Only once an admin has accepted the utility bill for that building.
+  const onPremises =
+    r.kind === 'own' &&
+    !!buildingId &&
+    buildingId === r.homeBuildingId &&
+    r.homeProofStatus === 'accepted'
   return {
     landlordResidence: onPremises ? 'on_premises' : r.kind === 'abroad' ? 'abroad' : 'elsewhere',
     landlordResidenceRegion: r.kind === 'abroad' || onPremises ? null : r.state,
     landlordLivesInProperty: onPremises,
     landlordLivesOnPremises: onPremises,
+    // Lets admin find claims waiting on a bill check (residence is private).
+    homeProofPending:
+      r.kind === 'own' && !!buildingId && buildingId === r.homeBuildingId && r.homeProofStatus === 'pending',
   }
 }
 
@@ -96,11 +111,25 @@ function listingFields(r: Residence, buildingId: string | null) {
  * ready again until an agent or caretaker handles them.
  */
 export async function saveResidence(uid: string, residence: Residence): Promise<string | null> {
-  const r: Residence =
-    residence.kind === 'own' ? residence : { ...residence, homeBuildingId: null, homeBuildingName: null }
-  const complete = r.kind === 'abroad' ? !!r.country?.trim() : !!r.state
+  const complete = residence.kind === 'abroad' ? !!residence.country?.trim() : !!residence.state
   if (!complete) return 'Please finish telling us where you live.'
   try {
+    // The home and its bill survive only while the landlord still owns where
+    // they live and the home is unchanged, so an accepted bill can never be
+    // dropped by a web save or carried to another building (rules refuse that).
+    const current = await getResidence(uid)
+    const keepHome =
+      residence.kind === 'own' &&
+      !!residence.homeBuildingId &&
+      residence.homeBuildingId === current?.homeBuildingId
+    const r: Residence = {
+      ...residence,
+      homeBuildingId: keepHome ? residence.homeBuildingId : null,
+      homeBuildingName: keepHome ? residence.homeBuildingName : null,
+      homeProofPath: keepHome ? current?.homeProofPath ?? null : null,
+      homeProofStatus: keepHome ? current?.homeProofStatus ?? null : null,
+      homeProofRejectionReason: keepHome ? current?.homeProofRejectionReason ?? null : null,
+    }
     await setDoc(residenceDoc(uid), { ...r, updatedAt: serverTimestamp() })
     const snap = await getDocs(query(collection(clientDb(), 'properties'), where('landlordId', '==', uid)))
     for (let i = 0; i < snap.docs.length; i += 400) {

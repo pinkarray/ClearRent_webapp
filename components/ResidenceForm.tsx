@@ -57,6 +57,10 @@ export default function ResidenceForm({ onSaved }: { onSaved: (r: Residence) => 
       country: abroad ? country.trim() || null : null,
       homeBuildingId: kind === 'own' ? existing?.homeBuildingId ?? null : null,
       homeBuildingName: kind === 'own' ? existing?.homeBuildingName ?? null : null,
+      // Carried or cleared by saveResidence, which reads the stored record.
+      homeProofPath: null,
+      homeProofStatus: null,
+      homeProofRejectionReason: null,
     }
     const err = await saveResidence(user.uid, residence)
     setBusy(false)

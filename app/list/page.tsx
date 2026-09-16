@@ -7,6 +7,8 @@ import { useAuth } from '../../components/AuthProvider'
 import { createListing, uploadImage, type ListingInput } from '../../lib/create-listing'
 import { getResidence, residenceSummary, saveResidence, type Residence } from '../../lib/residence'
 import ResidenceForm from '../../components/ResidenceForm'
+import { getPricing, listingFeeOwed, payListingFee } from '../../lib/listing-fee'
+import { formatNairaFull } from '../../lib/format'
 
 // ClearRent operates in Lagos today, so the State field is defaulted rather
 // than fixed. Nothing rejects another state outright: admin review is the gate,
@@ -138,6 +140,11 @@ export default function ListPropertyPage() {
   const [status, setStatus] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [createdId, setCreatedId] = useState<string | null>(null)
+  /** The first listing is free; null while checking. */
+  const [feeOwed, setFeeOwed] = useState<boolean | null>(null)
+  const [createdOwesFee, setCreatedOwesFee] = useState(false)
+  const [listingPrice, setListingPrice] = useState(10000)
+  const [paying, setPaying] = useState(false)
   /** undefined while loading; null until the landlord says where they live. */
   const [residence, setResidence] = useState<Residence | null | undefined>(undefined)
 
@@ -150,6 +157,24 @@ export default function ListPropertyPage() {
   useEffect(() => {
     if (user) void getResidence(user.uid).then(setResidence)
   }, [user])
+
+  useEffect(() => {
+    if (!user) return
+    void listingFeeOwed(user.uid).then(setFeeOwed).catch(() => setFeeOwed(null))
+    void getPricing().then((p) => setListingPrice(p.listing))
+  }, [user, createdId])
+
+  async function handlePayFee() {
+    if (!createdId) return
+    setPaying(true)
+    setError(null)
+    try {
+      await payListingFee(createdId, listingPrice)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not start the payment.')
+      setPaying(false)
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -214,8 +239,10 @@ export default function ListPropertyPage() {
         ownershipDocType,
       }
 
+      const owes = feeOwed === true
       const id = await createListing(user.uid, input)
       await saveResidence(user.uid, residence)
+      setCreatedOwesFee(owes)
       setCreatedId(id)
       setDraft(EMPTY)
       setFiles([])
@@ -278,6 +305,24 @@ export default function ListPropertyPage() {
               your listings. It will <strong>not</strong> appear on public browse until an admin
               verifies the ownership document and the property is marked ready for inspections.
             </p>
+            {createdOwesFee && (
+              <div className="mt-4">
+                <p className="text-sm text-content-secondary">
+                  This is not your first listing, so it has a {formatNairaFull(listingPrice)}{' '}
+                  listing fee. An admin can only publish it once the fee is paid.
+                </p>
+                <button
+                  type="button"
+                  className="btn-primary mt-3 px-5 py-2.5 text-sm"
+                  onClick={handlePayFee}
+                  disabled={paying}
+                >
+                  {paying
+                    ? 'Opening Paystack…'
+                    : `Pay the ${formatNairaFull(listingPrice)} listing fee`}
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -350,7 +395,7 @@ export default function ListPropertyPage() {
                           border: '1px solid ' + (on ? 'var(--primary)' : 'var(--border)'),
                         }}
                       >
-                        {t}
+                        {t === 'pop' || t === 'pvc' ? t.toUpperCase() : t}
                       </button>
                     )
                   })}
@@ -389,7 +434,7 @@ export default function ListPropertyPage() {
             <h2 className="font-semibold text-content">Location</h2>
             <Field
               label="Street address"
-              hint="Stored in the gated private/location subdoc - never shown publicly, released only after an inspection is approved."
+              hint="Tenants browsing see only the area. A tenant gets the street address once they pay for a viewing."
             >
               <input
                 className="input-field px-4 py-3"
@@ -491,7 +536,7 @@ export default function ListPropertyPage() {
 
           <section className="card space-y-4 p-6">
             <h2 className="font-semibold text-content">Photos & video</h2>
-            <Field label="Photos" hint="Uploaded to the same Cloudinary cloud as the app.">
+            <Field label="Photos" hint="Clear, well-lit photos of every room get more interest.">
               <input
                 type="file"
                 accept="image/*"
@@ -625,6 +670,12 @@ export default function ListPropertyPage() {
             )}
           </section>
 
+          {feeOwed && (
+            <p className="text-sm text-content-secondary">
+              Your first listing was free. This one has a {formatNairaFull(listingPrice)} listing
+              fee, which you pay right after creating it.
+            </p>
+          )}
           {error && <p className="text-sm text-red-600">{error}</p>}
           {status && <p className="text-sm text-content-secondary">{status}</p>}
 

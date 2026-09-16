@@ -14,6 +14,7 @@ import { confirmInspectionPayment } from '../../../lib/inspections'
 import { finalizeVerificationPayment } from '../../../lib/verification'
 import { completeRenewal } from '../../../lib/renewal'
 import { recordRentPayment } from '../../../lib/tenancy'
+import { confirmListingFee } from '../../../lib/listing-fee'
 
 type Phase = 'working' | 'done' | 'failed'
 
@@ -148,6 +149,26 @@ function PaymentCallback() {
         }
       }
 
+      if (p?.type === 'listing') {
+        const propertyId =
+          typeof p.context?.propertyId === 'string' ? p.context.propertyId : null
+        if (!propertyId) {
+          setPhase('failed')
+          setMessage(
+            'Payment succeeded but we lost track of which listing it was for. Contact support with reference ' +
+              reference +
+              '.',
+          )
+          return
+        }
+        const err = await confirmListingFee(propertyId, reference)
+        if (err) {
+          setPhase('failed')
+          setMessage(err)
+          return
+        }
+      }
+
       if (p?.type === 'verification') {
         const requestId =
           typeof p.context?.requestId === 'string' ? p.context.requestId : null
@@ -181,7 +202,9 @@ function PaymentCallback() {
               ? 'Renewal complete. Your tenancy has been extended.'
               : p?.type === 'verification'
                 ? 'Payment confirmed. Your verification is now with our team.'
-                : 'Payment confirmed.',
+                : p?.type === 'listing'
+                  ? 'Listing fee paid. Your listing is now with our team for review.'
+                  : 'Payment confirmed.',
       )
     })()
   }, [ready, user, reference])

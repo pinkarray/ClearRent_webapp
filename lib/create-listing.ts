@@ -11,6 +11,7 @@ import {
 import { getStorage, ref as storageRef, uploadBytes } from 'firebase/storage'
 import { clientApp, clientDb } from './firebase-client'
 import { trackPropertyAdded } from './activity'
+import { getPricing } from './listing-fee'
 
 export type ListingInput = {
   title: string
@@ -92,6 +93,9 @@ export async function createListing(uid: string, input: ListingInput): Promise<s
   const userData = userSnap.data()
   const landlordName = (userData?.fullName as string | undefined) ?? 'Landlord'
   const landlordPhone = (userData?.phone as string | undefined) ?? ''
+  // The flat viewing fee, stored on the listing as the app does. It was 0 here,
+  // and a 0 handler share made every web-listed viewing unpayable to its handler.
+  const pricing = await getPricing()
 
   const propertyData = {
     landlordId: uid,
@@ -147,9 +151,9 @@ export async function createListing(uid: string, input: ListingInput): Promise<s
     currentTenantsCount: input.currentTenantsCount,
     hasCaretaker: input.hasCaretaker,
     caretakerLivesOnPremises: input.caretakerLivesOnPremises,
-    inspectionFeeTotal: 0,
+    inspectionFeeTotal: pricing.inspectionTotal,
     inspectionTransportFee: 0,
-    inspectionServiceFee: 0,
+    inspectionServiceFee: pricing.inspectionHandler,
     inspectionAgentCluster: null,
     inspectionPropertyCluster: null,
     createdAt: serverTimestamp(),

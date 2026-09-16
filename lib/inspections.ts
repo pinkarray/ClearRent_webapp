@@ -13,6 +13,7 @@ import {
 import { getFunctions, httpsCallable } from 'firebase/functions'
 import { clientApp, clientDb, initAppCheck } from './firebase-client'
 import { trackInquiry } from './activity'
+import { getPricing } from './listing-fee'
 
 /**
  * Booking an inspection.
@@ -233,12 +234,14 @@ export async function createInspectionRequest(
     agentBaseLocation = (a.baseLocation as string) ?? null
   }
 
-  // Flat-fee model: the tenant pays inspectionFeeTotal, the handler earns
-  // inspectionServiceFee, ClearRent keeps the remainder. All three are already
-  // resolved on the property, so nothing is recomputed here.
-  const totalFee = property.inspectionFeeTotal
-  const transportFee = property.inspectionTransportFee
-  const agentServiceFee = property.inspectionServiceFee
+  // Flat-fee model, priced from config/pricing as the app does
+  // (InspectionPricing.calculateFee). It used to copy the listing's own figures,
+  // and web-created listings stored 0, so the handler share recorded here was 0
+  // and the payout refused it while the tenant was charged the server price.
+  const pricing = await getPricing()
+  const totalFee = pricing.inspectionTotal
+  const transportFee = 0
+  const agentServiceFee = pricing.inspectionHandler
   const agentEarnings = agentServiceFee + transportFee
   const clearrentFee = Math.max(0, totalFee - agentEarnings)
 

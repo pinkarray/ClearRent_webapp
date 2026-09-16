@@ -6,6 +6,8 @@ import { useParams } from 'next/navigation'
 import { useAuth } from '../../../../components/AuthProvider'
 import { PropertyAgreementSection } from '../../../../components/PropertyAgreementSection'
 import { fingerprint } from '../../../../lib/form-state'
+import { getPricing, listingFeeOwed, payListingFee } from '../../../../lib/listing-fee'
+import { formatNairaFull } from '../../../../lib/format'
 import {
   READINESS_ITEMS,
   loadListingForEdit,
@@ -47,6 +49,10 @@ export default function EditListingPage() {
   const [docType, setDocType] = useState<'c_of_o' | 'deed' | 'other'>('c_of_o')
   const [docBusy, setDocBusy] = useState(false)
 
+  /** Only set when this listing still owes its fee. */
+  const [feeDue, setFeeDue] = useState<number | null>(null)
+  const [paying, setPaying] = useState(false)
+
   const load = useCallback(async () => {
     const l = await loadListingForEdit(propertyId)
     const a = l?.amenities.join(', ') ?? ''
@@ -63,6 +69,26 @@ export default function EditListingPage() {
       await load()
     })()
   }, [user, load])
+
+  useEffect(() => {
+    if (!user) return
+    void (async () => {
+      const owed = await listingFeeOwed(user.uid, propertyId)
+      setFeeDue(owed ? (await getPricing()).listing : null)
+    })()
+  }, [user, propertyId])
+
+  async function handlePayFee() {
+    if (feeDue === null) return
+    setPaying(true)
+    setError(null)
+    try {
+      await payListingFee(propertyId, feeDue)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not start the payment.')
+      setPaying(false)
+    }
+  }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
@@ -268,6 +294,24 @@ export default function EditListingPage() {
           them nothing to act on and the listing can never reach public browse.
           'inherited' units are skipped - their document lives on the building.
         */}
+        {feeDue !== null && (
+          <div className="card mt-6 border-l-4 border-l-secondary p-6">
+            <h2 className="font-semibold text-content">Listing fee not paid</h2>
+            <p className="mt-1 text-sm text-content-secondary">
+              Your first listing was free. This one has a {formatNairaFull(feeDue)} listing fee,
+              and an admin can only publish it once it is paid.
+            </p>
+            <button
+              type="button"
+              className="btn-primary mt-4 px-5 py-2.5 text-sm"
+              onClick={handlePayFee}
+              disabled={paying}
+            >
+              {paying ? 'Opening Paystack…' : `Pay ${formatNairaFull(feeDue)}`}
+            </button>
+          </div>
+        )}
+
         {listing.ownershipDocStatus !== 'inherited' &&
           listing.ownershipDocStatus !== 'verified' && (
             <div className="card mt-6 p-6">

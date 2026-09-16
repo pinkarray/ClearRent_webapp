@@ -17,6 +17,7 @@ import {
   disputeAgreement,
   flagRentChange,
   requestMoveOut,
+  rentalStatusLabel,
   watchActiveRentals,
   watchInterests,
   type ActiveRental,
@@ -31,6 +32,28 @@ const INTEREST_COPY: Record<string, string> = {
   accepted: 'Accepted',
   rent_paid: 'Rent paid',
   rejected: 'Declined',
+  not_selected: 'Another applicant was chosen',
+  expired: 'Reservation expired',
+}
+
+type AskKind = 'moveout' | 'contest' | 'dispute'
+
+const ASK_COPY: Record<AskKind, { title: string; label: string; cta: string }> = {
+  moveout: {
+    title: 'Give move-out notice',
+    label: 'Reason for moving out (optional)',
+    cta: 'Send notice',
+  },
+  contest: {
+    title: 'What went wrong with the deposit?',
+    label: 'For example, the money never arrived, or the deduction is wrong',
+    cta: 'Report it',
+  },
+  dispute: {
+    title: 'Send the agreement back',
+    label: 'What needs changing in the agreement?',
+    cta: 'Send back',
+  },
 }
 
 function formatNaira(n: number): string {
@@ -49,6 +72,11 @@ export default function TenancyPage() {
   const [rentals, setRentals] = useState<ActiveRental[] | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  /** A question the page is asking, in its own dialog. Replaces window.prompt,
+   *  which gave a date as free text and looked like a browser error. */
+  const [ask, setAsk] = useState<{ kind: AskKind; rental: ActiveRental } | null>(null)
+  const [askDate, setAskDate] = useState('')
+  const [askText, setAskText] = useState('')
   /** Rental id whose signed copy we are collecting, or null. */
   const [signingFor, setSigningFor] = useState<string | null>(null)
 
@@ -103,28 +131,34 @@ export default function TenancyPage() {
     }
   }
 
-  async function moveOut(r: ActiveRental) {
-    const when = window.prompt('Intended move-out date (YYYY-MM-DD)')
-    if (!when) return
-    const parsed = new Date(`${when}T00:00:00`)
-    if (Number.isNaN(parsed.getTime())) {
-      setError('That date was not valid.')
-      return
+  function openAsk(kind: AskKind, rental: ActiveRental) {
+    setAskDate('')
+    setAskText('')
+    setAsk({ kind, rental })
+  }
+
+  async function submitAsk() {
+    if (!ask) return
+    const { kind, rental } = ask
+    const text = askText.trim()
+    if (kind === 'moveout') {
+      const parsed = new Date(`${askDate}T00:00:00`)
+      if (!askDate || Number.isNaN(parsed.getTime())) return
+      setAsk(null)
+      await run(rental.id, () => requestMoveOut(rental.id, parsed, text))
+    } else if (kind === 'contest') {
+      if (!text) return
+      setAsk(null)
+      await run(rental.id, () => contestSettlement(rental.id, text))
+    } else {
+      if (!text) return
+      setAsk(null)
+      await run(rental.id, () => disputeAgreement(rental.id, text))
     }
-    const reason = window.prompt('Reason for moving out') ?? ''
-    await run(r.id, () => requestMoveOut(r.id, parsed, reason))
   }
 
   async function depositArrived(r: ActiveRental) {
     await run(r.id, () => confirmDepositReceived(r.id))
-  }
-
-  async function depositMissing(r: ActiveRental) {
-    const statement = window.prompt(
-      'What happened? (e.g. the money never arrived, or the deduction is wrong)',
-    )
-    if (!statement?.trim()) return
-    await run(r.id, () => contestSettlement(r.id, statement.trim()))
   }
 
   async function viewProof(r: ActiveRental) {
@@ -133,12 +167,6 @@ export default function TenancyPage() {
     const err = await openInNewTab(() => handoverProofLink(r.id, r.handoverProofUrl))
     setBusy(null)
     if (err) setError(err)
-  }
-
-  async function dispute(r: ActiveRental) {
-    const reason = window.prompt('What needs changing in the agreement?')
-    if (!reason?.trim()) return
-    await run(r.id, () => disputeAgreement(r.id, reason))
   }
 
   async function messageLandlord(r: ActiveRental) {
@@ -275,7 +303,7 @@ export default function TenancyPage() {
                     </p>
                   </div>
                   <span className="chip shrink-0">
-                    {r.status}
+                    {rentalStatusLabel(r.status)}
                   </span>
                 </div>
 
@@ -332,7 +360,7 @@ export default function TenancyPage() {
                         <button
                           className="btn-ghost px-5 py-2.5 text-sm"
                           disabled={busy === r.id}
-                          onClick={() => void depositMissing(r)}
+                          onClick={() => openAsk('contest', r)}
                         >
                           No, something is wrong
                         </button>
@@ -444,7 +472,7 @@ export default function TenancyPage() {
                         <button
                           className="btn-ghost px-5 py-2.5 text-sm"
                           disabled={busy === r.id}
-                          onClick={() => void dispute(r)}
+                          onClick={() => openAsk('dispute', r)}
                         >
                           Raise a concern
                         </button>
@@ -477,7 +505,7 @@ export default function TenancyPage() {
                       <button
                         className="btn-ghost px-5 py-2.5 text-sm"
                         disabled={busy === r.id}
-                        onClick={() => moveOut(r)}
+                        onClick={() => openAsk('moveout', r)}
                       >
                         Give move-out notice
                       </button>
@@ -514,6 +542,54 @@ export default function TenancyPage() {
           </div>
         )}
       </div>
+
+      {ask && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center"
+          role="dialog"
+          aria-modal="true"
+          aria-label={ASK_COPY[ask.kind].title}
+          onClick={() => setAsk(null)}
+        >
+          <div className="card w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <p className="font-semibold text-content">{ASK_COPY[ask.kind].title}</p>
+            <p className="mt-1 text-sm text-content-secondary">{ask.rental.propertyTitle}</p>
+            {ask.kind === 'moveout' && (
+              <label className="mt-4 block text-sm text-content-secondary">
+                When do you plan to move out?
+                <input
+                  type="date"
+                  className="input-field mt-1 px-3 py-2.5"
+                  min={new Date().toISOString().slice(0, 10)}
+                  value={askDate}
+                  onChange={(e) => setAskDate(e.target.value)}
+                />
+              </label>
+            )}
+            <label className="mt-4 block text-sm text-content-secondary">
+              {ASK_COPY[ask.kind].label}
+              <textarea
+                className="input-field mt-1 px-3 py-2.5"
+                rows={3}
+                value={askText}
+                onChange={(e) => setAskText(e.target.value)}
+              />
+            </label>
+            <div className="mt-5 flex justify-end gap-3">
+              <button className="btn-ghost px-5 py-2.5 text-sm" onClick={() => setAsk(null)}>
+                Cancel
+              </button>
+              <button
+                className="btn-primary px-5 py-2.5 text-sm"
+                disabled={ask.kind === 'moveout' ? !askDate : !askText.trim()}
+                onClick={() => void submitAsk()}
+              >
+                {ASK_COPY[ask.kind].cta}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {signingFor && user && (
         <div

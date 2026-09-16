@@ -11,6 +11,7 @@ import {
   confirmMoveOut,
   handoverConfirmCondition,
   handoverSettle,
+  rentalStatusLabel,
   watchActiveRentals,
   type ActiveRental,
 } from '../lib/tenancy'
@@ -165,7 +166,7 @@ export default function LandlordRentals() {
                 <p className="truncate text-sm text-content-secondary">{r.propertyAddress}</p>
               </div>
               <span className={`chip shrink-0 ${r.status === 'active' ? 'chip-live' : ''}`}>
-                {r.status.replace(/_/g, ' ')}
+                {rentalStatusLabel(r.status)}
               </span>
             </div>
 

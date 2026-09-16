@@ -534,6 +534,23 @@ export async function confirmMoveOut(
   }
 }
 
+/** The app's wording for a rental status (ActiveRental.statusDisplay). */
+const RENTAL_STATUS: Record<string, string> = {
+  active: 'Active',
+  expiring_soon: 'Expiring soon',
+  grace_locked: 'Renewal due',
+  moveout_pending: 'Move-out pending',
+  expired: 'Expired',
+  terminated: 'Terminated',
+  ended_by_tenant: 'Ended',
+  ended_by_landlord: 'Ended',
+  pending_payment: 'Awaiting rent payment',
+}
+
+export function rentalStatusLabel(status: string): string {
+  return RENTAL_STATUS[status] ?? status.replace(/_/g, ' ')
+}
+
 /**
  * The landlord attests they have physically checked the unit. This is the
  * relist lever: nothing frees the property until someone has looked at it.

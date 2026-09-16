@@ -1,4 +1,4 @@
-import { signInWithEmailAndPassword } from 'firebase/auth'
+import { sendPasswordResetEmail, signInWithEmailAndPassword } from 'firebase/auth'
 import { getFunctions, httpsCallable } from 'firebase/functions'
 import { clientApp, clientAuth } from './firebase-client'
 
@@ -91,5 +91,38 @@ export async function signInWithPassword(
       return 'Too many attempts from this network. Try again shortly.'
     }
     return err instanceof Error ? err.message : 'Sign-in failed.'
+  }
+}
+
+/**
+ * Emails a password reset link to the account behind a phone number or email.
+ * Mirrors the app's AuthService.sendPasswordResetEmail. Returns null once sent,
+ * or a message to show.
+ *
+ * An unknown phone number returns null too, like an unknown email does in
+ * Firebase: saying "no such account" would confirm which numbers are registered.
+ */
+export async function sendPasswordReset(identifier: string): Promise<string | null> {
+  if (!identifier.trim()) return 'Enter your phone number or email first.'
+  try {
+    let email = identifier.trim()
+    if (looksLikePhone(identifier)) {
+      try {
+        email = await emailForPhone(identifier)
+      } catch (err) {
+        if ((err as { code?: string })?.code === 'functions/resource-exhausted') {
+          return 'Too many attempts from this network. Try again shortly.'
+        }
+        return null
+      }
+    }
+    await sendPasswordResetEmail(clientAuth(), email)
+    return null
+  } catch (err) {
+    const code = (err as { code?: string })?.code ?? ''
+    if (code === 'auth/invalid-email') return 'Enter your phone number or the email on your account.'
+    if (code === 'auth/user-not-found') return null
+    if (code === 'auth/too-many-requests') return 'Too many attempts. Wait a few minutes and try again.'
+    return 'Could not send the reset email. Please try again.'
   }
 }

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '../../../components/AuthProvider'
 import { myInvites } from '../../../lib/caretaker'
+import { sendPasswordReset } from '../../../lib/sign-in'
 
 /*
   The app's Profile tab (`landlord_home_screen.dart:1371`,
@@ -31,6 +32,7 @@ export default function ProfilePage() {
   const status = profile?.verificationStatus
 
   const [hasCaretaking, setHasCaretaking] = useState(false)
+  const [resetState, setResetState] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle')
   const [pendingInvites, setPendingInvites] = useState(0)
   const uid = user?.uid
   useEffect(() => {
@@ -207,6 +209,33 @@ export default function ProfilePage() {
             )}
           </Link>
         ))}
+      </section>
+
+      {/* A reset link, as the app's Settings does: web has no old-password
+          confirmation screen, and the emailed link is what proves it is them. */}
+      <section className="card px-5 py-4">
+        <button
+          className="w-full text-left"
+          disabled={resetState === 'sending'}
+          onClick={async () => {
+            const email = user?.email
+            if (!email) return
+            setResetState('sending')
+            const err = await sendPasswordReset(email)
+            setResetState(err ? 'failed' : 'sent')
+          }}
+        >
+          <p className="font-medium text-content">Change password</p>
+          <p className="text-sm text-content-secondary">
+            {resetState === 'sent'
+              ? `We have emailed a reset link to ${user?.email}.`
+              : resetState === 'failed'
+                ? 'Could not send the email. Tap to try again.'
+                : resetState === 'sending'
+                  ? 'Sending…'
+                  : 'We email you a link to set a new password'}
+          </p>
+        </button>
       </section>
 
       <section className="card divide-y divide-divider">

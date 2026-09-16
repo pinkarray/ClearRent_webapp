@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { PhoneOtpForm } from '../../components/PhoneOtpForm'
 import { PasswordField } from '../../components/PasswordField'
 import { isClientConfigured } from '../../lib/firebase-client'
-import { signInWithPassword } from '../../lib/sign-in'
+import { sendPasswordReset, signInWithPassword } from '../../lib/sign-in'
 
 /*
   Password is the default and OTP is the fallback - the reverse of how this page
@@ -28,6 +28,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [resetSent, setResetSent] = useState(false)
+
+  async function forgotPassword() {
+    setError(null)
+    setResetSent(false)
+    const err = await sendPasswordReset(identifier)
+    if (err) setError(err)
+    else setResetSent(true)
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -99,7 +108,21 @@ export default function LoginPage() {
                 onChange={setPassword}
               />
 
+              <button
+                type="button"
+                className="text-sm text-primary underline"
+                onClick={() => void forgotPassword()}
+              >
+                Forgot password?
+              </button>
+
               {error && <p className="text-sm text-error">{error}</p>}
+              {resetSent && (
+                <p className="text-sm text-success">
+                  If that account exists, we have emailed it a link to reset the password. Check
+                  your inbox and spam folder.
+                </p>
+              )}
 
               <button className="btn-primary w-full px-6 py-3" type="submit" disabled={busy}>
                 {busy ? 'Signing in…' : 'Log in'}

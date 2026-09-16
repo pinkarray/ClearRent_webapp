@@ -119,7 +119,10 @@ export async function createListing(uid: string, input: ListingInput): Promise<s
     agentFee: input.agentFee,
     cautionDeposit: input.cautionDeposit,
     cautionDepositRefundable: input.cautionDepositRefundable,
-    isAvailable: true,
+    // Born hidden, as the app creates it; adminReviewPropertyDoc sets it true
+    // on approval. `true` here put unreviewed web listings in front of agents
+    // on Discover, which filters on availability alone.
+    isAvailable: false,
     isVerified: false,
     amenities: input.amenities,
     rules: input.rules,

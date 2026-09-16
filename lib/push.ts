@@ -94,10 +94,12 @@ export async function enablePush(uid: string): Promise<string | null> {
   try {
     // Registered explicitly rather than relying on the SDK default, so a
     // failure surfaces here instead of producing a token that never receives.
-    const registration = await navigator.serviceWorker.register(
-      '/firebase-messaging-sw.js',
-      { scope: '/' },
-    )
+    await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+      scope: '/',
+    })
+    // register() resolves while a first-time worker is still installing, and
+    // subscribing then fails with "no active Service Worker". Wait for it.
+    const registration = await navigator.serviceWorker.ready
 
     const token = await getToken(getMessaging(clientApp()), {
       vapidKey,

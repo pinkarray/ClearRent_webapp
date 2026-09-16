@@ -60,6 +60,15 @@ export default function ProfilePage() {
           ? 'Payout account on file'
           : 'Add the account refunds and payouts go to',
     },
+    ...(accountType === 'landlord'
+      ? [
+          {
+            href: '/dashboard/residence',
+            title: 'Where you live',
+            subtitle: 'What tenants are told about your home',
+          },
+        ]
+      : []),
     {
       href: '/dashboard/inspections',
       title: accountType === 'landlord' ? 'Inspections' : 'My inspections',

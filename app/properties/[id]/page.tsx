@@ -197,6 +197,7 @@ export default async function PropertyDetailPage({ params }: Props) {
                     <Row label="Living room" value={accessLabel(property.livingRoomAccess)} />
                   </>
                 )}
+                {property.landlordLine && <Row label="Landlord" value={property.landlordLine} />}
                 {property.ceilingTypes.length > 0 && (
                   <Row
                     label="Ceiling"

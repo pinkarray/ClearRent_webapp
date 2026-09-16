@@ -1,4 +1,5 @@
 import { adminDb } from './firebase-admin'
+import { residenceShortLine } from './residence-line'
 
 /**
  * The only shape of a property that may reach a browser on a public page.
@@ -50,6 +51,8 @@ export type PublicProperty = {
    * stand in for it - both are legitimately empty on a grouped unit.
    */
   grouped: boolean
+  /** "Lives elsewhere (Lagos)", or null until the landlord has answered. Never an address. */
+  landlordLine: string | null
   /**
    * What the tenant gets exclusively: 'private' | 'shared', and 'none' for a
    * kitchen. Set for any GROUPED unit whatever its type - a self contain in a
@@ -194,6 +197,7 @@ function toPublicProperty(
     unitLabel: buildingId.length > 0 ? str(d.unitLabel) : '',
     floor: buildingId.length > 0 ? str(d.floor) : '',
     grouped: buildingId.length > 0,
+    landlordLine: residenceShortLine(str(d.landlordResidence), str(d.landlordResidenceRegion)),
     structure:
       buildingId.length > 0 ? buildings.get(buildingId)?.structure ?? '' : '',
     bathroomAccess: str(d.bathroomAccess),

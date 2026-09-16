@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '../../components/AuthProvider'
 import { createListing, uploadImage, type ListingInput } from '../../lib/create-listing'
+import { getResidence, residenceSummary, saveResidence, type Residence } from '../../lib/residence'
+import ResidenceForm from '../../components/ResidenceForm'
 
 // ClearRent operates in Lagos today, so the State field is defaulted rather
 // than fixed. Nothing rejects another state outright: admin review is the gate,
@@ -52,8 +54,6 @@ type Draft = {
   cautionDepositRefundable: boolean
   amenities: string
   rules: string
-  landlordLivesInProperty: boolean
-  landlordLivesOnPremises: boolean
   currentTenantsCount: string
   hasCaretaker: boolean
   caretakerLivesOnPremises: boolean
@@ -82,8 +82,6 @@ const EMPTY: Draft = {
   cautionDepositRefundable: true,
   amenities: '',
   rules: '',
-  landlordLivesInProperty: false,
-  landlordLivesOnPremises: false,
   currentTenantsCount: '0',
   hasCaretaker: false,
   caretakerLivesOnPremises: false,
@@ -140,12 +138,18 @@ export default function ListPropertyPage() {
   const [status, setStatus] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [createdId, setCreatedId] = useState<string | null>(null)
+  /** undefined while loading; null until the landlord says where they live. */
+  const [residence, setResidence] = useState<Residence | null | undefined>(undefined)
 
   // Listing is a landlord action behind auth. Unauthenticated visitors go to
   // /login, which owns sign-in for the whole site.
   useEffect(() => {
     if (ready && !user) router.replace('/login')
   }, [ready, user, router])
+
+  useEffect(() => {
+    if (user) void getResidence(user.uid).then(setResidence)
+  }, [user])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -157,6 +161,10 @@ export default function ListPropertyPage() {
     // 'none', which admin cannot verify OR reject - it just sits there.
     if (!ownershipDoc) {
       setError('Attach proof of ownership - a C of O, deed, or other document.')
+      return
+    }
+    if (!residence) {
+      setError('Tell tenants where you live first. It is asked once, for all your listings.')
       return
     }
 
@@ -192,8 +200,11 @@ export default function ListPropertyPage() {
         cautionDepositRefundable: draft.cautionDepositRefundable,
         amenities: csv(draft.amenities),
         rules: csv(draft.rules),
-        landlordLivesInProperty: draft.landlordLivesInProperty,
-        landlordLivesOnPremises: draft.landlordLivesOnPremises,
+        // Web lists whole properties only, and a property one tenant gets in
+        // full cannot also be the landlord's home. saveResidence below stamps
+        // the tenant-facing line.
+        landlordLivesInProperty: false,
+        landlordLivesOnPremises: false,
         currentTenantsCount: toInt(draft.currentTenantsCount),
         hasCaretaker: draft.hasCaretaker,
         caretakerLivesOnPremises: draft.caretakerLivesOnPremises,
@@ -204,6 +215,7 @@ export default function ListPropertyPage() {
       }
 
       const id = await createListing(user.uid, input)
+      await saveResidence(user.uid, residence)
       setCreatedId(id)
       setDraft(EMPTY)
       setFiles([])
@@ -537,8 +549,6 @@ export default function ListPropertyPage() {
             <div className="space-y-2 text-sm text-content">
               {(
                 [
-                  ['landlordLivesInProperty', 'Landlord lives in this property'],
-                  ['landlordLivesOnPremises', 'Landlord lives on the premises'],
                   ['hasCaretaker', 'There is a caretaker'],
                   ['caretakerLivesOnPremises', 'Caretaker lives on the premises'],
                 ] as const
@@ -553,6 +563,28 @@ export default function ListPropertyPage() {
                 </label>
               ))}
             </div>
+          </section>
+
+          <section className="card space-y-4 p-6">
+            <h2 className="font-semibold text-content">Where you live</h2>
+            {residence === undefined ? (
+              <p className="text-sm text-content-secondary">Loading…</p>
+            ) : residence ? (
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="text-sm text-content">{residenceSummary(residence)}</p>
+                <Link href="/dashboard/residence" className="text-sm text-primary">
+                  Change
+                </Link>
+              </div>
+            ) : (
+              <ResidenceForm onSaved={setResidence} />
+            )}
+            {residence?.kind === 'abroad' && (
+              <p className="text-sm text-warning">
+                You live outside Nigeria, so tenants can only book viewings through an agent or a
+                caretaker. Add one from the listing once it is published.
+              </p>
+            )}
           </section>
 
           <section className="card space-y-4 p-6">

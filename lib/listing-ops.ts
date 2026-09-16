@@ -1,6 +1,7 @@
 import { doc, getDoc, serverTimestamp, updateDoc } from 'firebase/firestore'
 import { getStorage, ref as storageRef, uploadBytes } from 'firebase/storage'
 import { clientApp, clientAuth, clientDb } from './firebase-client'
+import { getResidence } from './residence'
 
 /**
  * The readiness checklist, copied from `PropertyService.readinessChecklistItems`.
@@ -28,6 +29,20 @@ export async function markReadyForInspections(
   if (!all) return 'Please confirm every item before marking the property ready.'
 
   try {
+    // A landlord abroad cannot open the door. firestore.rules refuses this write
+    // too; checking here gives the reason instead of a bare failure.
+    const uid = clientAuth().currentUser?.uid
+    const prop = (await getDoc(doc(clientDb(), 'properties', propertyId))).data()
+    if (uid && prop?.landlordId === uid && (prop.inspectionHandler ?? 'self') === 'self') {
+      const residence = await getResidence(uid)
+      if (residence?.kind === 'abroad') {
+        return (
+          'You live outside Nigeria, so tenants cannot book viewings you handle ' +
+          'yourself. Assign an agent or add a caretaker first.'
+        )
+      }
+    }
+
     await updateDoc(doc(clientDb(), 'properties', propertyId), {
       readyForInspections: true,
       readinessCheckedAt: serverTimestamp(),

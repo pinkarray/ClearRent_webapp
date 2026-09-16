@@ -9,6 +9,7 @@ import { useAuth } from '../../components/AuthProvider'
 import { clientDb } from '../../lib/firebase-client'
 import { resolveDocStatuses } from '../../lib/ownership'
 import { saveAccountType, type AccountType } from '../../lib/user-profile'
+import { watchResidence } from '../../lib/residence'
 
 type OwnListing = {
   id: string
@@ -44,6 +45,8 @@ export default function DashboardPage() {
   const { user, profile, refreshProfile } = useAuth()
   const [listings, setListings] = useState<OwnListing[] | null>(null)
   const [savingType, setSavingType] = useState(false)
+  // Asked once of every landlord with listings; live, so the card leaves on save.
+  const [residenceMissing, setResidenceMissing] = useState(false)
   const uid = user?.uid
   const accountType = profile?.accountType
 
@@ -85,6 +88,11 @@ export default function DashboardPage() {
         )
       },
     )
+  }, [uid, accountType])
+
+  useEffect(() => {
+    if (!uid || accountType !== 'landlord') return
+    return watchResidence(uid, (r) => setResidenceMissing(r === null))
   }, [uid, accountType])
 
   if (!user) return null
@@ -171,6 +179,22 @@ export default function DashboardPage() {
                 className="btn-primary mt-4 inline-block px-5 py-2.5 text-sm no-underline"
               >
                 Get verified
+              </Link>
+            </section>
+          )}
+
+          {residenceMissing && (listings?.length ?? 0) > 0 && (
+            <section className="card border-primary/40 p-6">
+              <h3 className="text-lg font-semibold text-content">Where do you live?</h3>
+              <p className="mt-1 text-sm text-content-secondary">
+                Tenants want to know if their landlord lives on the premises. Answer once for all
+                your listings.
+              </p>
+              <Link
+                href="/dashboard/residence"
+                className="btn-primary mt-4 inline-block px-5 py-2.5 text-sm no-underline"
+              >
+                Answer now
               </Link>
             </section>
           )}

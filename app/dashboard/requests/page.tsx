@@ -19,6 +19,7 @@ import {
 } from '../../../lib/inspections'
 import { RescheduleActions } from '../../../components/RescheduleActions'
 import { InspectionActions } from '../../../components/InspectionActions'
+import { useAskText } from '../../../components/AskText'
 
 type Row = {
   id: string
@@ -73,6 +74,7 @@ function formatNaira(n: number): string {
  */
 export default function HandlerRequestsPage() {
   const { user, profile } = useAuth()
+  const [askText, askDialog] = useAskText()
   const [asLandlord, setAsLandlord] = useState<Row[] | null>(null)
   const [asAgent, setAsAgent] = useState<Row[] | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
@@ -86,9 +88,11 @@ export default function HandlerRequestsPage() {
   /// cancellationReason precisely so the tenant can be told why. A paid
   /// inspection is refunded server-side.
   async function callOff(id: string) {
-    const reason = window.prompt(
-      'Why are you cancelling? The tenant will be told.',
-    )
+    const reason = await askText({
+      title: 'Cancel this inspection',
+      label: 'Why are you cancelling? The tenant will be told.',
+      cta: 'Cancel inspection',
+    })
     if (reason === null) return
     setCancelling(id)
     const err = await cancelInspection(id, 'handler', { reason })
@@ -181,7 +185,12 @@ export default function HandlerRequestsPage() {
 
   async function handleDecline(r: Row) {
     if (!user) return
-    const reason = window.prompt('Why are you declining? The tenant will see this.')
+    const reason = await askText({
+      title: 'Decline this request',
+      label: 'Why are you declining? The tenant will see this.',
+      cta: 'Decline',
+      subtitle: r.propertyTitle,
+    })
     if (reason === null) return
     setError(null)
     setBusyId(r.id)
@@ -388,6 +397,7 @@ export default function HandlerRequestsPage() {
           </>
         )}
       </div>
+      {askDialog}
     </>
   )
 }

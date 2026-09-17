@@ -16,6 +16,7 @@ import {
   receiverCannotCounter,
   withinRescheduleWindow,
 } from '../lib/reschedule'
+import { useAskText } from './AskText'
 
 /*
   Moving an approved inspection, from either side.
@@ -60,6 +61,7 @@ export function RescheduleActions({
   const [date, setDate] = useState('')
   const [slot, setSlot] = useState('')
   const [reason, setReason] = useState('')
+  const [askText, askDialog] = useAskText()
 
   const proposal = readProposal(rescheduleProposal)
 
@@ -222,10 +224,12 @@ export function RescheduleActions({
             <button
               className="btn-ghost px-5 py-2.5 text-sm text-error"
               disabled={busy}
-              onClick={() => {
-                const why = window.prompt(
-                  'Declining CANCELS this inspection and refunds it. Why?',
-                )
+              onClick={async () => {
+                const why = await askText({
+                  title: 'Decline and cancel',
+                  label: 'Declining cancels this inspection and refunds it. Why?',
+                  cta: 'Decline and cancel',
+                })
                 if (why === null) return
                 void run(() =>
                   declineReschedule(requestId, role, actorRole, why),
@@ -290,6 +294,7 @@ export function RescheduleActions({
           )}
         </>
       )}
+      {askDialog}
     </div>
   )
 }

@@ -16,6 +16,7 @@ import {
 } from '../../../../lib/agent'
 import { formatNaira } from '../../../../lib/format'
 import { sortedFingerprint } from '../../../../lib/form-state'
+import { useAskText } from '../../../../components/AskText'
 
 /*
   One property this agent handles: vet it, set when it can be shown, or step
@@ -28,6 +29,7 @@ import { sortedFingerprint } from '../../../../lib/form-state'
 */
 export default function HandledPropertyPage() {
   const { user } = useAuth()
+  const [askText, askDialog] = useAskText()
   const router = useRouter()
   const params = useParams<{ id: string }>()
 
@@ -89,14 +91,12 @@ export default function HandledPropertyPage() {
   }
 
   async function stepBack() {
-    const reason = window.prompt(
-      'Why are you stepping back? The landlord sees this.',
-    )
+    const reason = await askText({
+      title: 'Step back from this property',
+      label: 'Why are you stepping back? The landlord sees this.',
+      cta: 'Step back',
+    })
     if (reason === null) return
-    if (!reason.trim()) {
-      setError('A reason is required.')
-      return
-    }
     setError(null)
     setBusy(true)
     const err = await unassignFromProperty(params.id, reason.trim())
@@ -253,6 +253,7 @@ export default function HandledPropertyPage() {
           Step back
         </button>
       </section>
+      {askDialog}
     </div>
   )
 }

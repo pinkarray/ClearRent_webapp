@@ -12,6 +12,7 @@ import {
   type Issue,
 } from '../lib/issues'
 import { activeRentals, type ActiveRental } from '../lib/tenancy'
+import { useAskText } from './AskText'
 
 function formatDate(d: Date | null): string {
   if (!d) return ''
@@ -34,6 +35,7 @@ export default function TenantIssueCentre() {
   const [issues, setIssues] = useState<Issue[] | null>(null)
   const [rentals, setRentals] = useState<ActiveRental[]>([])
   const [open, setOpen] = useState(false)
+  const [askText, askDialog] = useAskText()
   const [busy, setBusy] = useState(false)
   const [busyIssue, setBusyIssue] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -82,8 +84,12 @@ export default function TenantIssueCentre() {
   }
 
   async function rejectFix(issueId: string) {
-    const reason = window.prompt("What's still wrong?")
-    if (!reason?.trim()) return
+    const reason = await askText({
+      title: 'Not fixed yet',
+      label: "What's still wrong? Your landlord sees this.",
+      cta: 'Send',
+    })
+    if (!reason) return
     setError(null)
     setBusyIssue(issueId)
     const err = await disputeIssueResolution(issueId, reason)
@@ -302,6 +308,7 @@ export default function TenantIssueCentre() {
           </div>
         )}
       </div>
+      {askDialog}
     </div>
   )
 }

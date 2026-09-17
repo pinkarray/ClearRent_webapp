@@ -26,6 +26,7 @@ import {
 import { useScrollToHash } from '../../../lib/use-scroll-to-hash'
 import { openInNewTab } from '../../../lib/open-in-new-tab'
 import MoveOutConditionCapture from '../../../components/MoveOutConditionCapture'
+import { useAskText } from '../../../components/AskText'
 
 const INTEREST_COPY: Record<string, string> = {
   pending_acceptance: 'Waiting for the landlord to accept',
@@ -79,6 +80,7 @@ export default function TenancyPage() {
   const [askText, setAskText] = useState('')
   /** Rental id whose signed copy we are collecting, or null. */
   const [signingFor, setSigningFor] = useState<string | null>(null)
+  const [askQuestion, askQuestionDialog] = useAskText()
 
   const isLandlord = profile?.accountType === 'landlord'
 
@@ -450,14 +452,18 @@ export default function TenancyPage() {
                         <button
                           className="btn-ghost px-5 py-2.5 text-sm text-error"
                           disabled={busy === r.id}
-                          onClick={() =>
-                            run(r.id, () =>
-                              flagRentChange(
-                                r.id,
-                                prompt('What does the document say?') ?? '',
-                              ),
-                            )
-                          }
+                          onClick={async () => {
+                            // Cancelling used to flag anyway, with an empty
+                            // reason: prompt() returned null and ?? '' sent it.
+                            const says = await askQuestion({
+                              title: 'This changes my rent',
+                              subtitle: r.propertyTitle,
+                              label: 'What does the document say?',
+                              cta: 'Flag it',
+                            })
+                            if (says === null) return
+                            void run(r.id, () => flagRentChange(r.id, says))
+                          }}
                         >
                           This changes my rent
                         </button>
@@ -643,6 +649,7 @@ export default function TenancyPage() {
           </div>
         </div>
       )}
+      {askQuestionDialog}
     </>
   )
 }

@@ -99,12 +99,27 @@ export function RescheduleActions({
 
   const form = (
     <div className="mt-3 space-y-3">
-      <input
-        type="date"
-        className="input-field px-3 py-2.5"
-        value={date}
-        onChange={(e) => setDate(e.target.value)}
-      />
+      {/* A native date field cannot take a placeholder, rendered blank on
+          Android, and showed the browser's own format (09/18/2026). */}
+      <label className="block text-sm text-content-secondary">
+        New date
+        <input
+          type="date"
+          className="input-field mt-1 px-3 py-2.5"
+          min={new Date().toISOString().slice(0, 10)}
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+        />
+      </label>
+      {date && (
+        <p className="text-sm text-content">
+          {new Date(`${date}T12:00:00`).toLocaleDateString('en-NG', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+          })}
+        </p>
+      )}
       <select
         className="input-field px-3 py-2.5"
         value={slot}

@@ -34,6 +34,15 @@ type Row = {
   totalFee: number
   agentEarnings: number
   isAgentHandled: boolean
+  /**
+   * Whether this user conducts the inspection. A landlord whose listing an
+   * agent handles sees the request too, but approving, rescheduling,
+   * cancelling and the on-the-day steps are the agent's (rules Rows 14a, 16,
+   * 21 and the arrival rows). Showing them to the landlord offered buttons
+   * that failed with permission denied, and "You earn" money they do not earn.
+   */
+  iHandle: boolean
+  agentName: string | null
   tenantArrived: boolean
   handlerArrived: boolean
   tenantOnWay: boolean
@@ -114,6 +123,8 @@ export default function HandlerRequestsPage() {
         totalFee: (x.totalFee as number) ?? 0,
         agentEarnings: (x.agentEarnings as number) ?? 0,
         isAgentHandled: x.agentId === user?.uid,
+        iHandle: x.agentId ? x.agentId === user?.uid : x.landlordId === user?.uid,
+        agentName: (x.agentName as string) ?? null,
         tenantArrived: x.tenantArrived === true,
         handlerArrived: x.handlerArrived === true,
         tenantOnWay: x.tenantOnWay === true,
@@ -238,9 +249,11 @@ export default function HandlerRequestsPage() {
                           {r.tenantPhone ? ` · ${r.tenantPhone}` : ''}
                         </p>
                       </div>
-                      <span className="shrink-0 text-sm font-semibold text-primary">
-                        You earn {formatNaira(r.agentEarnings)}
-                      </span>
+                      {r.iHandle && (
+                        <span className="shrink-0 text-sm font-semibold text-primary">
+                          You earn {formatNaira(r.agentEarnings)}
+                        </span>
+                      )}
                     </div>
 
                     <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm text-content-secondary">
@@ -262,14 +275,29 @@ export default function HandlerRequestsPage() {
                       </p>
                     )}
 
+                    {/* Row 14b: a landlord may approve an agent-handled request
+                        only to overrule the agent's decline. */}
+                    {!r.iHandle && r.status !== 'declinedByAgent' && (
+                      <p className="mt-3 text-sm text-content-secondary">
+                        {r.agentName ?? 'Your agent'} is handling this request. You can still
+                        decline it.
+                      </p>
+                    )}
+
                     <div className="mt-4 flex flex-wrap gap-3">
-                      <button
-                        className="btn-primary px-6 py-2.5 text-sm"
-                        disabled={busyId === r.id || !profile?.hasBankDetails}
-                        onClick={() => handleApprove(r)}
-                      >
-                        {busyId === r.id ? 'Working…' : 'Approve'}
-                      </button>
+                      {(r.iHandle || r.status === 'declinedByAgent') && (
+                        <button
+                          className="btn-primary px-6 py-2.5 text-sm"
+                          disabled={busyId === r.id || !profile?.hasBankDetails}
+                          onClick={() => handleApprove(r)}
+                        >
+                          {busyId === r.id
+                            ? 'Working…'
+                            : r.iHandle
+                              ? 'Approve'
+                              : 'Approve anyway'}
+                        </button>
+                      )}
                       <button
                         className="btn-ghost px-6 py-2.5 text-sm"
                         disabled={busyId === r.id}
@@ -280,7 +308,7 @@ export default function HandlerRequestsPage() {
                     </div>
 
                     <p className="mt-3 text-xs text-content-hint">
-                      The tenant pays {formatNaira(r.totalFee)} after you approve. Nothing has
+                      The tenant pays {formatNaira(r.totalFee)} once it is approved. Nothing has
                       been charged yet.
                     </p>
                   </div>
@@ -309,6 +337,13 @@ export default function HandlerRequestsPage() {
                       {r.paymentStatus === 'paid' ? ' · paid' : ''}
                     </span>
 
+                    {!r.iHandle && (r.status === 'pending' || r.status === 'approved') && (
+                      <p className="w-full text-sm text-content-secondary">
+                        Handled by your agent, {r.agentName ?? 'the assigned agent'}.
+                      </p>
+                    )}
+
+                    {r.iHandle && (
                     <div className="w-full">
                       <InspectionActions
                         state={r}
@@ -345,6 +380,7 @@ export default function HandlerRequestsPage() {
                         </button>
                       )}
                     </div>
+                    )}
                   </div>
                 ))}
               </div>

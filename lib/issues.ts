@@ -95,7 +95,12 @@ export async function reportIssue(input: ReportIssueInput): Promise<string | nul
       landlordId: input.landlordId,
       type: 'issue_reported',
       title: 'New Issue Reported',
-      message: `${input.tenantName} reported a ${input.category} issue at ${input.propertyTitle}.`,
+      // "a electrical issue" - same wording rule as onIssueCreated.
+      message: `${input.tenantName} reported ${
+        input.category === 'other'
+          ? 'an issue'
+          : `${/^[aeiou]/i.test(input.category) ? 'an' : 'a'} ${input.category} issue`
+      } at ${input.propertyTitle}.`,
       propertyId: input.propertyId,
       actorId: input.tenantId,
       actorName: input.tenantName,

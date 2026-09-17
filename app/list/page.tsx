@@ -5,7 +5,14 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '../../components/AuthProvider'
 import { createListing, uploadImage, type ListingInput } from '../../lib/create-listing'
-import { getResidence, residenceSummary, saveResidence, type Residence } from '../../lib/residence'
+import {
+  NIGERIAN_STATES,
+  getResidence,
+  residenceSummary,
+  saveResidence,
+  type Residence,
+} from '../../lib/residence'
+import { areaDisplayName, areaGroups, lgaName } from '../../lib/lagos-areas'
 import ResidenceForm from '../../components/ResidenceForm'
 import { getPricing, listingFeeOwed, payListingFee } from '../../lib/listing-fee'
 import { formatNairaFull } from '../../lib/format'
@@ -145,6 +152,10 @@ export default function ListPropertyPage() {
   const [createdOwesFee, setCreatedOwesFee] = useState(false)
   const [listingPrice, setListingPrice] = useState(10000)
   const [paying, setPaying] = useState(false)
+  /** Areas for the chosen state, grouped by LGA. Empty outside Lagos/Ogun. */
+  const [groups, setGroups] = useState<Array<{ lga: string; label: string; areas: string[] }>>([])
+  /** The picked area as 'lga|area', '__other' when it is not listed, or ''. */
+  const [areaKey, setAreaKey] = useState('')
   /** undefined while loading; null until the landlord says where they live. */
   const [residence, setResidence] = useState<Residence | null | undefined>(undefined)
 
@@ -163,6 +174,14 @@ export default function ListPropertyPage() {
     void listingFeeOwed(user.uid).then(setFeeOwed).catch(() => setFeeOwed(null))
     void getPricing().then((p) => setListingPrice(p.listing))
   }, [user, createdId])
+
+  // City and LGA used to be free text, which is how a listing was saved as
+  // 'Ikorodu, Ogun'. Lagos and Ogun now pick from the app's own area list.
+  useEffect(() => {
+    const st = draft.state
+    if (st === 'Lagos' || st === 'Ogun') void areaGroups(st).then(setGroups)
+    else setGroups([])
+  }, [draft.state])
 
   async function handlePayFee() {
     if (!createdId) return
@@ -245,6 +264,7 @@ export default function ListPropertyPage() {
       setCreatedOwesFee(owes)
       setCreatedId(id)
       setDraft(EMPTY)
+      setAreaKey('')
       setFiles([])
       setOwnershipDoc(null)
       setOwnershipDocType('c_of_o')
@@ -443,43 +463,84 @@ export default function ListPropertyPage() {
                 onChange={(e) => set('address', e.target.value)}
               />
             </Field>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <Field label="LGA">
-                <input
-                  className="input-field px-4 py-3"
-                  value={draft.lga}
-                  onChange={(e) => set('lga', e.target.value)}
-                />
-              </Field>
-              <Field label="City">
-                <input
-                  className="input-field px-4 py-3"
-                  required
-                  value={draft.city}
-                  onChange={(e) => set('city', e.target.value)}
-                />
-              </Field>
-              {/* Not gated: ClearRent operates in Lagos today, but every
-                  listing is reviewed by an admin before it can be browsed, and
-                  that is where an out-of-state listing is approved or
-                  rejected. Defaulted rather than fixed, so opening another
-                  state costs no release. */}
-              <Field
-                label="State"
-                hint={
-                  draft.state.trim().toLowerCase() === LAGOS.toLowerCase()
-                    ? undefined
-                    : 'ClearRent is expanding beyond Lagos. Every listing is reviewed before it goes live.'
-                }
+            <Field
+              label="State"
+              hint={
+                draft.state === LAGOS
+                  ? undefined
+                  : 'ClearRent is expanding beyond Lagos. Every listing is reviewed before it goes live.'
+              }
+            >
+              <select
+                className="input-field px-4 py-3"
+                required
+                value={draft.state}
+                onChange={(e) => {
+                  set('state', e.target.value)
+                  set('city', '')
+                  set('lga', '')
+                  setAreaKey('')
+                }}
               >
-                <input
+                {NIGERIAN_STATES.map((st) => (
+                  <option key={st} value={st}>
+                    {st}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            {groups.length > 0 && (
+              <Field label="Area">
+                <select
                   className="input-field px-4 py-3"
                   required
-                  value={draft.state}
-                  onChange={(e) => set('state', e.target.value)}
-                />
+                  value={areaKey}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    setAreaKey(v)
+                    if (v === '__other' || v === '') {
+                      set('city', '')
+                      set('lga', '')
+                      return
+                    }
+                    const [lga, area] = v.split('|')
+                    set('city', areaDisplayName(area))
+                    set('lga', lgaName(lga))
+                  }}
+                >
+                  <option value="">Choose the area</option>
+                  {groups.map((g) => (
+                    <optgroup key={g.lga} label={g.label}>
+                      {g.areas.map((a) => (
+                        <option key={a} value={`${g.lga}|${a}`}>
+                          {areaDisplayName(a)}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                  <option value="__other">My area is not listed</option>
+                </select>
               </Field>
-            </div>
+            )}
+            {(groups.length === 0 || areaKey === '__other') && (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="City or area">
+                  <input
+                    className="input-field px-4 py-3"
+                    required
+                    value={draft.city}
+                    onChange={(e) => set('city', e.target.value)}
+                  />
+                </Field>
+                <Field label="LGA">
+                  <input
+                    className="input-field px-4 py-3"
+                    value={draft.lga}
+                    onChange={(e) => set('lga', e.target.value)}
+                  />
+                </Field>
+              </div>
+            )}
           </section>
 
           <section className="card space-y-4 p-6">

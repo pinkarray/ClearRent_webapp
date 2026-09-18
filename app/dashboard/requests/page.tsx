@@ -87,7 +87,7 @@ export default function HandlerRequestsPage() {
   /// else's behalf, and Row 21 of firestore.rules writes cancelledBy and
   /// cancellationReason precisely so the tenant can be told why. A paid
   /// inspection is refunded server-side.
-  async function callOff(id: string) {
+  async function callOff(id: string, by: 'agent' | 'landlord') {
     const reason = await askText({
       title: 'Cancel this inspection',
       label: 'Why are you cancelling? The tenant will be told.',
@@ -95,7 +95,7 @@ export default function HandlerRequestsPage() {
     })
     if (reason === null) return
     setCancelling(id)
-    const err = await cancelInspection(id, 'handler', { reason })
+    const err = await cancelInspection(id, 'handler', { reason, by })
     setCancelling(null)
     if (err) setError(err)
   }
@@ -381,7 +381,7 @@ export default function HandlerRequestsPage() {
                         <button
                           className="btn-ghost mt-3 px-5 py-2.5 text-sm text-error"
                           disabled={cancelling === r.id}
-                          onClick={() => void callOff(r.id)}
+                          onClick={() => void callOff(r.id, r.isAgentHandled ? 'agent' : 'landlord')}
                         >
                           {cancelling === r.id
                             ? 'Cancelling…'

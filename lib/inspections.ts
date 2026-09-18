@@ -521,7 +521,7 @@ export async function markOnWay(
 export async function cancelInspection(
   requestId: string,
   as: 'tenant' | 'handler',
-  opts: { reason?: string } = {},
+  opts: { reason?: string; by?: 'agent' | 'landlord' } = {},
 ): Promise<string | null> {
   const ref = doc(clientDb(), 'inspection_requests', requestId)
   try {
@@ -533,7 +533,9 @@ export async function cancelInspection(
     if (!reason) return 'Give a reason so the tenant knows why.'
     await updateDoc(ref, {
       status: 'cancelled',
-      cancelledBy: 'handler',
+      // The role, as the app writes it. 'handler' matched nothing on the
+      // server, so the tenant was never told the visit was called off.
+      cancelledBy: opts.by ?? 'landlord',
       cancellationReason: reason,
       cancelledAt: serverTimestamp(),
       rescheduleProposal: null,

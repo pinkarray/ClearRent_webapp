@@ -26,6 +26,8 @@ export type InspectionState = {
   /** Who the tenant rates: the agent when agent-handled, else the landlord. */
   handlerId: string
   handlerName: string
+  /** Shown to the handler; the tenant side does not need it. */
+  tenantName?: string
   handlerType: 'agent' | 'landlord'
   /**
    * The landlord lives in the unit AND is handling it themselves, so they are
@@ -103,6 +105,11 @@ export function InspectionActions({
   const theyArrived = mine ? state.handlerArrived : state.tenantArrived
   const iConfirmed = mine ? state.tenantConfirmedMet : state.handlerConfirmedMet
   const bothArrived = state.tenantArrived && state.handlerArrived
+  // The other party by name, as the app does. The on-the-way line had its
+  // labels swapped, so a handler read "Handler is on the way" about the tenant.
+  const them = mine
+    ? state.handlerName || 'The handler'
+    : state.tenantName || 'The tenant'
   const bothConfirmed = state.tenantConfirmedMet && state.handlerConfirmedMet
 
   // Nothing to do until it is approved and (when chargeable) paid - and not
@@ -169,7 +176,7 @@ export function InspectionActions({
               )}
               {theyOnWay && !theyArrived && (
                 <span className="text-sm text-content-secondary">
-                  ✓ {mine ? 'Tenant' : 'Handler'} is on the way
+                  ✓ {them} is on the way
                 </span>
               )}
             </div>
@@ -201,8 +208,8 @@ export function InspectionActions({
               {theyArrived
                 ? mine && resident
                   ? '✓ Landlord is at the property and ready'
-                  : `✓ ${mine ? 'Handler' : 'Tenant'} arrived`
-                : `Waiting for the ${mine ? 'handler' : 'tenant'}`}
+                  : `✓ ${them} arrived`
+                : `Waiting for ${them}`}
             </span>
           </div>
 
@@ -218,6 +225,11 @@ export function InspectionActions({
                 </button>
               ) : (
                 <span className="text-sm text-content-secondary">✓ You confirmed</span>
+              )}
+              {iConfirmed && !bothConfirmed && (
+                <span className="text-sm text-content-secondary">
+                  Waiting for {them} to confirm
+                </span>
               )}
             </div>
           )}

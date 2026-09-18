@@ -17,6 +17,7 @@ import {
   withinRescheduleWindow,
 } from '../lib/reschedule'
 import { useAskText } from './AskText'
+import { formatNairaFull } from '../lib/format'
 
 /*
   Moving an approved inspection, from either side.
@@ -45,6 +46,7 @@ export function RescheduleActions({
   actorRole,
   uid,
   handlerName,
+  refund,
   started,
 }: {
   requestId: string
@@ -58,6 +60,8 @@ export function RescheduleActions({
   uid: string
   /** Tenant side: who to ask, since a tenant cannot cancel an approved visit. */
   handlerName?: string
+  /** Paid visits: what a handler cancel returns and what ClearRent keeps. */
+  refund?: { back: number; kept: number }
   /** Someone has arrived, so moving or cancelling is moot. */
   started?: boolean
 }) {
@@ -106,7 +110,10 @@ export function RescheduleActions({
     return (
       <p className="mt-3 text-sm text-content-secondary">
         {role === 'tenant'
-          ? `${why}, message ${handlerName || 'the landlord'} and ask them to cancel it. You get a refund when they do.`
+          ? `${why}, message ${handlerName || 'the landlord'} and ask them to cancel it.` +
+            (refund
+              ? ` You get ${formatNairaFull(refund.back)} back when they do. The ${formatNairaFull(refund.kept)} service charge is not refunded.`
+              : '')
           : `${why}, cancel it below.`}
       </p>
     )

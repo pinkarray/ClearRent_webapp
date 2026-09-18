@@ -24,6 +24,8 @@ type Row = {
   status: string
   paymentStatus: string
   totalFee: number
+  /** ClearRent's charge, the part a handler cancel does not refund. */
+  clearrentFee: number
   tenantArrived: boolean
   handlerArrived: boolean
   tenantOnWay: boolean
@@ -157,6 +159,7 @@ export default function TenantInspectionsPage() {
               status: (x.status as string) ?? 'pending',
               paymentStatus: (x.paymentStatus as string) ?? 'not_required',
               totalFee: (x.totalFee as number) ?? 0,
+              clearrentFee: (x.clearrentFee as number) ?? 3000,
               tenantArrived: x.tenantArrived === true,
               handlerArrived: x.handlerArrived === true,
               tenantOnWay: x.tenantOnWay === true,
@@ -277,6 +280,11 @@ export default function TenantInspectionsPage() {
                   actorRole="tenant"
                   uid={user.uid}
                   handlerName={r.handlerName}
+                  refund={
+                    r.paymentStatus === 'paid'
+                      ? { back: r.totalFee - r.clearrentFee, kept: r.clearrentFee }
+                      : undefined
+                  }
                   started={r.tenantArrived || r.handlerArrived}
                 />
 

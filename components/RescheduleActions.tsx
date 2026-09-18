@@ -44,6 +44,8 @@ export function RescheduleActions({
   role,
   actorRole,
   uid,
+  handlerName,
+  started,
 }: {
   requestId: string
   rescheduleProposal: unknown
@@ -54,6 +56,10 @@ export function RescheduleActions({
   /** Precise role, stored on the proposal so the app can read it back. */
   actorRole: 'tenant' | 'agent' | 'landlord'
   uid: string
+  /** Tenant side: who to ask, since a tenant cannot cancel an approved visit. */
+  handlerName?: string
+  /** Someone has arrived, so moving or cancelling is moot. */
+  started?: boolean
 }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -88,13 +94,20 @@ export function RescheduleActions({
   const mine = proposal !== null && !theirs
 
   // Past the cutoff the button simply vanished, which reads as a bug rather
-  // than a rule. Say which rule closed it, and what to do instead.
+  // than a rule. Say which rule closed it, and what to do instead. Only the
+  // handler can cancel an approved visit (which refunds the tenant), so the
+  // tenant is pointed at them rather than at a button they do not have.
   if (!canStart && !proposal) {
+    if (started) return null
+    const why =
+      rescheduleCount >= 2
+        ? 'This visit has been moved twice already. If the time no longer works'
+        : 'Too close to the slot to move it. If you can no longer make it'
     return (
       <p className="mt-3 text-sm text-content-secondary">
-        {rescheduleCount >= 2
-          ? 'This visit has been moved twice already. Cancel it if the time no longer works.'
-          : 'Too close to the slot to move it. Cancel it if you can no longer make it.'}
+        {role === 'tenant'
+          ? `${why}, message ${handlerName || 'the landlord'} and ask them to cancel it. You get a refund when they do.`
+          : `${why}, cancel it below.`}
       </p>
     )
   }

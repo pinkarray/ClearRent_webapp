@@ -125,10 +125,10 @@ export async function proposeReschedule(
     if (d.status !== 'approved') return 'Only an approved inspection can be moved.'
     if (d.rescheduleProposal) return 'There is already a proposal waiting on a reply.'
     if ((d.rescheduleCount ?? 0) >= 2) {
-      return 'This inspection has been moved twice already. Cancel and book again.'
+      return 'This inspection has been moved twice already, it cannot be moved again.'
     }
     if (!withinRescheduleWindow(d.requestedDate?.toDate?.() ?? null)) {
-      return 'It is too close to the slot to move it. Cancel it instead.'
+      return 'It is too close to the slot to move it now.'
     }
     await updateDoc(ref, {
       rescheduleProposal: proposalMap(as, uid, opts.date, opts.slot, opts.reason, {
@@ -170,7 +170,7 @@ export async function counterPropose(
       return 'You have already countered once. Accept it or decline it.'
     }
     if (!withinRescheduleWindow(d.requestedDate?.toDate?.() ?? null)) {
-      return 'It is too close to the slot to move it. Cancel it instead.'
+      return 'It is too close to the slot to move it now.'
     }
     await updateDoc(ref, {
       rescheduleProposal: proposalMap(as, uid, opts.date, opts.slot, opts.reason, {

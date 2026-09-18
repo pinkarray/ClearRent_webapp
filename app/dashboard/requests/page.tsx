@@ -371,6 +371,7 @@ export default function HandlerRequestsPage() {
                         role="handler"
                         actorRole={r.isAgentHandled ? 'agent' : 'landlord'}
                         uid={user.uid}
+                        started={r.tenantArrived || r.handlerArrived}
                       />
 
                       {/* Row 21: the handler may call off a pending or an

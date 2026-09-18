@@ -276,6 +276,8 @@ export default function TenantInspectionsPage() {
                   role="tenant"
                   actorRole="tenant"
                   uid={user.uid}
+                  handlerName={r.handlerName}
+                  started={r.tenantArrived || r.handlerArrived}
                 />
 
                 {/* Calling it off, only while it is still unpaid. Row 8 of

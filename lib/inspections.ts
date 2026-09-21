@@ -508,9 +508,10 @@ export async function markOnWay(
  *
  * Two different rules, not one, because the two sides are not symmetric:
  *
- *   Tenant (Row 8)  only while still `pendingPayment`, and may write nothing
- *                   but the status. Once they have paid it is no longer theirs
- *                   to cancel unilaterally; that is a refund, not a cancel.
+ *   Tenant (Row 8)  while nothing is paid: awaiting approval, or approved and
+ *                   unpaid. Writes only the status and cancelledBy: 'tenant'.
+ *                   Once they have paid it is no longer theirs to cancel
+ *                   unilaterally; that is a refund, not a cancel.
  *   Handler (Row 21) from `pending` or `approved`, and MUST record who did it
  *                   and why, because they are cancelling on somebody else's
  *                   behalf. It also clears any live reschedule proposal, since
@@ -526,7 +527,11 @@ export async function cancelInspection(
   const ref = doc(clientDb(), 'inspection_requests', requestId)
   try {
     if (as === 'tenant') {
-      await updateDoc(ref, { status: 'cancelled', updatedAt: serverTimestamp() })
+      await updateDoc(ref, {
+        status: 'cancelled',
+        cancelledBy: 'tenant',
+        updatedAt: serverTimestamp(),
+      })
       return null
     }
     const reason = opts.reason?.trim()

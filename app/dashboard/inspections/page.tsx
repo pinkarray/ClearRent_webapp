@@ -72,7 +72,12 @@ export default function TenantInspectionsPage() {
   const [cancelling, setCancelling] = useState<string | null>(null)
 
   async function cancelRequest(id: string) {
-    if (!window.confirm('Cancel this inspection request?')) return
+    if (
+      !window.confirm(
+        'Withdraw this request? You have not been charged, and the landlord will be told the time is free again.',
+      )
+    )
+      return
     setCancelling(id)
     const err = await cancelInspection(id, 'tenant')
     setCancelling(null)
@@ -289,19 +294,21 @@ export default function TenantInspectionsPage() {
                   started={r.tenantArrived || r.handlerArrived}
                 />
 
-                {/* Calling it off, only while it is still unpaid. Row 8 of
+                {/* Withdrawing, only while nothing has been paid. Row 8 of
                     firestore.rules allows the tenant nothing else: once the
                     fee has gone through this is a refund, which is a different
-                    conversation and not a button. Web had no way to cancel at
-                    all, so an abandoned request just sat there. */}
-                {r.status === 'pendingPayment' && (
+                    conversation and not a button. This showed only for the old
+                    pay-first 'pendingPayment', which new requests never reach,
+                    so a tenant could not back out at all. */}
+                {['pendingPayment', 'pending', 'approved'].includes(r.status) &&
+                  r.paymentStatus !== 'paid' && (
                   <div className="mt-4 border-t border-divider pt-4">
                     <button
                       className="btn-ghost px-5 py-2.5 text-sm text-error"
                       disabled={cancelling === r.id}
                       onClick={() => void cancelRequest(r.id)}
                     >
-                      {cancelling === r.id ? 'Cancelling…' : 'Cancel this request'}
+                      {cancelling === r.id ? 'Withdrawing…' : 'Withdraw request'}
                     </button>
                   </div>
                 )}

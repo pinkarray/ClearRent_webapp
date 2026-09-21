@@ -71,10 +71,14 @@ messaging.onBackgroundMessage((payload) => {
       ? "chat_" + data.conversationId
       : data.type || "clearrent";
 
+  // Pushes arrive data-only (the sender puts title and body in the Android
+  // and iOS blocks), so this worker is the only thing that draws them. Were a
+  // notification block present, the Firebase SDK would draw it as well.
+  if (payload.notification) return;
   self.registration.showNotification(
-    payload.notification?.title || "ClearRent",
+    data.title || "ClearRent",
     {
-      body: payload.notification?.body || "",
+      body: data.body || "",
       icon: "/logos/clearrent_mark_color.svg",
       badge: "/logos/clearrent_mark_color.svg",
       tag,

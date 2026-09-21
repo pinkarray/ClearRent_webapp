@@ -364,6 +364,7 @@ export default function HandlerRequestsPage() {
 
                       <RescheduleActions
                         requestId={r.id}
+                        propertyId={r.propertyId}
                         rescheduleProposal={r.rescheduleProposal}
                         requestedDate={r.requestedDate}
                         status={r.status}

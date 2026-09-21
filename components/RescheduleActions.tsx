@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   TIME_SLOT_LABEL,
   isSlotStillBookable,
@@ -10,6 +10,7 @@ import {
   approveReschedule,
   counterPropose,
   declineReschedule,
+  handlerFreeSlots,
   isReceiverOf,
   proposeReschedule,
   readProposal,
@@ -38,6 +39,7 @@ const SLOTS = ['morning', 'afternoon', 'late_afternoon', 'evening']
 
 export function RescheduleActions({
   requestId,
+  propertyId,
   rescheduleProposal,
   requestedDate,
   status,
@@ -50,6 +52,7 @@ export function RescheduleActions({
   started,
 }: {
   requestId: string
+  propertyId: string
   rescheduleProposal: unknown
   requestedDate: Date | null
   status: string
@@ -72,6 +75,25 @@ export function RescheduleActions({
   const [slot, setSlot] = useState('')
   const [reason, setReason] = useState('')
   const [askText, askDialog] = useAskText()
+  // The handler's free slots, keyed by the date they were checked for, so a
+  // result for an earlier pick is never shown against a newer one.
+  const [checked, setChecked] = useState<{ date: string; slots: string[] | null } | null>(
+    null,
+  )
+  // Undefined while loading, null when the check failed (the accept step
+  // checks again either way).
+  const freeSlots = checked && checked.date === date ? checked.slots : undefined
+
+  useEffect(() => {
+    if (!date) return
+    let live = true
+    void handlerFreeSlots(propertyId, new Date(`${date}T12:00:00`)).then((slots) => {
+      if (live) setChecked({ date, slots })
+    })
+    return () => {
+      live = false
+    }
+  }, [date, propertyId])
 
   const proposal = readProposal(rescheduleProposal)
 
@@ -148,12 +170,31 @@ export function RescheduleActions({
         onChange={(e) => setSlot(e.target.value)}
       >
         <option value="">Choose a time</option>
-        {SLOTS.filter((s) => !date || isSlotStillBookable(date, s)).map((s) => (
+        {SLOTS.filter((s) =>
+          !date
+            ? true
+            : freeSlots
+              ? freeSlots.includes(s)
+              : isSlotStillBookable(date, s),
+        ).map((s) => (
           <option key={s} value={s}>
             {TIME_SLOT_LABEL[s] ?? s}
           </option>
         ))}
       </select>
+      {date && freeSlots === undefined && (
+        <p className="text-sm text-content-hint">Checking free times…</p>
+      )}
+      {date && freeSlots && freeSlots.length === 0 && (
+        <p className="text-sm text-content-secondary">
+          No free times that day. Pick another date.
+        </p>
+      )}
+      {date && freeSlots && freeSlots.length > 0 && (
+        <p className="text-xs text-content-hint">
+          Times the handler is already booked are not shown.
+        </p>
+      )}
       <input
         className="input-field px-3 py-2.5"
         placeholder="Why the change?"

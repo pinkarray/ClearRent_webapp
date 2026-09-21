@@ -6,7 +6,8 @@ import {
   serverTimestamp,
   updateDoc,
 } from 'firebase/firestore'
-import { clientDb } from './firebase-client'
+import { getFunctions, httpsCallable } from 'firebase/functions'
+import { clientApp, clientDb, initAppCheck } from './firebase-client'
 import { TIME_SLOT_DISPLAY, composeScheduledDateTime } from './inspections'
 
 /*
@@ -21,6 +22,30 @@ import { TIME_SLOT_DISPLAY, composeScheduledDateTime } from './inspections'
   None of this existed on web, so a tenant or handler who needed a different
   time had to go and find the app.
 */
+
+/**
+ * The slots the handler is still free for on that day, from the same callable
+ * the app's booking sheet uses: the property's offered slots, minus any the
+ * handler already holds, minus any that have started. Null when it could not
+ * be checked, which callers must never read as "free".
+ */
+export async function handlerFreeSlots(
+  propertyId: string,
+  day: Date,
+): Promise<string[] | null> {
+  initAppCheck()
+  try {
+    const fn = httpsCallable<
+      { propertyId: string; dateMillis: number },
+      { slots: unknown }
+    >(getFunctions(clientApp(), 'us-central1'), 'getAvailableInspectionSlots')
+    const res = await fn({ propertyId, dateMillis: day.getTime() })
+    const slots = res.data?.slots
+    return Array.isArray(slots) ? slots.map(String) : null
+  } catch {
+    return null
+  }
+}
 
 /** The live proposal sitting on a request, if any. */
 export type RescheduleProposal = {
@@ -204,10 +229,19 @@ export async function approveReschedule(
     if (!current) return 'There is no proposal to accept.'
     if (!isReceiverOf(current, role)) return 'You proposed this one, wait for a reply.'
     if (!current.proposedDate) return 'That proposal has no date on it.'
+    // A proposal can name a slot the handler has since filled, or one sent
+    // from a client that never filtered, so check the calendar at the moment
+    // of accepting rather than trusting the proposal.
+    const at = composeScheduledDateTime(current.proposedDate, current.proposedTimeSlot)
+    const free = await handlerFreeSlots(snap.data().propertyId as string, at)
+    if (free === null) return 'Could not check the calendar. Try again.'
+    if (!free.includes(current.proposedTimeSlot)) {
+      return role === 'handler'
+        ? 'You already have a viewing at that time. Suggest another time or decline.'
+        : 'That time is no longer free. Suggest another time or decline.'
+    }
     await updateDoc(ref, {
-      requestedDate: Timestamp.fromDate(
-        composeScheduledDateTime(current.proposedDate, current.proposedTimeSlot),
-      ),
+      requestedDate: Timestamp.fromDate(at),
       requestedTimeSlot: current.proposedTimeSlot,
       requestedTimeDisplay: current.proposedTimeDisplay,
       rescheduleProposal: null,

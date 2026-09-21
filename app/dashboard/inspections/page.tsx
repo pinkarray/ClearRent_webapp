@@ -272,6 +272,7 @@ export default function TenantInspectionsPage() {
 
                 <RescheduleActions
                   requestId={r.id}
+                  propertyId={r.propertyId}
                   rescheduleProposal={r.rescheduleProposal}
                   requestedDate={r.requestedDate}
                   status={r.status}

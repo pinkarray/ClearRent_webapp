@@ -673,3 +673,27 @@ export async function availableInspectionSlots(
     return null
   }
 }
+
+/**
+ * Handler reports the tenant never came (reportTenantNoShow callable). The
+ * server checks the caller handles it, it is paid, the handler has arrived and
+ * the tenant has not, and it is an hour past the start. It moves the viewing
+ * to admin review and pays nobody by itself.
+ */
+export async function reportTenantNoShow(requestId: string): Promise<string | null> {
+  initAppCheck()
+  try {
+    const fn = httpsCallable<{ requestId: string }, { ok: boolean }>(
+      getFunctions(clientApp(), 'us-central1'),
+      'reportTenantNoShow',
+    )
+    await fn({ requestId })
+    return null
+  } catch (err) {
+    const e = err as { code?: string; message?: string }
+    if (e.code === 'functions/failed-precondition' || e.code === 'functions/permission-denied') {
+      return e.message ?? 'This cannot be reported yet.'
+    }
+    return 'Could not report it. Check your connection and try again.'
+  }
+}

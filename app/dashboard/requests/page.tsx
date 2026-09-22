@@ -379,7 +379,12 @@ export default function HandlerRequestsPage() {
                           approved inspection. Web offered no way to, so a
                           handler who could not make it had to leave the tenant
                           waiting. */}
-                      {(r.status === 'pending' || r.status === 'approved') && (
+                      {/* Gone once the handler has arrived: cancelling then
+                          refunds a tenant who may simply not have come and
+                          forfeits the handler's fee. They report a no-show
+                          from the on-the-day panel instead. */}
+                      {(r.status === 'pending' || r.status === 'approved') &&
+                        !r.handlerArrived && (
                         <button
                           className="btn-ghost mt-3 px-5 py-2.5 text-sm text-error"
                           disabled={cancelling === r.id}

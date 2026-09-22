@@ -7,6 +7,7 @@ import {
   markArrived,
   markOnWay,
   rateInspection,
+  reportTenantNoShow,
 } from '../lib/inspections'
 
 export type InspectionState = {
@@ -49,6 +50,14 @@ export type InspectionState = {
  * with nothing on the other side to meet them. Same rule both clients.
  */
 const ARRIVAL_WINDOW_MS = 2 * 60 * 60 * 1000
+
+/** How long after the slot starts before a no-show can be reported. */
+const NO_SHOW_GRACE_MS = 60 * 60 * 1000
+
+/** Whether a no-show can be reported yet for a slot starting at d. */
+function noShowOpen(d: Date): boolean {
+  return Date.now() >= d.getTime() + NO_SHOW_GRACE_MS
+}
 
 function arrivalOpen(d: Date): boolean {
   return Date.now() >= d.getTime() - ARRIVAL_WINDOW_MS
@@ -111,6 +120,15 @@ export function InspectionActions({
     ? state.handlerName || 'The handler'
     : state.tenantName || 'The tenant'
   const bothConfirmed = state.tenantConfirmedMet && state.handlerConfirmedMet
+  // The handler waited and the tenant never came. Cancel would refund them and
+  // forfeit the handler's fee; this sends it to admin review instead. Mirrors
+  // the reportTenantNoShow callable's checks.
+  const canReportNoShow =
+    role === 'handler' &&
+    state.handlerArrived &&
+    !state.tenantArrived &&
+    state.requestedDate !== null &&
+    noShowOpen(state.requestedDate)
 
   // Nothing to do until it is approved and (when chargeable) paid - and not
   // before the day itself. Without the date check a Sunday visitor could mark
@@ -212,6 +230,24 @@ export function InspectionActions({
                 : `Waiting for ${them}`}
             </span>
           </div>
+
+          {canReportNoShow && (
+            <button
+              className="btn-ghost mt-3 px-5 py-2.5 text-sm"
+              disabled={busy}
+              onClick={() => {
+                if (
+                  !window.confirm(
+                    `Report that ${state.tenantName || 'the tenant'} didn't come? Our team will confirm it, and you are paid once they do. The tenant is told and can dispute it.`,
+                  )
+                )
+                  return
+                void run(() => reportTenantNoShow(state.id))
+              }}
+            >
+              Tenant didn&apos;t show up
+            </button>
+          )}
 
           {bothArrived && (
             <div className="mt-3 flex flex-wrap items-center gap-3">

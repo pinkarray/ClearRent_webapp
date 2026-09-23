@@ -12,6 +12,7 @@ import { InspectionActions } from '../../../components/InspectionActions'
 import { createRentalInterest, watchInterests } from '../../../lib/tenancy'
 import { cancelInspection } from '../../../lib/inspections'
 import { RescheduleActions } from '../../../components/RescheduleActions'
+import { RebookCard } from '../../../components/RebookCard'
 import { useScrollToHash } from '../../../lib/use-scroll-to-hash'
 
 type Row = {
@@ -35,6 +36,7 @@ type Row = {
   tenantConfirmedMet: boolean
   handlerConfirmedMet: boolean
   tenantRated: boolean
+  tenantNoShow: boolean
   handlerId: string
   handlerName: string
   handlerType: 'agent' | 'landlord'
@@ -55,6 +57,8 @@ const STATUS_COPY: Record<string, string> = {
   declined: 'Declined',
   completed: 'Completed',
   cancelled: 'Cancelled',
+  awaitingOutcome: 'Under review by our team',
+  rebookOffered: 'Pick a new time - your payment carries over',
 }
 
 function formatNaira(n: number): string {
@@ -174,6 +178,7 @@ export default function TenantInspectionsPage() {
               tenantConfirmedMet: x.tenantConfirmedMet === true,
               handlerConfirmedMet: x.handlerConfirmedMet === true,
               tenantRated: x.tenantRated === true,
+              tenantNoShow: x.tenantNoShow === true,
               // The handler is the assigned agent when there is one, else the
               // landlord - that is who the tenant rates.
               handlerId: (x.agentId as string) ?? (x.landlordId as string) ?? '',
@@ -242,6 +247,14 @@ export default function TenantInspectionsPage() {
 
                 {/* Renders only when a refund record exists for this request. */}
                 <RefundNotice sourceId={r.id} />
+
+                {(r.status === 'rebookOffered' || r.status === 'expiredUnapproved') && (
+                  <RebookCard
+                    requestId={r.id}
+                    propertyId={r.propertyId}
+                    onDone={() => setReloadKey((k) => k + 1)}
+                  />
+                )}
 
                 {r.status === 'approved' && r.paymentStatus === 'unpaid' && (
                   <div className="mt-4 border-t border-divider pt-4">

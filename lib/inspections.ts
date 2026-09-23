@@ -697,3 +697,26 @@ export async function reportTenantNoShow(requestId: string): Promise<string | nu
     return 'Could not report it. Check your connection and try again.'
   }
 }
+
+/**
+ * Tenant picks a new time for a viewing an admin let them rebook, or one that
+ * expired unapproved. Rules Row 25 allows exactly these four fields, and the
+ * payment is kept: the request re-enters the handler's approval queue.
+ */
+export async function rebookInspection(
+  requestId: string,
+  date: Date,
+  slot: string,
+): Promise<string | null> {
+  try {
+    await updateDoc(doc(clientDb(), 'inspection_requests', requestId), {
+      status: 'pending',
+      requestedDate: Timestamp.fromDate(composeScheduledDateTime(date, slot)),
+      requestedTimeSlot: slot,
+      updatedAt: serverTimestamp(),
+    })
+    return null
+  } catch {
+    return 'Could not book that time. Try again.'
+  }
+}

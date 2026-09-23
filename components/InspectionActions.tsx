@@ -24,6 +24,8 @@ export type InspectionState = {
   tenantConfirmedMet: boolean
   handlerConfirmedMet: boolean
   tenantRated: boolean
+  /** Closed as a tenant no-show: never asked to rate a visit that did not happen. */
+  tenantNoShow?: boolean
   /** Who the tenant rates: the agent when agent-handled, else the landlord. */
   handlerId: string
   handlerName: string
@@ -282,7 +284,17 @@ export function InspectionActions({
         </>
       )}
 
-      {state.status === 'completed' && role === 'tenant' && !state.tenantRated && (
+      {state.status === 'completed' && state.tenantNoShow && role === 'tenant' && (
+        <p className="text-sm text-content-secondary">
+          Closed as missed: our team confirmed you did not make this viewing.
+          Book again whenever you are ready.
+        </p>
+      )}
+
+      {state.status === 'completed' &&
+        !state.tenantNoShow &&
+        role === 'tenant' &&
+        !state.tenantRated && (
         <div>
           <p className="text-sm font-medium text-content">
             Rate {state.handlerName}

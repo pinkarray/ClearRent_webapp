@@ -287,7 +287,13 @@ export default function DashboardPage() {
             gate, hasBankDetails via actorHasBankDetails(). Showing them as a
             checklist means the tenant knows why booking is unavailable
             instead of meeting a permission error at the end.
+
+            It goes once both are done. A finished checklist answers a question
+            nobody is asking any more, and it sat above the things a verified
+            tenant actually came for.
           */}
+          {!(profile?.verificationStatus === 'verified' &&
+            profile?.hasBankDetails === true) && (
           <section className="card p-6">
             <h3 className="text-lg font-semibold text-content">
               Before you can book an inspection
@@ -338,6 +344,7 @@ export default function DashboardPage() {
               ))}
             </div>
           </section>
+          )}
 
           <section className="card p-6">
             <h3 className="text-lg font-semibold text-content">Find a place</h3>

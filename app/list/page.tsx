@@ -304,16 +304,28 @@ export default function ListPropertyPage() {
 
         <h1 className="mt-4 text-3xl font-bold text-content">List a property</h1>
 
-        {verificationStatus !== null && verificationStatus !== 'verified' && (
+        {/* A new account has no verificationStatus at all, so absent counts as
+            unverified: otherwise it met a disabled button with no reason. */}
+        {profile && verificationStatus !== 'verified' && (
           <div className="card mt-6 border-l-4 border-l-secondary p-5">
-            <p className="font-semibold text-content">
-              This account is not a verified landlord
-            </p>
-            <p className="mt-1 text-sm text-content-secondary">
-              Firestore rules require <code>verificationStatus == &apos;verified&apos;</code> to
-              create a listing. Current value: <code>{verificationStatus}</code>. Complete
-              verification in the ClearRent app first.
-            </p>
+            {verificationStatus === 'pending' ? (
+              <>
+                <p className="font-semibold text-content">Your verification is being reviewed</p>
+                <p className="mt-1 text-sm text-content-secondary">
+                  You can list a property once it is approved.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="font-semibold text-content">Verify your account to list</p>
+                <p className="mt-1 text-sm text-content-secondary">
+                  Only verified landlords can list a property.{' '}
+                  <Link href="/dashboard/verification" className="font-medium text-primary">
+                    Verify now
+                  </Link>
+                </p>
+              </>
+            )}
           </div>
         )}
 

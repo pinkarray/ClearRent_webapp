@@ -104,8 +104,13 @@ export default function VerificationPage() {
     <>
       <div className="mx-auto max-w-2xl">
         <p className="text-content-secondary">
-          ClearRent verifies every party before money moves. You need this before you can book an
-          inspection.
+          ClearRent verifies every party before money moves. You need this before you can{' '}
+          {accountType === 'landlord'
+            ? 'list a property'
+            : accountType === 'agent'
+              ? 'handle inspections'
+              : 'book an inspection'}
+          .
         </p>
 
         {copy && (

@@ -240,7 +240,7 @@ export function InspectionActions({
               onClick={() => {
                 if (
                   !window.confirm(
-                    `Report that ${state.tenantName || 'the tenant'} didn't come? Our team will confirm it, and you are paid once they do. The tenant is told and can dispute it.`,
+                    `Report that ${state.tenantName || 'the tenant'} didn't come? Our team will review it, and you are paid once they confirm it. The tenant is told.`,
                   )
                 )
                   return

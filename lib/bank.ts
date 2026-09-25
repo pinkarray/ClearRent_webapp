@@ -44,7 +44,7 @@ export async function resolveAccount(
     }
     // Paystack rate-limits /bank/resolve per integration.
     if (code === 'functions/resource-exhausted') {
-      return { error: 'Too many lookups just now. Wait a moment and try again.' }
+      return { error: 'Too many checks in a short time. Wait a few minutes and try again.' }
     }
     if (code === 'functions/unauthenticated') {
       return { error: 'The request was rejected (App Check or sign-in). Reload and try again.' }

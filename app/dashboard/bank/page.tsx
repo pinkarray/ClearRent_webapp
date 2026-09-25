@@ -122,6 +122,12 @@ export default function BankDetailsPage() {
               value={accountNumber}
               onChange={(e) => changeAccountNumber(e.target.value)}
             />
+            {/* Paystack caps name lookups; a run of typos locks checking out
+                for minutes, so say so before the first press. */}
+            <span className="mt-1.5 block text-xs text-content-hint">
+              Check the bank and all 10 digits before you verify. Too many checks in a row
+              pause checking for a few minutes.
+            </span>
           </label>
 
           {error && <p className="text-sm text-red-600">{error}</p>}

@@ -551,6 +551,18 @@ export function rentalStatusLabel(status: string): string {
   return RENTAL_STATUS[status] ?? status.replace(/_/g, ' ')
 }
 
+const AGREEMENT_STATUS: Record<string, string> = {
+  pending_review: 'awaiting tenant signature',
+  accepted: 'accepted',
+  finalized: 'signed',
+  disputed: 'concern raised',
+}
+
+/** The agreement status in words; the raw value (pending_review) was shown as is. */
+export function agreementStatusLabel(status: string): string {
+  return AGREEMENT_STATUS[status] ?? status.replace(/_/g, ' ')
+}
+
 /**
  * The landlord attests they have physically checked the unit. This is the
  * relist lever: nothing frees the property until someone has looked at it.

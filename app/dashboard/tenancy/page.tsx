@@ -17,6 +17,7 @@ import {
   disputeAgreement,
   flagRentChange,
   requestMoveOut,
+  agreementStatusLabel,
   rentalStatusLabel,
   watchActiveRentals,
   watchInterests,
@@ -277,7 +278,12 @@ export default function TenancyPage() {
                     one anyway sent them looking for work already done. */}
                 {isLandlord && i.status === 'accepted' && (
                   <p className="mt-3 text-sm text-content-secondary">
-                    {rentalFor(i.id)?.agreementUrl ? (
+                    {/* The rental is created server-side a moment after the
+                        accept, so for that moment say so rather than tell the
+                        landlord to upload an agreement that may be on its way. */}
+                    {!rentalFor(i.id) ? (
+                      <>Accepted. Setting up the tenancy…</>
+                    ) : rentalFor(i.id)?.agreementUrl ? (
                       <>
                         Accepted, and your agreement was attached automatically.
                         Next: your tenant signs it - rent unlocks the moment they do.
@@ -313,8 +319,9 @@ export default function TenancyPage() {
                   <div className="min-w-0">
                     <p className="font-semibold text-content">{r.propertyTitle}</p>
                     <p className="text-sm text-content-secondary">
-                      {formatNaira(r.rentAmount)} · agreement {r.agreementStatus} · rent{' '}
-                      {r.rentPaymentStatus}
+                      {formatNaira(r.rentAmount)} · agreement{' '}
+                      {agreementStatusLabel(r.agreementStatus)} · rent{' '}
+                      {r.rentPaymentStatus === 'paid' ? 'paid' : 'unpaid'}
                     </p>
                   </div>
                   <span className="chip shrink-0">

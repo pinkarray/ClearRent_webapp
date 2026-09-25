@@ -5,7 +5,11 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useAuth } from '../../../../components/AuthProvider'
 import { agreementUrl } from '../../../../lib/documents'
-import { tenantRentalHistory, type ActiveRental } from '../../../../lib/tenancy'
+import {
+  agreementStatusLabel,
+  tenantRentalHistory,
+  type ActiveRental,
+} from '../../../../lib/tenancy'
 import { openInNewTab } from '../../../../lib/open-in-new-tab'
 
 function formatNaira(n: number): string {
@@ -89,7 +93,7 @@ export default function LeaseDetailsPage() {
       <section className="card p-6">
         <h3 className="font-semibold text-content">Tenancy agreement</h3>
         <p className="mt-1 text-sm text-content-secondary">
-          Status: {rental.agreementStatus}. The document is held in private storage and opened
+          Status: {agreementStatusLabel(rental.agreementStatus)}. The document is held in private storage and opened
           through a short-lived signed link.
         </p>
         {error && <p className="mt-3 text-sm text-error">{error}</p>}

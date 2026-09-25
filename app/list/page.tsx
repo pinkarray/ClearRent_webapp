@@ -343,9 +343,13 @@ export default function ListPropertyPage() {
           <div className="card mt-6 border-l-4 border-l-primary p-5">
             <p className="font-semibold text-content">Listing created</p>
             <p className="mt-1 text-sm text-content-secondary">
-              Property ID <code>{createdId}</code>. It is now visible in the ClearRent app under
-              your listings. It will <strong>not</strong> appear on public browse until an admin
-              verifies the ownership document and the property is marked ready for inspections.
+              It is under Your listings on your dashboard. It will <strong>not</strong> appear on
+              public browse until an admin verifies the ownership document and you mark it ready
+              for inspections on{' '}
+              <Link href={`/dashboard/listings/${createdId}`} className="font-medium text-primary">
+                its listing page
+              </Link>
+              .
             </p>
             {createdOwesFee && (
               <div className="mt-4">

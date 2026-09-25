@@ -54,7 +54,9 @@ export default function TenantIssueCentre() {
     if (!uid) return
     let cancelled = false
     ;(async () => {
-      const r = await activeRentals('tenantId', uid)
+      // Every tenancy doc comes back, ended ones included; only a live one can
+      // have a repair raised against it, as in the app (ActiveRental.isActive).
+      const r = (await activeRentals('tenantId', uid)).filter((x) => x.status === 'active')
       if (cancelled) return
       setRentals(r)
       // An issue must name a property, so default to the only one when there

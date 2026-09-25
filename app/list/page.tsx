@@ -151,6 +151,7 @@ export default function ListPropertyPage() {
   const [feeOwed, setFeeOwed] = useState<boolean | null>(null)
   const [createdOwesFee, setCreatedOwesFee] = useState(false)
   const [listingPrice, setListingPrice] = useState(10000)
+  const [minRent, setMinRent] = useState(10000)
   const [paying, setPaying] = useState(false)
   /** Areas for the chosen state, grouped by LGA. Empty outside Lagos/Ogun. */
   const [groups, setGroups] = useState<Array<{ lga: string; label: string; areas: string[] }>>([])
@@ -172,7 +173,10 @@ export default function ListPropertyPage() {
   useEffect(() => {
     if (!user) return
     void listingFeeOwed(user.uid).then(setFeeOwed).catch(() => setFeeOwed(null))
-    void getPricing().then((p) => setListingPrice(p.listing))
+    void getPricing().then((p) => {
+      setListingPrice(p.listing)
+      setMinRent(p.minRent)
+    })
   }, [user, createdId])
 
   // City and LGA used to be free text, which is how a listing was saved as
@@ -209,6 +213,12 @@ export default function ListPropertyPage() {
     }
     if (!residence) {
       setError('Tell tenants where you live first. It is asked once, for all your listings.')
+      return
+    }
+    // The rules refuse a lower rent, which surfaced as a bare permissions error
+    // after the photos had already uploaded.
+    if (!(toFloat(draft.rent) >= minRent)) {
+      setError(`Rent must be at least ${formatNairaFull(minRent)}.`)
       return
     }
 

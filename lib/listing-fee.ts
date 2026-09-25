@@ -16,9 +16,16 @@ export type Pricing = {
   listing: number
   inspectionTotal: number
   inspectionHandler: number
+  /** Lowest rent a listing may have; firestore.rules enforces the same floor. */
+  minRent: number
 }
 
-const DEFAULTS: Pricing = { listing: 10000, inspectionTotal: 10000, inspectionHandler: 7000 }
+const DEFAULTS: Pricing = {
+  listing: 10000,
+  inspectionTotal: 10000,
+  inspectionHandler: 7000,
+  minRent: 10000,
+}
 
 export async function getPricing(): Promise<Pricing> {
   try {
@@ -29,6 +36,7 @@ export async function getPricing(): Promise<Pricing> {
       inspectionTotal: typeof insp.total === 'number' ? insp.total : DEFAULTS.inspectionTotal,
       inspectionHandler:
         typeof insp.handler === 'number' ? insp.handler : DEFAULTS.inspectionHandler,
+      minRent: typeof d.minRent === 'number' ? d.minRent : DEFAULTS.minRent,
     }
   } catch {
     return DEFAULTS

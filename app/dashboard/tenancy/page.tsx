@@ -57,6 +57,17 @@ const ASK_COPY: Record<AskKind, { title: string; label: string; cta: string }> =
   },
 }
 
+/** Mirrors kMoveOutNoticeDays in the app: notice is at least three days. */
+const MOVE_OUT_NOTICE_DAYS = 3
+
+/** The earliest move-out date allowed, as yyyy-mm-dd in local time. */
+function earliestMoveOut(): string {
+  const d = new Date()
+  d.setDate(d.getDate() + MOVE_OUT_NOTICE_DAYS)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
 function formatNaira(n: number): string {
   return `₦${n.toLocaleString('en-NG')}`
 }
@@ -146,6 +157,8 @@ export default function TenancyPage() {
     if (kind === 'moveout') {
       const parsed = new Date(`${askDate}T00:00:00`)
       if (!askDate || Number.isNaN(parsed.getTime())) return
+      // `min` only steers the picker; a typed date can still go below it.
+      if (askDate < earliestMoveOut()) return
       setAsk(null)
       await run(rental.id, () => requestMoveOut(rental.id, parsed, text))
     } else if (kind === 'contest') {
@@ -566,10 +579,15 @@ export default function TenancyPage() {
                 <input
                   type="date"
                   className="input-field mt-1 px-3 py-2.5"
-                  min={new Date().toISOString().slice(0, 10)}
+                  min={earliestMoveOut()}
                   value={askDate}
                   onChange={(e) => setAskDate(e.target.value)}
                 />
+                {askDate && askDate < earliestMoveOut() && (
+                  <span className="mt-1 block text-error">
+                    Give at least {MOVE_OUT_NOTICE_DAYS} days&apos; notice.
+                  </span>
+                )}
               </label>
             )}
             <label className="mt-4 block text-sm text-content-secondary">
@@ -587,7 +605,11 @@ export default function TenancyPage() {
               </button>
               <button
                 className="btn-primary px-5 py-2.5 text-sm"
-                disabled={ask.kind === 'moveout' ? !askDate : !askText.trim()}
+                disabled={
+                  ask.kind === 'moveout'
+                    ? !askDate || askDate < earliestMoveOut()
+                    : !askText.trim()
+                }
                 onClick={() => void submitAsk()}
               >
                 {ASK_COPY[ask.kind].cta}

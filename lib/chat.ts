@@ -614,6 +614,10 @@ export function counterparty(c: Conversation, uid: string): string {
   if (c.landlordId === uid) {
     return c.tenantName || c.caretakerName || c.agentName || 'Tenant'
   }
+  // On the caretaker thread the tenant sees the caretaker, as the app does
+  // (getOtherPersonName). It showed the landlord, so the thread read as a
+  // second copy of the landlord chat.
+  if (c.tenantId === uid && c.caretakerId && c.caretakerName) return c.caretakerName
   if (c.tenantId === uid) return c.agentId ? c.agentName || c.landlordName : c.landlordName
   return c.tenantName || 'Tenant'
 }

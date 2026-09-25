@@ -503,7 +503,13 @@ export default function TenancyPage() {
                         disabled={busy === r.id}
                         onClick={() => payRent(r)}
                       >
-                        Pay rent {formatNaira(r.rentAmount)}
+                        {/* The charge is the interest's total (rent + agent fee + deal
+                            fee), not the bare rent it used to show. */}
+                        Pay rent{' '}
+                        {formatNaira(
+                          interests?.find((i) => i.id === r.rentalInterestId)?.paymentAmount ??
+                            r.rentAmount,
+                        )}
                       </button>
                     )}
 

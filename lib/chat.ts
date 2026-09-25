@@ -539,6 +539,7 @@ export function mentionTargets(c: Conversation, uid: string): MentionTarget[] {
     { uid: c.landlordId, name: c.landlordName, role: 'Landlord' },
     { uid: c.tenantId, name: c.tenantName, role: 'Tenant' },
     { uid: c.agentId, name: c.agentName, role: 'Agent' },
+    { uid: c.caretakerId, name: c.caretakerName, role: 'Caretaker' },
   ].filter((e) => e.uid && e.uid !== uid)
 
   const firstName = (name: string) =>

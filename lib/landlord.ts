@@ -33,6 +33,8 @@ export type Transaction = {
   tenantName: string
   amount: number
   status: 'pending' | 'completed' | 'failed'
+  /** 'rent' or 'inspection' (the handler's viewing fee). */
+  type: string
   reference: string
   createdAt: Date | null
 }
@@ -49,11 +51,17 @@ function parseStatus(v: unknown): Transaction['status'] {
 }
 
 export async function landlordEarnings(uid: string): Promise<Earnings> {
-  const snap = await getDocs(
-    query(collection(clientDb(), 'transactions'), where('landlordId', '==', uid)),
+  // Rows name their earner as landlordId or agentId, never both, and the rules
+  // only allow a list scoped to one of them - so two queries, merged. Reading
+  // landlordId alone left every agent's page at zero.
+  const snaps = await Promise.all(
+    (['landlordId', 'agentId'] as const).map((field) =>
+      getDocs(query(collection(clientDb(), 'transactions'), where(field, '==', uid))),
+    ),
   )
 
-  const transactions = snap.docs
+  const transactions = snaps
+    .flatMap((snap) => snap.docs)
     .map((d) => {
       const x = d.data()
       return {
@@ -64,6 +72,7 @@ export async function landlordEarnings(uid: string): Promise<Earnings> {
         tenantName: (x.tenantName as string) ?? 'Unknown tenant',
         amount: (x.amount as number) ?? 0,
         status: parseStatus(x.status),
+        type: (x.type as string) ?? 'rent',
         reference: (x.reference as string) ?? '',
         createdAt: x.createdAt?.toDate?.() ?? null,
       }

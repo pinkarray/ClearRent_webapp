@@ -9,6 +9,13 @@ function formatNaira(n: number): string {
   return `₦${n.toLocaleString('en-NG')}`
 }
 
+/** Pending means owed, not yet sent: a row is only completed once ClearRent pays it out. */
+const STATUS_LABEL: Record<string, string> = {
+  pending: 'Payout pending',
+  completed: 'Paid out',
+  failed: 'Failed',
+}
+
 function tone(status: string): string {
   if (status === 'completed') return 'chip-success'
   if (status === 'failed') return 'chip-error'
@@ -32,7 +39,7 @@ export default function EarningsPage() {
       <div className="grid gap-3 sm:grid-cols-3">
         {[
           { label: 'Total', value: data.total, accent: 'text-content' },
-          { label: 'Settled', value: data.completed, accent: 'text-success' },
+          { label: 'Paid out', value: data.completed, accent: 'text-success' },
           { label: 'Pending payout', value: data.pending, accent: 'text-secondary-dark' },
         ].map((stat) => (
           <div key={stat.label} className="card p-5">
@@ -52,7 +59,7 @@ export default function EarningsPage() {
           <div className="card mt-3 p-8 text-center">
             <p className="text-content-secondary">No transactions yet.</p>
             <p className="mt-1 text-sm text-content-hint">
-              Inspection fees and rent settlements appear here once money moves.
+              Viewing fees and rent appear here once you have earned them.
             </p>
           </div>
         ) : (
@@ -64,6 +71,9 @@ export default function EarningsPage() {
               >
                 <div className="min-w-0">
                   <p className="truncate font-medium text-content">{t.propertyTitle}</p>
+                  <p className="text-xs font-medium text-content-hint">
+                    {t.type === 'inspection' ? 'Viewing fee' : 'Rent'}
+                  </p>
                   <p className="truncate text-sm text-content-secondary">
                     {t.tenantName} · {formatDate(t.createdAt)}
                   </p>
@@ -73,7 +83,7 @@ export default function EarningsPage() {
                 </div>
                 <div className="shrink-0 text-right">
                   <p className="font-semibold text-content">{formatNaira(t.amount)}</p>
-                  <span className={`chip ${tone(t.status)}`}>{t.status}</span>
+                  <span className={`chip ${tone(t.status)}`}>{STATUS_LABEL[t.status]}</span>
                 </div>
               </div>
             ))}

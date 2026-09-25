@@ -16,17 +16,20 @@ export default function BankDetailsPage() {
   const [saved, setSaved] = useState(false)
 
   // A changed number or bank invalidates the resolved name - saving a stale one
-  // would put the wrong payout destination on file. Done in the handlers rather
-  // than an effect so there is no render where a stale name is still showing.
+  // would put the wrong payout destination on file - and any error about the
+  // old number. Done in the handlers rather than an effect so there is no
+  // render where a stale name is still showing.
   function changeAccountNumber(v: string) {
     setAccountNumber(v.replace(/\D/g, ''))
     setAccountName(null)
+    setError(null)
     setSaved(false)
   }
 
   function changeBank(v: string) {
     setBankCode(v)
     setAccountName(null)
+    setError(null)
     setSaved(false)
   }
 

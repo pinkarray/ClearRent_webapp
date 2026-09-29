@@ -9,6 +9,7 @@ import {
   type Residence,
   type ResidenceKind,
 } from '../lib/residence'
+import { areaDisplayName, areaGroups } from '../lib/lagos-areas'
 
 const CHOICES: Array<[ResidenceKind, string, string]> = [
   ['own', 'In a property I own', 'If it is a building you list, you can mark it "I live here" in the app.'],
@@ -32,6 +33,14 @@ export default function ResidenceForm({ onSaved }: { onSaved: (r: Residence) => 
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
+  const [groups, setGroups] = useState<Array<{ lga: string; label: string; areas: string[] }>>([])
+
+  // Areas for whatever state was chosen, grouped by LGA as in the app. Empty
+  // for a state we carry no areas for, which hides the field.
+  useEffect(() => {
+    if (state) void areaGroups(state).then(setGroups)
+    else setGroups([])
+  }, [state])
 
   useEffect(() => {
     if (!user) return
@@ -53,7 +62,8 @@ export default function ResidenceForm({ onSaved }: { onSaved: (r: Residence) => 
     const residence: Residence = {
       kind,
       state: abroad ? null : state || null,
-      area: !abroad && state === 'Lagos' ? area.trim() || null : null,
+      // Cleared whenever the state changes, so it belongs to the state above.
+      area: abroad ? null : area.trim() || null,
       country: abroad ? country.trim() || null : null,
       homeBuildingId: kind === 'own' ? existing?.homeBuildingId ?? null : null,
       homeBuildingName: kind === 'own' ? existing?.homeBuildingName ?? null : null,
@@ -106,7 +116,10 @@ export default function ResidenceForm({ onSaved }: { onSaved: (r: Residence) => 
           <select
             className="input-field mt-1 px-3 py-2.5"
             value={state}
-            onChange={(e) => setState(e.target.value)}
+            onChange={(e) => {
+              if (e.target.value !== state) setArea('')
+              setState(e.target.value)
+            }}
           >
             <option value="">Choose your state</option>
             {NIGERIAN_STATES.map((s) => (
@@ -117,15 +130,25 @@ export default function ResidenceForm({ onSaved }: { onSaved: (r: Residence) => 
           </select>
         </label>
       )}
-      {kind && kind !== 'abroad' && state === 'Lagos' && (
+      {kind && kind !== 'abroad' && groups.length > 0 && (
         <label className="block text-sm text-content-secondary">
           Area (optional)
-          <input
+          <select
             className="input-field mt-1 px-3 py-2.5"
-            placeholder="e.g. Allen"
             value={area}
             onChange={(e) => setArea(e.target.value)}
-          />
+          >
+            <option value="">Choose your area</option>
+            {groups.map((g) => (
+              <optgroup key={g.lga} label={g.label}>
+                {g.areas.map((a) => (
+                  <option key={a} value={areaDisplayName(a)}>
+                    {areaDisplayName(a)}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
         </label>
       )}
       {kind === 'abroad' && (

@@ -183,7 +183,7 @@ export default function ListPropertyPage() {
   // 'Ikorodu, Ogun'. Lagos and Ogun now pick from the app's own area list.
   useEffect(() => {
     const st = draft.state
-    if (st === 'Lagos' || st === 'Ogun') void areaGroups(st).then(setGroups)
+    if (st) void areaGroups(st).then(setGroups)
     else setGroups([])
   }, [draft.state])
 

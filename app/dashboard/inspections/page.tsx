@@ -59,6 +59,10 @@ const STATUS_COPY: Record<string, string> = {
   cancelled: 'Cancelled',
   awaitingOutcome: 'Under review by our team',
   rebookOffered: 'Pick a new time - your payment carries over',
+  // Both of these reach a tenant, and without them the chip printed the raw
+  // status: "expiredUnapproved" in front of the person it happened to.
+  expiredUnapproved: 'Not approved in time - pick a new time below',
+  refunded: 'Refunded',
 }
 
 function formatNaira(n: number): string {

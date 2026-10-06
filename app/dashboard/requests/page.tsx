@@ -33,6 +33,7 @@ type Row = {
   status: string
   paymentStatus: string
   totalFee: number
+  clearrentFee: number
   agentEarnings: number
   isAgentHandled: boolean
   /**
@@ -88,8 +89,16 @@ export default function HandlerRequestsPage() {
   /// cancellationReason precisely so the tenant can be told why. A paid
   /// inspection is refunded server-side.
   async function callOff(id: string, by: 'agent' | 'landlord') {
+    // Say what the tenant gets back, as the app's cancel sheet does. The
+    // 3,000 booking charge is not refunded: the booking itself happened.
+    const r = rows?.find((x) => x.id === id)
+    const paid = r?.paymentStatus === 'paid' && r.totalFee > 0
     const reason = await askText({
       title: 'Cancel this inspection',
+      subtitle: paid
+        ? `${formatNaira(r!.totalFee - r!.clearrentFee)} goes back to the tenant. `
+          + `The ${formatNaira(r!.clearrentFee)} booking charge is not refunded.`
+        : undefined,
       label: 'Why are you cancelling? The tenant will be told.',
       cta: 'Cancel inspection',
     })
@@ -125,6 +134,7 @@ export default function HandlerRequestsPage() {
         status: (x.status as string) ?? 'pending',
         paymentStatus: (x.paymentStatus as string) ?? 'not_required',
         totalFee: (x.totalFee as number) ?? 0,
+        clearrentFee: (x.clearrentFee as number) ?? 0,
         agentEarnings: (x.agentEarnings as number) ?? 0,
         isAgentHandled: x.agentId === user?.uid,
         iHandle: x.agentId ? x.agentId === user?.uid : x.landlordId === user?.uid,

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '../../components/AuthProvider'
@@ -147,6 +147,11 @@ export default function ListPropertyPage() {
   const [status, setStatus] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [createdId, setCreatedId] = useState<string | null>(null)
+  /** The Create button sits at the foot of a very long form, while the
+      'listing created' panel and its PAY button render at the top. Without
+      this the form just empties and nothing visible happens, so the fee
+      never gets paid. */
+  const createdRef = useRef<HTMLDivElement | null>(null)
   /** The first listing is free; null while checking. */
   const [feeOwed, setFeeOwed] = useState<boolean | null>(null)
   const [createdOwesFee, setCreatedOwesFee] = useState(false)
@@ -172,6 +177,10 @@ export default function ListPropertyPage() {
   useEffect(() => {
     if (user) void getResidence(user.uid).then(setResidence)
   }, [user])
+
+  useEffect(() => {
+    if (createdId) createdRef.current?.scrollIntoView({behavior: 'smooth', block: 'start'})
+  }, [createdId])
 
   useEffect(() => {
     if (!user) return
@@ -361,7 +370,7 @@ export default function ListPropertyPage() {
         )}
 
         {createdId && (
-          <div className="card mt-6 border-l-4 border-l-primary p-5">
+          <div ref={createdRef} className="card mt-6 border-l-4 border-l-primary p-5">
             <p className="font-semibold text-content">Listing created</p>
             <p className="mt-1 text-sm text-content-secondary">
               It is under Your listings on your dashboard. It will <strong>not</strong> appear on

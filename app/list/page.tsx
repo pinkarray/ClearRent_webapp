@@ -300,14 +300,14 @@ export default function ListPropertyPage() {
   return (
     <main className="mesh-bg min-h-screen">
       <div className="container max-w-3xl py-12">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-6">
           <Link
             href="/dashboard"
-            className="text-sm font-medium text-primary no-underline hover:underline"
+            className="shrink-0 text-sm font-medium text-primary no-underline hover:underline"
           >
             ← Dashboard
           </Link>
-          <span className="text-sm text-content-secondary">
+          <span className="truncate text-sm text-content-secondary">
             {user.phoneNumber ?? user.email}
           </span>
         </div>

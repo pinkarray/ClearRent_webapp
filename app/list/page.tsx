@@ -157,6 +157,9 @@ export default function ListPropertyPage() {
   const [groups, setGroups] = useState<Array<{ lga: string; label: string; areas: string[] }>>([])
   /** The picked area as 'lga|area', '__other' when it is not listed, or ''. */
   const [areaKey, setAreaKey] = useState('')
+  /** Narrows the area list. Lagos alone runs to hundreds of options, which on
+      a phone is a native dropdown nobody can scroll to the end of. */
+  const [areaQuery, setAreaQuery] = useState('')
   /** undefined while loading; null until the landlord says where they live. */
   const [residence, setResidence] = useState<Residence | null | undefined>(undefined)
 
@@ -275,6 +278,7 @@ export default function ListPropertyPage() {
       setCreatedId(id)
       setDraft(EMPTY)
       setAreaKey('')
+      setAreaQuery('')
       setFiles([])
       setOwnershipDoc(null)
       setOwnershipDocType('c_of_o')
@@ -288,6 +292,23 @@ export default function ListPropertyPage() {
 
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) =>
     setDraft((d) => ({ ...d, [key]: value }))
+
+  // Filters the area list for DISPLAY only. The selected option is always kept
+  // so narrowing the search can never silently drop the landlord's choice.
+  const areaFilter = areaQuery.trim().toLowerCase()
+  const shownGroups = areaFilter
+    ? groups
+        .map((g) => ({
+          ...g,
+          areas: g.areas.filter(
+            (a) =>
+              `${g.lga}|${a}` === areaKey ||
+              areaDisplayName(a).toLowerCase().includes(areaFilter) ||
+              g.label.toLowerCase().includes(areaFilter),
+          ),
+        }))
+        .filter((g) => g.areas.length > 0)
+    : groups
 
   if (!ready || !user) {
     return (
@@ -506,6 +527,7 @@ export default function ListPropertyPage() {
                   set('city', '')
                   set('lga', '')
                   setAreaKey('')
+                  setAreaQuery('')
                 }}
               >
                 {NIGERIAN_STATES.map((st) => (
@@ -517,9 +539,18 @@ export default function ListPropertyPage() {
             </Field>
             {groups.length > 0 && (
               <Field label="Area">
+                <input
+                  type="search"
+                  className="input-field mb-2 px-4 py-3"
+                  placeholder="Search areas"
+                  aria-label="Search areas"
+                  value={areaQuery}
+                  onChange={(e) => setAreaQuery(e.target.value)}
+                />
                 <select
                   className="input-field px-4 py-3"
                   required
+                  aria-label="Area"
                   value={areaKey}
                   onChange={(e) => {
                     const v = e.target.value
@@ -534,8 +565,12 @@ export default function ListPropertyPage() {
                     set('lga', lgaName(lga))
                   }}
                 >
-                  <option value="">Choose the area</option>
-                  {groups.map((g) => (
+                  <option value="">
+                    {areaFilter && shownGroups.length === 0
+                      ? 'No area matches that search'
+                      : 'Choose the area'}
+                  </option>
+                  {shownGroups.map((g) => (
                     <optgroup key={g.lga} label={g.label}>
                       {g.areas.map((a) => (
                         <option key={a} value={`${g.lga}|${a}`}>

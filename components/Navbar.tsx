@@ -118,7 +118,9 @@ export default function Navbar() {
             Log in
           </a>
 
-          <a href="#waitlist" className="btn-primary desktop-cta" style={{
+          {/* The web is live: sign-up, not a waitlist. The waitlist below is for
+              the mobile app. */}
+          <a href="/signup" className="btn-primary desktop-cta" style={{
             padding: '8px 18px',
             fontSize: 13,
             fontWeight: 600,
@@ -126,7 +128,7 @@ export default function Navbar() {
             display: 'inline-block',
             whiteSpace: 'nowrap',
           }}>
-            Get Early Access
+            Create account
           </a>
 
           {/* Hamburger */}
@@ -211,7 +213,7 @@ export default function Navbar() {
           Log in
         </a>
 
-        <a href="#waitlist" onClick={() => setMenuOpen(false)} className="btn-amber" style={{
+        <a href="/signup" onClick={() => setMenuOpen(false)} className="btn-amber" style={{
           marginTop: 16,
           padding: '13px 24px',
           fontSize: 15,
@@ -219,7 +221,7 @@ export default function Navbar() {
           display: 'block',
           textAlign: 'center',
         }}>
-          Get Early Access →
+          Create account →
         </a>
       </div>
 

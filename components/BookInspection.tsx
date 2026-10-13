@@ -42,6 +42,7 @@ export function BookInspection({ propertyId }: { propertyId: string }) {
   const [date, setDate] = useState('')
   const [slot, setSlot] = useState('')
   const [notes, setNotes] = useState('')
+  const [mode, setMode] = useState<'in_person' | 'video'>('in_person')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [requestId, setRequestId] = useState<string | null>(null)
@@ -213,6 +214,7 @@ export function BookInspection({ propertyId }: { propertyId: string }) {
       requestedDate: new Date(`${date}T00:00:00`),
       requestedTimeSlot: slot,
       notes: notes.trim(),
+      viewingMode: mode,
     })
     setBusy(false)
     if ('error' in res) setError(res.error)
@@ -300,6 +302,45 @@ export function BookInspection({ propertyId }: { propertyId: string }) {
           ))}
         </div>
       </fieldset>
+
+      {/* Only where the host's presence can be checked: the pin was
+          confirmed on site. */}
+      {property.videoViewingAvailable && (
+        <fieldset className="mt-4">
+          <legend className="text-sm font-medium text-content">
+            How would you like to view it?
+          </legend>
+          <div className="mt-2 grid gap-2">
+            {([
+              ['in_person', 'Visit in person', 'Meet your host at the property.'],
+              [
+                'video',
+                'Video viewing',
+                'Your host walks you through on a live video call, from the property itself. Same fee.',
+              ],
+            ] as const).map(([value, title, sub]) => (
+              <label
+                key={value}
+                className={`flex cursor-pointer items-start gap-3 rounded-md border p-3 ${
+                  mode === value ? 'border-primary bg-primary/5' : 'border-divider'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="viewingMode"
+                  className="mt-1"
+                  checked={mode === value}
+                  onChange={() => setMode(value)}
+                />
+                <span>
+                  <span className="block text-sm font-medium text-content">{title}</span>
+                  <span className="block text-xs text-content-secondary">{sub}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
 
       <label className="mt-4 block">
         <span className="text-sm font-medium text-content">

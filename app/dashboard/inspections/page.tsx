@@ -234,9 +234,10 @@ export default function TenantInspectionsPage() {
                     </Link>
                     <p className="text-sm text-content-secondary">{r.propertyAddress}</p>
                   </div>
-                  <span className="chip shrink-0">
-                    {STATUS_COPY[r.status] ?? r.status}
-                  </span>
+                  <div className="flex shrink-0 flex-wrap gap-2">
+                    {r.isVideo && <span className="chip">Video viewing</span>}
+                    <span className="chip">{STATUS_COPY[r.status] ?? r.status}</span>
+                  </div>
                 </div>
 
                 <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm text-content-secondary">

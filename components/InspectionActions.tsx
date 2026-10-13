@@ -293,7 +293,11 @@ export function InspectionActions({
                   disabled={busy}
                   onClick={() => run(() => confirmMet(state.id, role))}
                 >
-                  Confirm we met
+                  {!state.isVideo
+                    ? 'Confirm we met'
+                    : mine
+                      ? 'I watched the video viewing'
+                      : 'The video viewing took place'}
                 </button>
               ) : (
                 <span className="text-sm text-content-secondary">✓ You confirmed</span>
@@ -312,7 +316,7 @@ export function InspectionActions({
               disabled={busy}
               onClick={() => run(() => completeInspection(state.id, uid, state.handlerType))}
             >
-              Mark inspection complete
+              {state.isVideo ? 'Mark video viewing complete' : 'Mark inspection complete'}
             </button>
           )}
         </>

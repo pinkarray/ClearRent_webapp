@@ -93,6 +93,8 @@ export type BookableProperty = {
   assignedAgentId: string | null
   readyForInspections: boolean
   landlordLivesInProperty: boolean
+  /** The pin was confirmed on site and not moved since: video viewings can be booked. */
+  videoViewingAvailable: boolean
   inspectionDays: string[]
   inspectionTimeSlots: string[]
   inspectionFeeTotal: number
@@ -128,6 +130,7 @@ export async function loadBookableProperty(id: string): Promise<BookableProperty
     inspectionHandler: str(d.inspectionHandler) || 'self',
     assignedAgentId: typeof d.assignedAgentId === 'string' ? d.assignedAgentId : null,
     readyForInspections: d.readyForInspections === true,
+    videoViewingAvailable: d.videoViewingAvailable === true,
     landlordLivesInProperty: d.landlordLivesInProperty === true,
     inspectionDays: Array.isArray(d.inspectionDays) ? (d.inspectionDays as string[]) : [],
     inspectionTimeSlots: Array.isArray(d.inspectionTimeSlots)
@@ -174,6 +177,8 @@ export type BookingInput = {
   requestedDate: Date
   requestedTimeSlot: string
   notes: string
+  /** Rules refuse 'video' unless the property has videoViewingAvailable. */
+  viewingMode?: 'in_person' | 'video'
 }
 
 export type BookingResult = { requestId: string } | { error: string }
@@ -272,6 +277,7 @@ export async function createInspectionRequest(
         composeScheduledDateTime(input.requestedDate, input.requestedTimeSlot),
       ),
       requestedTimeSlot: input.requestedTimeSlot,
+      viewingMode: input.viewingMode ?? 'in_person',
       requestedTimeDisplay:
         TIME_SLOT_DISPLAY[input.requestedTimeSlot] ?? input.requestedTimeSlot,
       notes: input.notes,

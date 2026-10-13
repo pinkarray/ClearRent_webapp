@@ -19,7 +19,9 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   {
     key: "Permissions-Policy",
-    value: "camera=(), microphone=(), geolocation=()",
+    // Our own pages only: the tenant's side of a video viewing needs the
+    // microphone (and the camera, if they turn it on).
+    value: "camera=(self), microphone=(self), geolocation=()",
   },
   {
     key: "Content-Security-Policy",
@@ -53,7 +55,20 @@ const securityHeaders = [
         // Property photos upload to the same Cloudinary cloud and unsigned
         // preset the Flutter app uses, so both surfaces produce identical URLs.
         "https://api.cloudinary.com",
+        // Agora, for video viewings. Its edge servers sit on non-default
+        // ports, which a bare *.agora.io source would not match. Without
+        // these the web call hung on "Joining the call" (2026-10-13).
+        "https://*.agora.io",
+        "wss://*.agora.io",
+        "https://*.agora.io:*",
+        "wss://*.agora.io:*",
+        "https://*.sd-rtn.com",
+        "wss://*.sd-rtn.com",
+        "https://*.sd-rtn.com:*",
+        "wss://*.sd-rtn.com:*",
       ].join(" "),
+      // The Agora SDK may start a worker from a blob URL.
+      "worker-src 'self' blob:",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",

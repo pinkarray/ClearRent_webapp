@@ -207,6 +207,14 @@ export function BookInspection({ propertyId }: { propertyId: string }) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!user || !property) return
+    if (!date) {
+      setError('Pick a date first.')
+      return
+    }
+    if (!slot) {
+      setError('Pick a time first.')
+      return
+    }
     setError(null)
     setBusy(true)
     const res = await createInspectionRequest(user.uid, {
@@ -359,7 +367,9 @@ export function BookInspection({ propertyId }: { propertyId: string }) {
       <button
         className="btn-primary mt-5 w-full px-6 py-3"
         type="submit"
-        disabled={busy || !date || !slot}
+        // Not disabled for a missing date or time: a disabled button here
+        // looked clickable and said nothing. Submitting explains instead.
+        disabled={busy}
       >
         {busy ? 'Requesting…' : 'Request inspection'}
       </button>

@@ -23,6 +23,10 @@ export default function VideoCallPage({ params }: { params: Promise<{ id: string
   const [hasRemote, setHasRemote] = useState(false)
   const [micOn, setMicOn] = useState(true)
   const [cameraOn, setCameraOn] = useState(false)
+  // On a bad network the SDK can retry for minutes. After 15s, or a dropped
+  // connection, offer a Reconnect that starts over with a fresh token.
+  const [lost, setLost] = useState(false)
+  const lostTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const remoteRef = useRef<HTMLDivElement>(null)
   const localRef = useRef<HTMLDivElement>(null)
   const client = useRef<IAgoraRTCClient | null>(null)
@@ -58,8 +62,17 @@ export default function VideoCallPage({ params }: { params: Promise<{ id: string
           setHasRemote(false)
           setStatus('Your host left the call.')
         })
-        c.on('connection-state-change', (state) => {
-          if (state === 'RECONNECTING') setStatus('Weak network, reconnecting…')
+        c.on('connection-state-change', (state, _prev, reason) => {
+          if (state === 'RECONNECTING') {
+            setStatus('Weak network, reconnecting…')
+            lostTimer.current ??= setTimeout(() => setLost(true), 15000)
+          } else if (state === 'CONNECTED') {
+            if (lostTimer.current) clearTimeout(lostTimer.current)
+            lostTimer.current = null
+            setLost(false)
+          } else if (state === 'DISCONNECTED' && reason !== 'LEAVE') {
+            setLost(true)
+          }
         })
 
         setStatus('Joining the call…')
@@ -85,6 +98,7 @@ export default function VideoCallPage({ params }: { params: Promise<{ id: string
 
     return () => {
       left = true
+      if (lostTimer.current) clearTimeout(lostTimer.current)
       mic.current?.close()
       cam.current?.close()
       void client.current?.leave()
@@ -120,6 +134,18 @@ export default function VideoCallPage({ params }: { params: Promise<{ id: string
           <p className="absolute inset-0 flex items-center justify-center p-6 text-center text-white/70">
             {status}
           </p>
+        )}
+        {lost && (
+          <div className="absolute inset-x-6 top-24 rounded-2xl bg-black/80 p-4 text-center">
+            <p className="text-sm">Connection lost. Mobile data is often better than weak Wi-Fi.</p>
+            {/* A reload rejoins from scratch with a fresh token. */}
+            <button
+              className="mt-3 rounded-full bg-white/20 px-5 py-2 text-sm"
+              onClick={() => window.location.reload()}
+            >
+              Reconnect
+            </button>
+          </div>
         )}
         <div
           ref={localRef}

@@ -190,11 +190,24 @@ export function InspectionActions({
           {state.isVideo && (
             <div className="mt-2 flex flex-wrap items-center gap-3">
               {!mine ? (
-                <span className="text-sm text-content-secondary">
-                  {iArrived
-                    ? '✓ You started the call from the property'
-                    : 'Start this video viewing from the ClearRent app, at the property. It checks you are there.'}
-                </span>
+                <>
+                  {/* The host still travels: telling the tenant, who waits
+                      at home, that someone is coming. */}
+                  {!iArrived && !iOnWay && (
+                    <button
+                      className="btn-ghost px-5 py-2.5 text-sm"
+                      disabled={busy}
+                      onClick={() => run(() => markOnWay(state.id, role))}
+                    >
+                      I&apos;m on my way
+                    </button>
+                  )}
+                  <span className="text-sm text-content-secondary">
+                    {iArrived
+                      ? '✓ You started the call from the property'
+                      : 'Start this video viewing from the ClearRent app, at the property. It checks you are there.'}
+                  </span>
+                </>
               ) : state.videoStarted ? (
                 // Kept after joining: a call can drop mid-walkthrough.
                 <Link
@@ -205,7 +218,9 @@ export function InspectionActions({
                 </Link>
               ) : (
                 <span className="text-sm text-content-secondary">
-                  Waiting for {them} to start the call from the property.
+                  {theyOnWay
+                    ? `${them} is on the way to the property.`
+                    : `Waiting for ${them} to start the call from the property.`}
                 </span>
               )}
             </div>

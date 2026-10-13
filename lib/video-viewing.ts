@@ -23,3 +23,21 @@ export async function joinVideoViewing(requestId: string): Promise<VideoCallCred
   )({ requestId })
   return res.data
 }
+
+/**
+ * The tenant says they are waiting for the call. The server records it with
+ * its own clock; if the host never starts by the end of the slot, this is what
+ * makes the refund automatic. Returns an error message, or null on success.
+ */
+export async function markVideoViewingReady(requestId: string): Promise<string | null> {
+  initAppCheck()
+  try {
+    await httpsCallable<{ requestId: string }, unknown>(
+      getFunctions(clientApp(), 'us-central1'),
+      'markVideoViewingReady',
+    )({ requestId })
+    return null
+  } catch (err) {
+    return err instanceof Error ? err.message : 'Could not record that. Please try again.'
+  }
+}

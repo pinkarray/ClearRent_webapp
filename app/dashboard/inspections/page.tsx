@@ -43,6 +43,7 @@ type Row = {
   handlerIsResident?: boolean
   isVideo: boolean
   videoStarted: boolean
+  tenantReady: boolean
 }
 
 /**
@@ -187,6 +188,7 @@ export default function TenantInspectionsPage() {
               tenantNoShow: x.tenantNoShow === true,
               isVideo: x.viewingMode === 'video',
               videoStarted: x.video?.startedAt != null,
+              tenantReady: x.tenantReadyAt != null,
               // The handler is the assigned agent when there is one, else the
               // landlord - that is who the tenant rates.
               handlerId: (x.agentId as string) ?? (x.landlordId as string) ?? '',

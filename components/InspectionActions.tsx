@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { markVideoViewingReady } from '../lib/video-viewing'
 import {
   completeInspection,
   confirmMet,
@@ -34,6 +35,8 @@ export type InspectionState = {
   isVideo?: boolean
   /** The host has opened the call; the tenant can join. */
   videoStarted?: boolean
+  /** The tenant said they were waiting (proves a host no-show). */
+  tenantReady?: boolean
   /** Who the tenant rates: the agent when agent-handled, else the landlord. */
   handlerId: string
   handlerName: string
@@ -217,11 +220,25 @@ export function InspectionActions({
                   {iArrived ? 'Rejoin video call' : 'Join video call'}
                 </Link>
               ) : (
-                <span className="text-sm text-content-secondary">
-                  {theyOnWay
-                    ? `${them} is on the way to the property.`
-                    : `Waiting for ${them} to start the call from the property.`}
-                </span>
+                <>
+                  {/* The tenant can't join before the host starts. Saying
+                      they are ready is what proves a host who never starts. */}
+                  {!state.tenantReady && (
+                    <button
+                      className="btn-primary px-5 py-2.5 text-sm"
+                      disabled={busy}
+                      onClick={() => run(() => markVideoViewingReady(state.id))}
+                    >
+                      I&apos;m ready for the call
+                    </button>
+                  )}
+                  <span className="text-sm text-content-secondary">
+                    {state.tenantReady ? '✓ You are ready. ' : ''}
+                    {theyOnWay
+                      ? `${them} is on the way to the property.`
+                      : `Waiting for ${them} to start the call from the property.`}
+                  </span>
+                </>
               )}
             </div>
           )}

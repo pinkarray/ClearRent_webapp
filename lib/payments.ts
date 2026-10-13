@@ -72,17 +72,42 @@ export async function verifyPayment(reference: string): Promise<Record<string, u
  * [returnPath] is where Paystack should send the user back to; the reference is
  * appended so the return page can verify it.
  */
+/**
+ * A slow or dropped connection used to leave Pay silent for over a minute
+ * (the callable) or for good (the Firestore write waits for the server), so
+ * people kept tapping. Each step now gives up and says why.
+ */
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>((_, reject) =>
+      setTimeout(
+        () =>
+          reject(
+            new Error(
+              "Couldn't reach Paystack. Check your connection and try again. You have not been charged.",
+            ),
+          ),
+        ms,
+      ),
+    ),
+  ])
+}
+
 export async function startPayment(
   type: PaymentType,
   amount: number,
   returnPath: string,
   metadata: Record<string, unknown> = {},
 ): Promise<void> {
-  const init = await initializePayment(type, amount, {
-    ...metadata,
-    // Read back on return so we know which payment to verify.
-    webReturnPath: returnPath,
-  })
+  const init = await withTimeout(
+    initializePayment(type, amount, {
+      ...metadata,
+      // Read back on return so we know which payment to verify.
+      webReturnPath: returnPath,
+    }),
+    30000,
+  )
 
   // What the callback page needs must survive the round trip - and the round
   // trip crosses ORIGINS: `initializePayment` hardcodes
@@ -92,7 +117,7 @@ export async function startPayment(
   // owner-read/write.
   const uid = clientAuth().currentUser?.uid
   if (uid) {
-    await setDoc(doc(clientDb(), 'users', uid, 'private', 'pendingPayment'), {
+    await withTimeout(setDoc(doc(clientDb(), 'users', uid, 'private', 'pendingPayment'), {
       reference: init.reference,
       type,
       returnPath,
@@ -100,7 +125,7 @@ export async function startPayment(
       // confirmInspectionPayment, and verifyPayment does not echo metadata back.
       context: metadata,
       startedAt: serverTimestamp(),
-    })
+    }), 30000)
   }
 
   window.location.href = init.authorizationUrl

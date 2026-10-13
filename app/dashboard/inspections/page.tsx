@@ -79,6 +79,9 @@ export default function TenantInspectionsPage() {
   useScrollToHash(rows !== null)
   const [payingId, setPayingId] = useState<string | null>(null)
   const [payError, setPayError] = useState<string | null>(null)
+  // Which card a payment error belongs to, so it shows under that card's Pay
+  // button. At the top of the page it went unseen and Pay looked dead.
+  const [payErrorFor, setPayErrorFor] = useState<string | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
   const [cancelling, setCancelling] = useState<string | null>(null)
 
@@ -132,6 +135,7 @@ export default function TenantInspectionsPage() {
 
   async function handlePay(r: Row) {
     setPayError(null)
+    setPayErrorFor(null)
     setPayingId(r.id)
     try {
       // The amount is display-only - resolveServerAmount recomputes the real
@@ -142,6 +146,7 @@ export default function TenantInspectionsPage() {
       })
     } catch (err) {
       setPayingId(null)
+      setPayErrorFor(r.id)
       setPayError(err instanceof Error ? err.message : 'Could not start the payment.')
     }
   }
@@ -208,7 +213,7 @@ export default function TenantInspectionsPage() {
   return (
     <>
       <div>
-        {payError && <p className="mb-4 text-sm text-error">{payError}</p>}
+        {payError && !payErrorFor && <p className="mb-4 text-sm text-error">{payError}</p>}
 
         {rows === null ? (
           <p className="text-sm text-content-secondary">Loading…</p>
@@ -278,8 +283,11 @@ export default function TenantInspectionsPage() {
                       disabled={payingId === r.id}
                       onClick={() => handlePay(r)}
                     >
-                      {payingId === r.id ? 'Redirecting…' : `Pay ${formatNaira(r.totalFee)}`}
+                      {payingId === r.id ? 'Connecting to Paystack…' : `Pay ${formatNaira(r.totalFee)}`}
                     </button>
+                    {payErrorFor === r.id && payError && (
+                      <p className="mt-2 text-sm text-error">{payError}</p>
+                    )}
                   </div>
                 )}
 

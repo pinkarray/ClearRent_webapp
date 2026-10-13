@@ -1,9 +1,11 @@
 import {
   RecaptchaVerifier,
+  signInWithCustomToken,
   signInWithPhoneNumber,
   type ConfirmationResult,
 } from 'firebase/auth'
-import { clientAuth } from './firebase-client'
+import { getFunctions, httpsCallable } from 'firebase/functions'
+import { clientApp, clientAuth, initAppCheck } from './firebase-client'
 
 /**
  * Firebase phone auth on web.
@@ -50,6 +52,68 @@ export function resetVerifier(): void {
 export async function sendOtp(
   e164Phone: string,
   containerId: string,
-): Promise<ConfirmationResult> {
-  return signInWithPhoneNumber(clientAuth(), e164Phone, getVerifier(containerId))
+): Promise<SentCode> {
+  const viaServer = await requestServerOtp(e164Phone)
+  if (viaServer) return viaServer
+  return {
+    kind: 'firebase',
+    confirmation: await signInWithPhoneNumber(clientAuth(), e164Phone, getVerifier(containerId)),
+  }
+}
+
+/**
+ * Who sent the code. Firebase Phone Auth fails for Glo and Airtel numbers
+ * (17499 / Error 39), so config/otp can route codes through our own
+ * requestPhoneOtp CF (Termii); those are checked by verifyPhoneOtp instead of
+ * a ConfirmationResult.
+ */
+export type SentCode =
+  | { kind: 'firebase'; confirmation: ConfirmationResult }
+  | { kind: 'clearrent'; phone: string }
+
+function callables() {
+  initAppCheck()
+  return getFunctions(clientApp(), 'us-central1')
+}
+
+/**
+ * Null means "use Firebase": config/otp says so, or the CF is unreachable or
+ * not deployed, in which case Firebase still serves MTN and 9mobile. A bad
+ * number or too many requests is thrown, since Firebase would not do better.
+ */
+async function requestServerOtp(e164Phone: string): Promise<SentCode | null> {
+  try {
+    const res = await httpsCallable<{ phone: string }, { provider?: string }>(
+      callables(),
+      'requestPhoneOtp',
+    )({ phone: e164Phone })
+    return res.data.provider === 'termii' ? { kind: 'clearrent', phone: e164Phone } : null
+  } catch (err) {
+    const code = (err as { code?: string }).code
+    if (code === 'functions/invalid-argument' || code === 'functions/resource-exhausted') {
+      throw err
+    }
+    console.warn('requestPhoneOtp failed; using Firebase', code)
+    return null
+  }
+}
+
+/** Checks the code and signs in. Throws with a user-facing message. */
+export async function confirmCode(
+  sent: SentCode,
+  code: string,
+): Promise<{ uid: string; isNewUser: boolean }> {
+  if (sent.kind === 'firebase') {
+    const cred = await sent.confirmation.confirm(code)
+    return {
+      uid: cred.user.uid,
+      isNewUser: cred.user.metadata.creationTime === cred.user.metadata.lastSignInTime,
+    }
+  }
+  const res = await httpsCallable<
+    { phone: string; code: string },
+    { token: string; isNewUser: boolean }
+  >(callables(), 'verifyPhoneOtp')({ phone: sent.phone, code })
+  const cred = await signInWithCustomToken(clientAuth(), res.data.token)
+  return { uid: cred.user.uid, isNewUser: res.data.isNewUser === true }
 }

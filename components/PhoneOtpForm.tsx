@@ -1,8 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import type { ConfirmationResult } from 'firebase/auth'
-import { resetVerifier, sendOtp } from '../lib/phone-auth'
+import { confirmCode, resetVerifier, sendOtp, type SentCode } from '../lib/phone-auth'
 import { phoneToE164 } from '../lib/phone'
 
 /**
@@ -21,7 +20,7 @@ export function PhoneOtpForm({
 }) {
   const [phone, setPhone] = useState('')
   const [code, setCode] = useState('')
-  const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(null)
+  const [confirmation, setConfirmation] = useState<SentCode | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -53,8 +52,8 @@ export function PhoneOtpForm({
     setError(null)
     setBusy(true)
     try {
-      const cred = await confirmation.confirm(code.trim())
-      await onVerified(cred.user.uid, cred.user.metadata.creationTime === cred.user.metadata.lastSignInTime)
+      const { uid, isNewUser } = await confirmCode(confirmation, code.trim())
+      await onVerified(uid, isNewUser)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'That code was not accepted.')
     } finally {

@@ -180,7 +180,7 @@ export default function WhyClearRent() {
                 ))}
               </div>
 
-              <a href="#waitlist" className="btn-primary" style={{
+              <a href="/signup" className="btn-primary" style={{
                 padding: '14px 32px',
                 fontSize: 15,
                 display: 'inline-block',

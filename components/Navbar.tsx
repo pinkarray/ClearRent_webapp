@@ -36,7 +36,7 @@ export default function Navbar() {
     { label: 'How It Works', href: '#how-it-works' },
     { label: 'For Agents', href: '#agents' },
     { label: 'Pricing', href: '#pricing' },
-    { label: 'Join Waitlist', href: '#waitlist' },
+    { label: 'Get the App', href: '#waitlist' },
   ]
 
   return (

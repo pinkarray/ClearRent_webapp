@@ -65,8 +65,9 @@ export default function Hero() {
             flexWrap: 'wrap',
             marginBottom: 48,
           }}>
-            <a href="#waitlist" className="btn-amber" style={{ padding: '13px 28px', fontSize: 15, display: 'inline-block', textDecoration: 'none' }}>
-              Join the Waitlist →
+            {/* The web is live; the waitlist further down is for the app. */}
+            <a href="/properties" className="btn-amber" style={{ padding: '13px 28px', fontSize: 15, display: 'inline-block', textDecoration: 'none' }}>
+              Browse properties →
             </a>
             <a href="#how-it-works" className="btn-ghost" style={{ padding: '13px 28px', fontSize: 15, display: 'inline-block', textDecoration: 'none' }}>
               See How It Works

@@ -70,15 +70,15 @@ export default function Waitlist() {
                 You&apos;re on the list!
               </h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: 16, lineHeight: 1.7 }}>
-                We&apos;ll notify you as soon as ClearRent opens in your area. Tell a friend - the more verified
-                users, the better the platform for everyone.
+                We&apos;ll tell you the day the app is on Google Play. Until then, everything already works
+                on the web. Tell a friend - the more verified users, the better the platform for everyone.
               </p>
             </div>
           ) : (
             <>
               <div style={{ marginBottom: 32 }}>
                 <span className="verified-badge" style={{ marginBottom: 16, display: 'inline-flex' }}>
-                  🚀 Early Access
+                  📱 Android app
                 </span>
                 <h2 style={{
                   fontFamily: 'Outfit',
@@ -89,10 +89,12 @@ export default function Waitlist() {
                   marginBottom: 12,
                   letterSpacing: '-0.02em',
                 }}>
-                  Be first when we launch
+                  Get the app first
                 </h2>
                 <p style={{ fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
-                  ClearRent is launching in Lagos soon. Join the waitlist and get priority access.
+                  ClearRent is live on the web today: browse verified listings, book viewings and pay
+                  safely. Our Android app is in final testing. Join the list and we'll tell you the
+                  day it's on Google Play.
                 </p>
               </div>
 
@@ -193,11 +195,11 @@ export default function Waitlist() {
                     width: '100%',
                   }}
                 >
-                  {loading ? 'Joining...' : 'Join the Waitlist →'}
+                  {loading ? 'Joining...' : 'Notify me when the app is out →'}
                 </button>
 
                 <p style={{ fontSize: 12, color: 'var(--text-hint)', textAlign: 'center' }}>
-                  No spam. Just a heads-up when we launch. 🔒
+                  No spam. Just a heads-up when the app is out. 🔒
                 </p>
               </div>
             </>

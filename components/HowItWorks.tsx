@@ -148,7 +148,7 @@ export default function HowItWorks() {
         {/* Agent CTA */}
         {active === 'agent' && (
           <div style={{ textAlign: 'center', marginTop: 40 }}>
-            <a href="#waitlist" className="btn-primary" style={{
+            <a href="/signup" className="btn-primary" style={{
               padding: '14px 36px',
               fontSize: 15,
               display: 'inline-block',

@@ -177,7 +177,7 @@ export default function Pricing() {
               </div>
 
               <a
-                href="#waitlist"
+                href="/signup"
                 style={{
                   display: 'block',
                   textAlign: 'center',

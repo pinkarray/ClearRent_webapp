@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import {
   completeInspection,
   confirmMet,
@@ -26,6 +27,13 @@ export type InspectionState = {
   tenantRated: boolean
   /** Closed as a tenant no-show: never asked to rate a visit that did not happen. */
   tenantNoShow?: boolean
+  /**
+   * A live video call instead of a visit. Arrival is recorded by the server
+   * (the host's GPS check, the tenant joining), so the taps below don't apply.
+   */
+  isVideo?: boolean
+  /** The host has opened the call; the tenant can join. */
+  videoStarted?: boolean
   /** Who the tenant rates: the agent when agent-handled, else the landlord. */
   handlerId: string
   handlerName: string
@@ -179,7 +187,32 @@ export function InspectionActions({
               whether anyone is coming. Hidden once you have arrived, since
               saying you are on the way then is nonsense, and hidden for a
               resident landlord, who is not travelling anywhere. */}
-          {!iArrived && !(resident && !mine) && (
+          {state.isVideo && (
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              {!mine ? (
+                <span className="text-sm text-content-secondary">
+                  {iArrived
+                    ? '✓ You started the call from the property'
+                    : 'Start this video viewing from the ClearRent app, at the property. It checks you are there.'}
+                </span>
+              ) : iArrived && bothArrived ? (
+                <span className="text-sm text-content-secondary">✓ You joined the call</span>
+              ) : state.videoStarted ? (
+                <Link
+                  className="btn-primary px-5 py-2.5 text-sm"
+                  href={`/dashboard/inspections/${state.id}/call`}
+                >
+                  Join video call
+                </Link>
+              ) : (
+                <span className="text-sm text-content-secondary">
+                  Waiting for {them} to start the call from the property.
+                </span>
+              )}
+            </div>
+          )}
+
+          {!state.isVideo && !iArrived && !(resident && !mine) && (
             <div className="mt-2 flex flex-wrap items-center gap-3">
               {!iOnWay ? (
                 <button
@@ -207,6 +240,7 @@ export function InspectionActions({
               someone announce and arrive in the same breath, or skip straight
               to arrived - a state the app can never produce. A resident
               landlord is travelling nowhere, so they go straight to ready. */}
+          {!state.isVideo && (
           <div className="mt-2 flex flex-wrap items-center gap-3">
             {!iArrived ? (
               (iOnWay || (resident && !mine)) && (
@@ -232,6 +266,7 @@ export function InspectionActions({
                 : `Waiting for ${them}`}
             </span>
           </div>
+          )}
 
           {canReportNoShow && (
             <button

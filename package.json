@@ -9,6 +9,7 @@
     "lint": "eslint app components lib"
   },
   "dependencies": {
+    "agora-rtc-sdk-ng": "^4.24.9",
     "firebase": "^12.14.0",
     "firebase-admin": "^13.7.0",
     "next": "16.1.6",

@@ -195,14 +195,13 @@ export function InspectionActions({
                     ? '✓ You started the call from the property'
                     : 'Start this video viewing from the ClearRent app, at the property. It checks you are there.'}
                 </span>
-              ) : iArrived && bothArrived ? (
-                <span className="text-sm text-content-secondary">✓ You joined the call</span>
               ) : state.videoStarted ? (
+                // Kept after joining: a call can drop mid-walkthrough.
                 <Link
                   className="btn-primary px-5 py-2.5 text-sm"
                   href={`/dashboard/inspections/${state.id}/call`}
                 >
-                  Join video call
+                  {iArrived ? 'Rejoin video call' : 'Join video call'}
                 </Link>
               ) : (
                 <span className="text-sm text-content-secondary">

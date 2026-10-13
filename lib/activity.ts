@@ -14,7 +14,7 @@ import { clientDb } from './firebase-client'
  * renders both.
  */
 
-type ActivityType = 'propertyAdded' | 'inquiry' | 'payment'
+type ActivityType = 'propertyAdded' | 'payment' | 'inspection_request'
 
 async function addActivity(fields: Record<string, unknown>): Promise<void> {
   try {
@@ -67,26 +67,32 @@ export async function trackPropertyAdded(
 }
 
 /**
- * Records a tenant's interest in a property. The app files an inspection
- * request under the 'inquiry' type, which is what the landlord's feed shows as
- * "New inquiry from …".
+ * Records a booking on the landlord's feed exactly as the app does
+ * (inspection_service.dart): type 'inspection_request' with the request id,
+ * which the app routes to Inspection Requests. Filed as an 'inquiry' before,
+ * it opened a "message this person" sheet with no way to the request.
  */
-export async function trackInquiry(args: {
+export async function trackInspectionRequest(args: {
   landlordId: string
   propertyId: string
   propertyTitle: string
   tenantId: string
   tenantName: string
+  requestId: string
+  isVideo: boolean
 }): Promise<void> {
   await addActivity({
     landlordId: args.landlordId,
-    type: 'inquiry' satisfies ActivityType,
-    title: `New inquiry from ${args.tenantName}`,
-    subtitle: args.propertyTitle,
+    type: 'inspection_request' satisfies ActivityType,
+    title: 'New Inspection Request',
+    subtitle: args.isVideo
+      ? `${args.tenantName} wants a video viewing of ${args.propertyTitle}`
+      : `${args.tenantName} wants to inspect ${args.propertyTitle}`,
     propertyId: args.propertyId,
     propertyTitle: args.propertyTitle,
     actorId: args.tenantId,
     actorName: args.tenantName,
+    relatedId: args.requestId,
   })
 }
 

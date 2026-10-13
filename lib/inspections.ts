@@ -12,7 +12,7 @@ import {
 } from 'firebase/firestore'
 import { getFunctions, httpsCallable } from 'firebase/functions'
 import { clientApp, clientDb, initAppCheck } from './firebase-client'
-import { trackInquiry } from './activity'
+import { trackInspectionRequest } from './activity'
 import { getPricing } from './listing-fee'
 
 /**
@@ -329,12 +329,14 @@ export async function createInspectionRequest(
     // Surfaces the booking on the landlord's recent-activity feed. Written by
     // the client here because that is where the app writes it too - there is no
     // trigger doing it server-side.
-    await trackInquiry({
+    await trackInspectionRequest({
       landlordId: property.landlordId,
       propertyId: property.id,
       propertyTitle: property.title,
       tenantId,
       tenantName: (tenant.fullName as string) ?? 'Tenant',
+      requestId: ref.id,
+      isVideo: input.viewingMode === 'video',
     })
 
     return { requestId: ref.id }

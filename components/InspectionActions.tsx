@@ -77,6 +77,11 @@ function arrivalOpen(d: Date): boolean {
 }
 
 /** When the window opens, for the not-yet message. */
+/** Whether a video call window has opened (video_viewing_ops.ts). */
+function videoCallOpen(opensAt: Date): boolean {
+  return Date.now() >= opensAt.getTime()
+}
+
 function opensAt(d: Date): Date {
   return new Date(d.getTime() - ARRIVAL_WINDOW_MS)
 }
@@ -127,6 +132,15 @@ export function InspectionActions({
   const theyArrived = mine ? state.handlerArrived : state.tenantArrived
   const iConfirmed = mine ? state.tenantConfirmedMet : state.handlerConfirmedMet
   const bothArrived = state.tenantArrived && state.handlerArrived
+
+  // Video call window (video_viewing_ops.ts): opens 30 minutes before the
+  // slot; the host must have checked in 30 minutes after it starts.
+  const slotStart = state.requestedDate?.getTime() ?? 0
+  const callOpensAt = new Date(slotStart - 30 * 60 * 1000)
+  const checkInBy = new Date(slotStart + 30 * 60 * 1000)
+  const beforeWindow = !videoCallOpen(callOpensAt)
+  const clock = (d: Date) =>
+    d.toLocaleTimeString('en-NG', { hour: 'numeric', minute: '2-digit' })
   // The other party by name, as the app does. The on-the-way line had its
   // labels swapped, so a handler read "Handler is on the way" about the tenant.
   const them = mine
@@ -206,9 +220,11 @@ export function InspectionActions({
                     </button>
                   )}
                   <span className="text-sm text-content-secondary">
-                    {iArrived
-                      ? '✓ You started the call from the property'
-                      : 'Start this video viewing from the ClearRent app, at the property. It checks you are there.'}
+                    {!iArrived
+                      ? `Check in from the ClearRent app at the property by ${clock(checkInBy)}. If the tenant is waiting and you haven't, they are refunded and you are not paid.`
+                      : state.videoStarted
+                        ? '✓ You started the call from the property'
+                        : '✓ You checked in at the property. Start the call from the app.'}
                   </span>
                 </>
               ) : state.videoStarted ? (
@@ -223,7 +239,11 @@ export function InspectionActions({
                 <>
                   {/* The tenant can't join before the host starts. Saying
                       they are ready is what proves a host who never starts. */}
-                  {!state.tenantReady && (
+                  {beforeWindow ? (
+                    <span className="text-sm text-content-secondary">
+                      The call opens at {clock(callOpensAt)}.
+                    </span>
+                  ) : !state.tenantReady && (
                     <button
                       className="btn-primary px-5 py-2.5 text-sm"
                       disabled={busy}
@@ -234,9 +254,11 @@ export function InspectionActions({
                   )}
                   <span className="text-sm text-content-secondary">
                     {state.tenantReady ? '✓ You are ready. ' : ''}
-                    {theyOnWay
-                      ? `${them} is on the way to the property.`
-                      : `Waiting for ${them} to start the call from the property.`}
+                    {theyArrived
+                      ? `${them} is at the property. Waiting for the call to start.`
+                      : theyOnWay
+                        ? `${them} is on the way to the property.`
+                        : `Waiting for ${them} to start the call from the property.`}
                   </span>
                 </>
               )}

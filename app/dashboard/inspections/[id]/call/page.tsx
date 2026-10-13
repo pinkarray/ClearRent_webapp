@@ -35,7 +35,9 @@ export default function VideoCallPage({ params }: { params: Promise<{ id: string
 
     ;(async () => {
       try {
+        setStatus('Getting the call details…')
         const creds = await joinVideoViewing(id)
+        setStatus('Loading video…')
         const AgoraRTC = (await import('agora-rtc-sdk-ng')).default
         AgoraRTC.setLogLevel(3) // warnings and errors only
         const c = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' })
@@ -60,7 +62,18 @@ export default function VideoCallPage({ params }: { params: Promise<{ id: string
           if (state === 'RECONNECTING') setStatus('Weak network, reconnecting…')
         })
 
-        await c.join(creds.appId, creds.channel, creds.token, creds.uid)
+        setStatus('Joining the call…')
+        // On a bad network join can retry for a long time; say so rather than
+        // leaving the page on a spinner.
+        await Promise.race([
+          c.join(creds.appId, creds.channel, creds.token, creds.uid),
+          new Promise((_, reject) =>
+            setTimeout(
+              () => reject(new Error('Could not reach the video service. Check your connection (mobile data often works better than weak Wi-Fi) and try again.')),
+              30000,
+            ),
+          ),
+        ])
         if (left) return
         mic.current = await AgoraRTC.createMicrophoneAudioTrack()
         await c.publish([mic.current])

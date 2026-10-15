@@ -56,8 +56,9 @@ export default function Footer() {
               <p style={{ fontSize: 12, color: 'var(--text-hint)', marginTop: 8 }}>
                 A product of Verealty Technologies Ltd. 🇳🇬
               </p>
-              <p style={{ fontSize: 12, color: 'var(--text-hint)', marginTop: 2 }}>
-                Lagos, Nigeria
+              <p style={{ fontSize: 12, color: 'var(--text-hint)', marginTop: 2, lineHeight: 1.6 }}>
+                14 Waidi Oladehinde, New Era Estate,<br />
+                Parafa, Ikorodu, Lagos, Nigeria
               </p>
             </div>
 

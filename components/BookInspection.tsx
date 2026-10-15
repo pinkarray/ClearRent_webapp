@@ -311,44 +311,51 @@ export function BookInspection({ propertyId }: { propertyId: string }) {
         </div>
       </fieldset>
 
-      {/* Only where the host's presence can be checked: the pin was
-          confirmed on site. */}
-      {property.videoViewingAvailable && (
-        <fieldset className="mt-4">
-          <legend className="text-sm font-medium text-content">
-            How would you like to view it?
-          </legend>
-          <div className="mt-2 grid gap-2">
-            {([
-              ['in_person', 'Visit in person', 'Meet your host at the property.'],
-              [
-                'video',
-                'Video viewing',
-                'Your host walks you through on a live video call, from the property itself. Same fee.',
-              ],
-            ] as const).map(([value, title, sub]) => (
-              <label
-                key={value}
-                className={`flex cursor-pointer items-start gap-3 rounded-md border p-3 ${
-                  mode === value ? 'border-primary bg-primary/5' : 'border-divider'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="viewingMode"
-                  className="mt-1"
-                  checked={mode === value}
-                  onChange={() => setMode(value)}
-                />
-                <span>
-                  <span className="block text-sm font-medium text-content">{title}</span>
-                  <span className="block text-xs text-content-secondary">{sub}</span>
-                </span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
-      )}
+      {/* Video only where the host's presence can be checked (the pin was
+          confirmed on site). Shown greyed out otherwise, so tenants know it
+          exists rather than never seeing it. */}
+      <fieldset className="mt-4">
+        <legend className="text-sm font-medium text-content">
+          How would you like to view it?
+        </legend>
+        <div className="mt-2 grid gap-2">
+          {([
+            ['in_person', 'Visit in person', 'Meet your host at the property.', true],
+            [
+              'video',
+              'Video viewing',
+              property.videoViewingAvailable
+                ? 'Your host walks you through on a live video call, from the property itself. Same fee.'
+                : "Video viewing isn't offered for this listing yet.",
+              property.videoViewingAvailable,
+            ],
+          ] as const).map(([value, title, sub, available]) => (
+            <label
+              key={value}
+              className={`flex items-start gap-3 rounded-md border p-3 ${
+                !available
+                  ? 'cursor-not-allowed border-divider opacity-50'
+                  : mode === value
+                    ? 'cursor-pointer border-primary bg-primary/5'
+                    : 'cursor-pointer border-divider'
+              }`}
+            >
+              <input
+                type="radio"
+                name="viewingMode"
+                className="mt-1"
+                disabled={!available}
+                checked={mode === value}
+                onChange={() => setMode(value)}
+              />
+              <span>
+                <span className="block text-sm font-medium text-content">{title}</span>
+                <span className="block text-xs text-content-secondary">{sub}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
 
       <label className="mt-4 block">
         <span className="text-sm font-medium text-content">

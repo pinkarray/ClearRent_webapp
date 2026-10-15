@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { confirmCode, resetVerifier, sendOtp, type SentCode } from '../lib/phone-auth'
 import { phoneToE164 } from '../lib/phone'
 
@@ -46,13 +46,37 @@ export function PhoneOtpForm({
     }
   }
 
+  // Chrome on Android reads our SMS itself (WebOTP) when its last line is
+  // "@<this host> #<code>", which requestPhoneOtp adds when config/otp has
+  // webOtpDomain. Only for codes we sent: Firebase's own SMS has no such line.
+  useEffect(() => {
+    if (confirmation?.kind !== 'clearrent' || !('OTPCredential' in window)) return
+    const ac = new AbortController()
+    navigator.credentials
+      .get({ otp: { transport: ['sms'] }, signal: ac.signal } as CredentialRequestOptions)
+      .then((cred) => {
+        const otp = (cred as unknown as { code?: string } | null)?.code
+        if (otp) {
+          setCode(otp)
+          void verify(otp)
+        }
+      })
+      .catch(() => {}) // aborted, or the user dismissed the prompt: type it instead
+    return () => ac.abort()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [confirmation])
+
   async function handleVerify(e: React.FormEvent) {
     e.preventDefault()
+    await verify(code)
+  }
+
+  async function verify(entered: string) {
     if (!confirmation) return
     setError(null)
     setBusy(true)
     try {
-      const { uid, isNewUser } = await confirmCode(confirmation, code.trim())
+      const { uid, isNewUser } = await confirmCode(confirmation, entered.trim())
       await onVerified(uid, isNewUser)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'That code was not accepted.')

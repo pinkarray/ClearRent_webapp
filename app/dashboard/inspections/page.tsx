@@ -262,7 +262,7 @@ export default function TenantInspectionsPage() {
                 </div>
 
                 {/* Renders only when a refund record exists for this request. */}
-                <RefundNotice sourceId={r.id} />
+                <RefundNotice sourceId={r.id} paidTotal={r.totalFee} />
 
                 {(r.status === 'rebookOffered' || r.status === 'expiredUnapproved') && (
                   <RebookCard

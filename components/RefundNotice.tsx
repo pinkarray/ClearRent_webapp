@@ -16,7 +16,14 @@ function formatNaira(n: number): string {
  * to show a tenant is that it is queued and for how much - not a promise about
  * when.
  */
-export function RefundNotice({ sourceId }: { sourceId: string }) {
+export function RefundNotice({
+  sourceId,
+  paidTotal,
+}: {
+  sourceId: string
+  /** What the tenant paid, so a partial refund can say what was kept. */
+  paidTotal?: number
+}) {
   const [refund, setRefund] = useState<Refund | null>(null)
 
   useEffect(() => {
@@ -52,6 +59,12 @@ export function RefundNotice({ sourceId }: { sourceId: string }) {
             }.`
           : 'Queued for payout to the bank account on your profile. Add one under Bank details if you have not yet.'}
       </p>
+      {paidTotal !== undefined && refund.amount < paidTotal && (
+        <p className="mt-1 text-sm text-content-secondary">
+          Of the {formatNaira(paidTotal)} you paid. The{' '}
+          {formatNaira(paidTotal - refund.amount)} booking charge is not refunded.
+        </p>
+      )}
     </div>
   )
 }

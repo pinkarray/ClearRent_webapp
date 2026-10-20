@@ -1,5 +1,20 @@
-import { EmailAuthProvider, linkWithCredential, sendEmailVerification } from 'firebase/auth'
-import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore'
+import {
+  createUserWithEmailAndPassword,
+  EmailAuthProvider,
+  linkWithCredential,
+  sendEmailVerification,
+} from 'firebase/auth'
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  limit,
+  query,
+  serverTimestamp,
+  setDoc,
+  where,
+} from 'firebase/firestore'
 import { clientAuth, clientDb } from './firebase-client'
 import { phoneToE164 } from './phone'
 
@@ -45,6 +60,54 @@ export async function linkEmailPassword(
   return null
 }
 
+/**
+ * Creates an account from email and password, for people whose network never
+ * delivers the SMS code (Airtel). Mirrors `AuthService.signUp` in the app.
+ *
+ * Returns null on success, or a message to show the user.
+ */
+export async function createEmailAccount(
+  email: string,
+  password: string,
+): Promise<string | null> {
+  try {
+    const cred = await createUserWithEmailAndPassword(clientAuth(), email, password)
+    try {
+      await sendEmailVerification(cred.user)
+    } catch {
+      // Ignore, as in linkEmailPassword.
+    }
+    return null
+  } catch (err) {
+    const code = (err as { code?: string })?.code ?? ''
+    if (code === 'auth/email-already-in-use') {
+      return 'That email already has an account. Log in instead.'
+    }
+    if (code === 'auth/invalid-email') return 'That email address is not valid.'
+    if (code === 'auth/weak-password') return 'Password must be at least 6 characters.'
+    return err instanceof Error ? err.message : 'Could not create the account.'
+  }
+}
+
+/**
+ * Whether another account already holds this number. Only a courtesy for email
+ * signups, whose number is typed and never confirmed, same as
+ * `isPhoneTakenByAnotherAccount` in the app: a failed read answers false.
+ */
+export async function isPhoneTakenByAnotherAccount(
+  e164: string,
+  uid: string,
+): Promise<boolean> {
+  try {
+    const snap = await getDocs(
+      query(collection(clientDb(), 'users'), where('phone', '==', e164), limit(2)),
+    )
+    return snap.docs.some((d) => d.id !== uid)
+  } catch {
+    return false
+  }
+}
+
 export type AccountType = 'tenant' | 'landlord' | 'agent'
 
 /**
@@ -82,6 +145,8 @@ export type ProfileInput = {
   accountType: AccountType
   /** The signed-in phone number, already E.164 from Firebase Auth. */
   authPhone: string | null
+  /** Typed by an email signup, E.164. Saved unverified; authPhone wins. */
+  typedPhone?: string
   // Agent-only
   baseLocation?: string
   serviceAreas?: string[]
@@ -114,6 +179,13 @@ export async function saveUserProfile(uid: string, input: ProfileInput): Promise
     profileCompleted: true,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
+  }
+
+  // Typed, not proven: written so the person can be found and called, and
+  // flagged false so nothing treats it as ownership. authPhone overwrites it.
+  if (input.typedPhone) {
+    data.phone = input.typedPhone
+    data.phoneVerified = false
   }
 
   if (input.authPhone) {

@@ -6,7 +6,11 @@ import { useRouter } from 'next/navigation'
 import { PhoneOtpForm } from '../../components/PhoneOtpForm'
 import { PasswordField } from '../../components/PasswordField'
 import { useAuth } from '../../components/AuthProvider'
+import { clientAuth } from '../../lib/firebase-client'
+import { phoneToE164 } from '../../lib/phone'
 import {
+  createEmailAccount,
+  isPhoneTakenByAnotherAccount,
   linkEmailPassword,
   saveAccountType,
   saveUserProfile,
@@ -42,6 +46,8 @@ export default function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [occupation, setOccupation] = useState('')
   const [employer, setEmployer] = useState('')
+  const [phone, setPhone] = useState('')
+  const [useEmail, setUseEmail] = useState(false)
   const [incomeRange, setIncomeRange] = useState('')
   const [baseLocation, setBaseLocation] = useState('')
   const [serviceAreas, setServiceAreas] = useState('')
@@ -49,39 +55,76 @@ export default function SignupPage() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Created with email and password, so it has no phone and nothing to link.
+  const isEmailFirst = !!user && !user.phoneNumber && !!user.email
+
   async function handleVerified(uid: string) {
     if (accountType) await saveAccountType(uid, accountType)
     setStep('profile')
+  }
+
+  async function handleEmailSignup(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+    if (password !== confirmPassword) {
+      setError('Those passwords do not match.')
+      return
+    }
+    setBusy(true)
+    const createError = await createEmailAccount(email.trim(), password)
+    if (createError) {
+      setError(createError)
+      setBusy(false)
+      return
+    }
+    const uid = clientAuth().currentUser?.uid
+    if (uid) await handleVerified(uid)
+    setBusy(false)
   }
 
   async function handleProfile(e: React.FormEvent) {
     e.preventDefault()
     if (!user || !accountType) return
     setError(null)
+    const typedPhone = isEmailFirst ? phoneToE164(phone) : null
+    if (isEmailFirst && !typedPhone) {
+      setError('Enter a valid Nigerian mobile number, e.g. 0803 123 4567.')
+      return
+    }
     // A mistyped password is not recoverable from this screen: the account is
     // already created against the phone, and this password is the only way to
     // sign in by email afterwards. Catch it here rather than at the next
     // sign-in, weeks later, with no idea what was typed.
-    if (password !== confirmPassword) {
+    if (!isEmailFirst && password !== confirmPassword) {
       setError('Those passwords do not match.')
       return
     }
     setBusy(true)
     try {
-      // Must happen before the profile write: payments read the email off the
-      // AUTH token, not off the user doc.
-      const linkError = await linkEmailPassword(email.trim(), password)
-      if (linkError) {
-        setError(linkError)
-        setBusy(false)
-        return
+      if (typedPhone) {
+        // Stop a typo landing on someone else's number before it is saved.
+        if (await isPhoneTakenByAnotherAccount(typedPhone, user.uid)) {
+          setError('That number is already on another ClearRent account. Please check it for a typo.')
+          setBusy(false)
+          return
+        }
+      } else {
+        // Must happen before the profile write: payments read the email off the
+        // AUTH token, not off the user doc.
+        const linkError = await linkEmailPassword(email.trim(), password)
+        if (linkError) {
+          setError(linkError)
+          setBusy(false)
+          return
+        }
       }
 
       await saveUserProfile(user.uid, {
         fullName: fullName.trim(),
-        email: email.trim(),
+        email: user.email ?? email.trim(),
         accountType,
         authPhone: user.phoneNumber,
+        typedPhone: typedPhone ?? undefined,
         occupation: occupation.trim() || undefined,
         employer: employer.trim() || undefined,
         incomeRange: incomeRange || undefined,
@@ -151,7 +194,16 @@ export default function SignupPage() {
             <button
               className="btn-primary mt-6 w-full px-6 py-3"
               disabled={!accountType}
-              onClick={() => setStep('phone')}
+              onClick={async () => {
+                // Already signed in (a signup left half done): the account
+                // exists, so creating it again would only fail.
+                if (user && accountType) {
+                  await saveAccountType(user.uid, accountType)
+                  setStep('profile')
+                } else {
+                  setStep('phone')
+                }
+              }}
             >
               Continue
             </button>
@@ -161,14 +213,59 @@ export default function SignupPage() {
         {step === 'phone' && (
           <>
             <h1 className="mt-6 text-2xl font-bold text-content">
-              Verify your phone
+              {useEmail ? 'Sign up with email' : 'Verify your phone'}
             </h1>
             <p className="mt-2 text-sm text-content-secondary">
               This is how you will sign in, on web and in the app.
             </p>
-            <div className="card mt-6 p-6">
-              <PhoneOtpForm onVerified={handleVerified} submitLabel="Verify" />
-            </div>
+            {useEmail ? (
+              <form onSubmit={handleEmailSignup} className="card mt-6 space-y-4 p-6">
+                <label className="block">
+                  <span className="text-sm font-medium text-content">Email</span>
+                  <input
+                    className="input-field mt-1.5 px-4 py-3"
+                    type="email"
+                    autoComplete="username"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </label>
+                <PasswordField
+                  label="Password"
+                  hint="At least 6 characters."
+                  autoComplete="new-password"
+                  minLength={6}
+                  value={password}
+                  onChange={setPassword}
+                />
+                <PasswordField
+                  label="Confirm password"
+                  hint="Type it again so a slip on the keyboard doesn't lock you out."
+                  autoComplete="new-password"
+                  minLength={6}
+                  value={confirmPassword}
+                  onChange={setConfirmPassword}
+                />
+                {error && <p className="text-sm text-red-600">{error}</p>}
+                <button className="btn-primary w-full px-6 py-3" type="submit" disabled={busy}>
+                  {busy ? 'Creating…' : 'Create account'}
+                </button>
+              </form>
+            ) : (
+              <div className="card mt-6 p-6">
+                <PhoneOtpForm onVerified={handleVerified} submitLabel="Verify" />
+              </div>
+            )}
+            <button
+              className="mt-4 w-full text-sm font-medium text-primary"
+              onClick={() => {
+                setError(null)
+                setUseEmail(!useEmail)
+              }}
+            >
+              {useEmail ? 'Use my phone number instead' : 'No SMS code? Sign up with email instead'}
+            </button>
             <button
               className="mt-4 w-full text-sm text-content-secondary underline"
               onClick={() => setStep('type')}
@@ -193,47 +290,67 @@ export default function SignupPage() {
                   onChange={(e) => setFullName(e.target.value)}
                 />
               </label>
-              <label className="block">
-                <span className="text-sm font-medium text-content">Email</span>
-                <span className="mt-0.5 block text-xs text-content-hint">
-                  Receipts and payments use this address.
-                </span>
-                {/* `username`, not `email`: this address IS the sign-in
-                    identifier, and browsers use a username field next to a
-                    new-password field to recognise a REGISTRATION form. That
-                    recognition is what makes them offer to generate and save a
-                    strong password - with `email` alone many simply don't. */}
-                <input
-                  className="input-field mt-1.5 px-4 py-3"
-                  type="email"
-                  autoComplete="username"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </label>
+              {isEmailFirst ? (
+                <label className="block">
+                  <span className="text-sm font-medium text-content">Phone number</span>
+                  <span className="mt-0.5 block text-xs text-content-hint">
+                    So landlords, agents and caretakers can reach you.
+                  </span>
+                  <input
+                    className="input-field mt-1.5 px-4 py-3"
+                    type="tel"
+                    autoComplete="tel"
+                    placeholder="0803 123 4567"
+                    required
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                  />
+                </label>
+              ) : (
+                <>
+                  <label className="block">
+                    <span className="text-sm font-medium text-content">Email</span>
+                    <span className="mt-0.5 block text-xs text-content-hint">
+                      Receipts and payments use this address.
+                    </span>
+                    {/* `username`, not `email`: this address IS the sign-in
+                        identifier, and browsers use a username field next to a
+                        new-password field to recognise a REGISTRATION form. That
+                        recognition is what makes them offer to generate and save a
+                        strong password - with `email` alone many simply don't. */}
+                    <input
+                      className="input-field mt-1.5 px-4 py-3"
+                      type="email"
+                      autoComplete="username"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </label>
 
-              <PasswordField
-                label="Password"
-                hint="At least 6 characters. Lets you sign in by email as well as phone."
-                autoComplete="new-password"
-                minLength={6}
-                value={password}
-                onChange={setPassword}
-              />
+                  <PasswordField
+                    label="Password"
+                    hint="At least 6 characters. Lets you sign in by email as well as phone."
+                    autoComplete="new-password"
+                    minLength={6}
+                    value={password}
+                    onChange={setPassword}
+                  />
 
-              <PasswordField
-                label="Confirm password"
-                hint="Type it again so a slip on the keyboard doesn't lock you out."
-                autoComplete="new-password"
-                minLength={6}
-                value={confirmPassword}
-                onChange={setConfirmPassword}
-              />
-              {confirmPassword.length > 0 && password !== confirmPassword && (
-                <p className="text-xs text-red-500">
-                  These do not match yet.
-                </p>
+                  <PasswordField
+                    label="Confirm password"
+                    hint="Type it again so a slip on the keyboard doesn't lock you out."
+                    autoComplete="new-password"
+                    minLength={6}
+                    value={confirmPassword}
+                    onChange={setConfirmPassword}
+                  />
+                  {confirmPassword.length > 0 && password !== confirmPassword && (
+                    <p className="text-xs text-red-500">
+                      These do not match yet.
+                    </p>
+                  )}
+                </>
               )}
 
               {accountType === 'tenant' && (

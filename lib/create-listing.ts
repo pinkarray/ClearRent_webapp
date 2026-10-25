@@ -34,6 +34,8 @@ export type ListingInput = {
   agentFee: number
   cautionDeposit: number
   cautionDepositRefundable: boolean
+  /** 'unfurnished' | 'partly' | 'fully'. Required by the form. */
+  furnishing: string
   amenities: string[]
   rules: string[]
   landlordLivesInProperty: boolean
@@ -119,6 +121,7 @@ export async function createListing(uid: string, input: ListingInput): Promise<s
     agentFee: input.agentFee,
     cautionDeposit: input.cautionDeposit,
     cautionDepositRefundable: input.cautionDepositRefundable,
+    furnishing: input.furnishing,
     // Born hidden, as the app creates it; adminReviewPropertyDoc sets it true
     // on approval. `true` here put unreviewed web listings in front of agents
     // on Discover, which filters on availability alone.

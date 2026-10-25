@@ -43,6 +43,29 @@ export function propertyTypeLabel(value: string): string {
   return TYPE_LABELS[value] ?? value
 }
 
+/** PropertyModel.furnishingLabels, in the order offered. Key is what's stored. */
+export const FURNISHING_LABELS: Record<string, string> = {
+  unfurnished: 'Unfurnished',
+  partly: 'Partly furnished',
+  fully: 'Fully furnished',
+}
+
+/** Same one-line meaning the app's picker shows under each level. */
+export const FURNISHING_HINTS: Record<string, string> = {
+  unfurnished: 'An empty space. The tenant brings everything.',
+  partly: 'Some furniture or fittings stay, such as wardrobes or a cooker.',
+  fully: 'Ready to live in: beds, seating and kitchen items included.',
+}
+
+/** Anything outside the three values reads as not stated, never shown raw. */
+export function furnishingOrNull(value: unknown): string | null {
+  return typeof value === 'string' && value in FURNISHING_LABELS ? value : null
+}
+
+export function furnishingLabel(value: string | null): string {
+  return (value && FURNISHING_LABELS[value]) || 'Furnishing not stated'
+}
+
 /**
  * Types that are ONE space. They have no meaningful bedroom count - what
  * separates them is which facilities are the tenant's own, so their spec is

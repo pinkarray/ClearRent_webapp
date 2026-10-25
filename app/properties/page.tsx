@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { PropertyCard } from '../../components/PropertyCard'
 import { getPublishedProperties, type PropertyFilters } from '../../lib/property'
+import { FURNISHING_LABELS } from '../../lib/format'
 
 export const metadata: Metadata = {
   title: 'Verified properties for rent in Nigeria - ClearRent',
@@ -39,6 +40,7 @@ export default async function PropertiesPage({
     bedrooms: parseNumber(one('bedrooms')),
     minRent: parseNumber(one('minRent')),
     maxRent: parseNumber(one('maxRent')),
+    furnishing: one('furnishing'),
   }
 
   const properties = await getPublishedProperties(filters)
@@ -55,7 +57,7 @@ export default async function PropertiesPage({
           inspection. Exact addresses are shared once your inspection is approved.
         </p>
 
-        <form className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-5" method="get">
+        <form className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-6" method="get">
           <input
             className="input-field px-4 py-3"
             name="state"
@@ -82,6 +84,19 @@ export default async function PropertiesPage({
             placeholder="Bedrooms"
             defaultValue={filters.bedrooms ?? ''}
           />
+          <select
+            className="input-field px-4 py-3"
+            name="furnishing"
+            aria-label="Furnishing"
+            defaultValue={filters.furnishing ?? ''}
+          >
+            <option value="">Any furnishing</option>
+            {Object.entries(FURNISHING_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
           <button className="btn-primary px-6 py-3" type="submit">
             Search
           </button>

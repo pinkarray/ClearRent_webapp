@@ -2,6 +2,7 @@ import { doc, getDoc, serverTimestamp, updateDoc } from 'firebase/firestore'
 import { getStorage, ref as storageRef, uploadBytes } from 'firebase/storage'
 import { clientApp, clientAuth, clientDb } from './firebase-client'
 import { getResidence } from './residence'
+import { furnishingOrNull } from './format'
 
 /**
  * The readiness checklist, copied from `PropertyService.readinessChecklistItems`.
@@ -65,6 +66,14 @@ export type EditableListing = {
   agentFee: number
   cautionDeposit: number
   cautionDepositRefundable: boolean
+  /** null = "Not stated" (listings from before the field). */
+  furnishing: string | null
+  /**
+   * The level as stored. Rules freeze furnishing while a tenant is in, except
+   * on a listing that never stated it, so the lock keys off this, not the
+   * value being edited.
+   */
+  savedFurnishing: string | null
   isAvailable: boolean
   amenities: string[]
   rules: string[]
@@ -104,6 +113,8 @@ export async function loadListingForEdit(propertyId: string): Promise<EditableLi
     agentFee: (d.agentFee as number) ?? 0,
     cautionDeposit: (d.cautionDeposit as number) ?? 0,
     cautionDepositRefundable: d.cautionDepositRefundable !== false,
+    furnishing: furnishingOrNull(d.furnishing),
+    savedFurnishing: furnishingOrNull(d.furnishing),
     isAvailable: d.isAvailable === true,
     amenities: Array.isArray(d.amenities) ? (d.amenities as string[]) : [],
     rules: Array.isArray(d.rules) ? (d.rules as string[]) : [],
@@ -132,6 +143,10 @@ export async function saveListingEdits(
     rules: edits.rules,
     updatedAt: serverTimestamp(),
   }
+
+  // Never written as null: rules accept only the three values, and a listing
+  // that never stated it stays "Not stated" until the landlord picks one.
+  if (edits.furnishing) payload.furnishing = edits.furnishing
 
   if (edits.currentTenantsCount <= 0) {
     payload.rent = edits.rent

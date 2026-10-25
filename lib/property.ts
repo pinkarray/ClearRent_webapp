@@ -1,5 +1,6 @@
 import { adminDb } from './firebase-admin'
 import { residenceShortLine } from './residence-line'
+import { furnishingOrNull } from './format'
 
 /**
  * The only shape of a property that may reach a browser on a public page.
@@ -33,6 +34,8 @@ export type PublicProperty = {
   agentFee: number
   cautionDeposit: number
   cautionDepositRefundable: boolean
+  /** 'unfurnished' | 'partly' | 'fully', or null: "Not stated" (legacy listings). */
+  furnishing: string | null
   amenities: string[]
   rules: string[]
   recurringDues: { name?: string; amount?: number; frequency?: string }[]
@@ -186,6 +189,7 @@ function toPublicProperty(
     // Absent field ⇒ refundable: every listing predating the flag was
     // advertised as refundable, same default as the Flutter model.
     cautionDepositRefundable: d.cautionDepositRefundable !== false,
+    furnishing: furnishingOrNull(d.furnishing),
     amenities: strList(d.amenities),
     rules: strList(d.rules),
     recurringDues: Array.isArray(d.recurringDues)
@@ -251,6 +255,7 @@ export type PropertyFilters = {
   bedrooms?: number
   minRent?: number
   maxRent?: number
+  furnishing?: string
 }
 
 function matchesFilters(p: PublicProperty, f: PropertyFilters): boolean {
@@ -262,7 +267,10 @@ function matchesFilters(p: PublicProperty, f: PropertyFilters): boolean {
     eq(p.propertyType, f.propertyType) &&
     (f.bedrooms === undefined || p.bedrooms === f.bedrooms) &&
     (f.minRent === undefined || p.rent >= f.minRent) &&
-    (f.maxRent === undefined || p.rent <= f.maxRent)
+    (f.maxRent === undefined || p.rent <= f.maxRent) &&
+    // A listing that never stated its level could be either, so it matches
+    // only when no level is asked for. Same rule as the app's filter.
+    (!f.furnishing || p.furnishing === f.furnishing)
   )
 }
 

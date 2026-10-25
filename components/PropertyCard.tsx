@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { CloudinaryImage } from './CloudinaryImage'
 import {
   formatNaira,
+  furnishingLabel,
   isSingleSpace,
   rentPeriod,
   sharedFacilities,
@@ -77,6 +78,16 @@ export function PropertyCard({ property }: { property: PublicProperty }) {
             </>
           )}
         </div>
+
+        {/* Always shown, so a listing that never said reads as not stated
+            rather than looking unfurnished by omission. */}
+        <p
+          className={`mt-1 text-sm ${
+            property.furnishing ? 'text-content-secondary' : 'text-content-hint'
+          }`}
+        >
+          {furnishingLabel(property.furnishing)}
+        </p>
       </div>
     </Link>
   )

@@ -15,6 +15,7 @@ import {
   unitContext,
   type PublicProperty,
 } from '../../../lib/property'
+import { furnishingLabel } from '../../../lib/format'
 
 /** Listings written before the access fields existed carry ''. Say so rather
  *  than guessing - "private" would overclaim, "shared" would undersell. */
@@ -197,6 +198,10 @@ export default async function PropertyDetailPage({ params }: Props) {
                     <Row label="Living room" value={accessLabel(property.livingRoomAccess)} />
                   </>
                 )}
+                <Row
+                  label="Furnishing"
+                  value={property.furnishing ? furnishingLabel(property.furnishing) : 'Not stated'}
+                />
                 {property.landlordLine && <Row label="Landlord" value={property.landlordLine} />}
                 {property.ceilingTypes.length > 0 && (
                   <Row

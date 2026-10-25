@@ -14,6 +14,7 @@ import {
 } from '../../lib/residence'
 import { areaDisplayName, areaGroups, lgaName } from '../../lib/lagos-areas'
 import ResidenceForm from '../../components/ResidenceForm'
+import { FurnishingPicker } from '../../components/FurnishingPicker'
 import { getPricing, listingFeeOwed, payListingFee } from '../../lib/listing-fee'
 import { formatNairaFull } from '../../lib/format'
 
@@ -61,6 +62,8 @@ type Draft = {
   agentFee: string
   cautionDeposit: string
   cautionDepositRefundable: boolean
+  // No default: required, so it is a real answer. Same as the app.
+  furnishing: string | null
   amenities: string
   rules: string
   currentTenantsCount: string
@@ -89,6 +92,7 @@ const EMPTY: Draft = {
   agentFee: '0',
   cautionDeposit: '0',
   cautionDepositRefundable: true,
+  furnishing: null,
   amenities: '',
   rules: '',
   currentTenantsCount: '0',
@@ -227,6 +231,10 @@ export default function ListPropertyPage() {
       setError('Tell tenants where you live first. It is asked once, for all your listings.')
       return
     }
+    if (!draft.furnishing) {
+      setError('Say how furnished the property is.')
+      return
+    }
     // The rules refuse a lower rent, which surfaced as a bare permissions error
     // after the photos had already uploaded.
     if (!(toFloat(draft.rent) >= minRent)) {
@@ -264,6 +272,7 @@ export default function ListPropertyPage() {
         agentFee: toFloat(draft.agentFee),
         cautionDeposit: toFloat(draft.cautionDeposit),
         cautionDepositRefundable: draft.cautionDepositRefundable,
+        furnishing: draft.furnishing,
         amenities: csv(draft.amenities),
         rules: csv(draft.rules),
         // Web lists whole properties only, and a property one tenant gets in
@@ -692,6 +701,18 @@ export default function ListPropertyPage() {
 
           <section className="card space-y-4 p-6">
             <h2 className="font-semibold text-content">Details & occupancy</h2>
+            <div>
+              <span className="text-sm font-medium text-content">Furnishing</span>
+              <span className="mt-0.5 block text-xs text-content-hint">
+                So tenants know whether they are moving into an empty space.
+              </span>
+              <div className="mt-1.5">
+                <FurnishingPicker
+                  value={draft.furnishing}
+                  onChange={(v) => set('furnishing', v)}
+                />
+              </div>
+            </div>
             <Field label="Amenities" hint="Comma separated, e.g. borehole, prepaid meter, parking">
               <input
                 className="input-field px-4 py-3"

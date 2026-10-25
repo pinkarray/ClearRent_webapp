@@ -8,6 +8,7 @@ import { PropertyAgreementSection } from '../../../../components/PropertyAgreeme
 import { fingerprint } from '../../../../lib/form-state'
 import { getPricing, listingFeeOwed, payListingFee } from '../../../../lib/listing-fee'
 import { formatNairaFull } from '../../../../lib/format'
+import { FurnishingPicker } from '../../../../components/FurnishingPicker'
 import {
   READINESS_ITEMS,
   loadListingForEdit,
@@ -107,7 +108,9 @@ export default function EditListingPage() {
       return
     }
     setMessage('Changes saved.')
-    setSavedState(fingerprint([listing, amenities, rules]))
+    const saved = { ...listing, savedFurnishing: listing.furnishing }
+    setListing(saved)
+    setSavedState(fingerprint([saved, amenities, rules]))
   }
 
   async function handleMarkReady() {
@@ -240,6 +243,33 @@ export default function EditListingPage() {
             />
             Caution deposit is refundable at move-out
           </label>
+
+          <div>
+            <span className="text-sm font-medium text-content">Furnishing</span>
+            {listing.savedFurnishing === null && (
+              <p
+                className="mt-1.5 rounded-lg px-3 py-2 text-sm text-content"
+                style={{ background: 'var(--warning-tint)' }}
+              >
+                Tenants see &ldquo;Furnishing not stated&rdquo; on this listing until you choose.
+              </p>
+            )}
+            {listing.currentTenantsCount > 0 && listing.savedFurnishing !== null && (
+              <span className="mt-0.5 block text-xs text-content-hint">
+                Locked while a tenant is living here.
+              </span>
+            )}
+            <div className="mt-1.5">
+              <FurnishingPicker
+                value={listing.furnishing}
+                onChange={
+                  listing.currentTenantsCount > 0 && listing.savedFurnishing !== null
+                    ? undefined
+                    : (v) => set('furnishing', v)
+                }
+              />
+            </div>
+          </div>
 
           <label className="block">
             <span className="text-sm font-medium text-content">Amenities</span>

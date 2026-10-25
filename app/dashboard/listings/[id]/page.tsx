@@ -8,7 +8,7 @@ import { PropertyAgreementSection } from '../../../../components/PropertyAgreeme
 import { fingerprint } from '../../../../lib/form-state'
 import { getPricing, listingFeeOwed, payListingFee } from '../../../../lib/listing-fee'
 import { formatNairaFull } from '../../../../lib/format'
-import { OVERDUE_URGENT_MESSAGE } from '../../../../lib/user-profile'
+import { publishBlockReason } from '../../../../lib/user-profile'
 import { FurnishingPicker } from '../../../../components/FurnishingPicker'
 import {
   READINESS_ITEMS,
@@ -297,8 +297,9 @@ export default function EditListingPage() {
               onChange={(e) => {
                 // Relisting is what the urgent-issue block stops (rules
                 // enforce it); taking a listing down is always allowed.
-                if (e.target.checked && profile?.overdueUrgentIssues?.length) {
-                  setError(OVERDUE_URGENT_MESSAGE)
+                const blocked = e.target.checked ? publishBlockReason(profile) : null
+                if (blocked) {
+                  setError(blocked)
                   return
                 }
                 set('isAvailable', e.target.checked)

@@ -137,12 +137,30 @@ export type UserProfile = {
    * remain; it empties the moment the landlord responds.
    */
   overdueUrgentIssues?: string[]
+  /** Server-written by adminSetListingSuspension; rules enforce it. */
+  listingSuspended?: boolean
+  listingSuspendedUntil?: { toDate?: () => Date } | null
 }
 
-/** Shown when a landlord tries to publish or relist while blocked. */
-export const OVERDUE_URGENT_MESSAGE =
-  'An urgent issue a tenant reported has been waiting on you for over 3 days. ' +
-  'Respond to it in Issues before you publish or relist a property.'
+/**
+ * Why this landlord may not publish or relist right now, or null when they
+ * may. Mirrors the firestore.rules checks so the page can say why instead of
+ * failing on a bare permissions error.
+ */
+export function publishBlockReason(p: UserProfile | null): string | null {
+  if (!p) return null
+  const until = p.listingSuspendedUntil?.toDate?.() ?? null
+  if (p.listingSuspended === true && (!until || until > new Date())) {
+    return until
+      ? `Your listings are suspended until ${until.toLocaleDateString('en-NG')}, so you cannot publish or relist.`
+      : 'Your listings are suspended, so you cannot publish or relist.'
+  }
+  if (p.overdueUrgentIssues?.length) {
+    return 'An urgent issue a tenant reported has been waiting on you for over 3 days. ' +
+      'Respond to it in Issues before you publish or relist a property.'
+  }
+  return null
+}
 
 export async function getUserProfile(uid: string): Promise<UserProfile | null> {
   const snap = await getDoc(doc(clientDb(), 'users', uid))

@@ -27,6 +27,7 @@ import {
 import { useScrollToHash } from '../../../lib/use-scroll-to-hash'
 import { openInNewTab } from '../../../lib/open-in-new-tab'
 import MoveOutConditionCapture from '../../../components/MoveOutConditionCapture'
+import RateLandlord from '../../../components/RateLandlord'
 import { useAskText } from '../../../components/AskText'
 
 const INTEREST_COPY: Record<string, string> = {
@@ -337,6 +338,11 @@ export default function TenancyPage() {
                 {!isLandlord && r.handoverStage === 'awaiting_evidence' && user && (
                   <MoveOutConditionCapture rentalId={r.id} uid={user.uid} />
                 )}
+
+                {!isLandlord &&
+                  (r.status === 'ended_by_tenant' || r.status === 'ended_by_landlord') && (
+                    <RateLandlord rentalId={r.id} />
+                  )}
 
                 {!isLandlord &&
                   r.handoverStage === 'awaiting_confirm' &&

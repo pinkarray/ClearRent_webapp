@@ -7,6 +7,7 @@ import SaveButton from '../../../components/SaveButton'
 import TrackView from '../../../components/TrackView'
 import {
   formatNairaFull,
+  getLandlordRecord,
   getPublishedProperty,
   isSingleSpace,
   propertyTypeLabel,
@@ -113,6 +114,7 @@ export default async function PropertyDetailPage({ params }: Props) {
   const { id } = await params
   const property = await getPublishedProperty(id)
   if (!property) notFound()
+  const record = await getLandlordRecord(id)
 
   return (
     <main>
@@ -203,6 +205,26 @@ export default async function PropertyDetailPage({ params }: Props) {
                   value={property.furnishing ? furnishingLabel(property.furnishing) : 'Not stated'}
                 />
                 {property.landlordLine && <Row label="Landlord" value={property.landlordLine} />}
+                {record.issues && (
+                  <Row
+                    label="Issue response"
+                    value={
+                      record.issues.received === 0
+                        ? 'No tenant issues yet'
+                        : `Answered ${record.issues.answeredInTime} of ${record.issues.received} in time`
+                    }
+                  />
+                )}
+                {record.rating && (
+                  <Row
+                    label="Tenant rating"
+                    value={
+                      record.rating.count === 0
+                        ? 'No ratings yet'
+                        : `${record.rating.average.toFixed(1)} ★ from ${record.rating.count} tenant${record.rating.count === 1 ? '' : 's'}`
+                    }
+                  />
+                )}
                 {property.ceilingTypes.length > 0 && (
                   <Row
                     label="Ceiling"

@@ -319,6 +319,41 @@ export async function getPublishedProperty(id: string): Promise<PublicProperty |
   return toPublicProperty(snap.id, data, buildings)
 }
 
+/**
+ * What the public is told about a listing's landlord, when the admin has
+ * switched it on (config/features publicLandlordRecord / publicLandlordRatings).
+ * Each part is null while its switch is off, so nothing reaches the page.
+ * Read from public_profiles, never the private user doc.
+ */
+export type LandlordRecord = {
+  issues: { received: number; answeredInTime: number } | null
+  rating: { average: number; count: number } | null
+}
+
+export async function getLandlordRecord(propertyId: string): Promise<LandlordRecord> {
+  const db = adminDb()
+  const [prop, features] = await Promise.all([
+    db.collection('properties').doc(propertyId).get(),
+    db.collection('config').doc('features').get(),
+  ])
+  const f = features.data() ?? {}
+  const showIssues = f.publicLandlordRecord === true
+  const showRating = f.publicLandlordRatings === true
+  const landlordId = str(prop.data()?.landlordId)
+  if ((!showIssues && !showRating) || !landlordId) return { issues: null, rating: null }
+
+  const p = (await db.collection('public_profiles').doc(landlordId).get()).data() ?? {}
+  const rec = (p.issueRecord ?? {}) as Record<string, unknown>
+  return {
+    issues: showIssues
+      ? { received: num(rec.received), answeredInTime: num(rec.answeredInTime) }
+      : null,
+    rating: showRating
+      ? { average: num(p.landlordRating), count: num(p.landlordRatingCount) }
+      : null,
+  }
+}
+
 // ── Formatting, mirroring the Flutter model's helpers ──
 // The pure helpers live in `lib/format.ts` so client components can use them
 // without importing this module, which pulls in the Admin SDK. Re-exported here

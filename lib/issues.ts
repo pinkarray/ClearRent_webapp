@@ -48,6 +48,21 @@ export type Issue = {
   priority: string
   status: string
   createdAt: Date | null
+  /**
+   * How far the server has chased the landlord on this issue
+   * (issueResponseReminders): 1 reminded, 2 warned, 3 handed to ClearRent's
+   * team. Null until the first rung, and cleared when a new round starts.
+   */
+  chase: { rung: number; at: Date | null } | null
+}
+
+/** The line a tenant sees under an issue the landlord is being chased on. */
+export function chaseLine(chase: Issue['chase'], when: string): string | null {
+  if (!chase) return null
+  if (chase.rung >= 3) return `ClearRent's team was alerted on ${when} and will follow up.`
+  if (chase.rung === 2) return `We warned your landlord on ${when} that this is overdue.`
+  if (chase.rung === 1) return `We reminded your landlord about this on ${when}.`
+  return null
 }
 
 export type ReportIssueInput = {
@@ -133,6 +148,10 @@ function toIssue(d: QueryDocumentSnapshot): Issue {
     priority: (x.priority as string) ?? 'medium',
     status: (x.status as string) ?? 'open',
     createdAt: x.createdAt?.toDate?.() ?? null,
+    chase:
+      typeof x.landlordChase?.rung === 'number'
+        ? { rung: x.landlordChase.rung, at: x.landlordChase.at?.toDate?.() ?? null }
+        : null,
   }
 }
 

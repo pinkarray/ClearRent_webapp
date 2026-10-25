@@ -10,6 +10,7 @@ import {
   reportIssue,
   watchTenantIssues,
   type Issue,
+  chaseLine,
 } from '../lib/issues'
 import { activeRentals, type ActiveRental } from '../lib/tenancy'
 import { useAskText } from './AskText'
@@ -275,6 +276,18 @@ export default function TenantIssueCentre() {
                   </span>
                 </div>
                 <p className="mt-3 text-sm text-content-secondary">{i.description}</p>
+
+                {/* So the tenant knows the complaint is being chased, not just
+                    hoping it is. Only while it still waits on the landlord. */}
+                {(i.status === 'open' || i.status === 'in_progress') &&
+                  chaseLine(i.chase, formatDate(i.chase?.at ?? null)) && (
+                    <p
+                      className="mt-3 rounded-lg px-3 py-2 text-sm text-content"
+                      style={{ background: 'var(--warning-tint)' }}
+                    >
+                      {chaseLine(i.chase, formatDate(i.chase?.at ?? null))}
+                    </p>
+                  )}
 
                 {/*
                   The landlord saying it is fixed does not close it - it lands

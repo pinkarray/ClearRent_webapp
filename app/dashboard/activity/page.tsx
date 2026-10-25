@@ -25,6 +25,8 @@ const GLYPH: Record<string, string> = {
   issue_reported: '⚠',
   issue_updated: '🔧',
   issue_pending_reminder: '⏳',
+  issue_response_reminder: '⏰',
+  issue_nudge: '⏰',
   inspection_request: '📅',
   inspection_arrival: '📍',
   rental_interest_paid: '₦',

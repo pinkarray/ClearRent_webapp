@@ -17,6 +17,7 @@ import ResidenceForm from '../../components/ResidenceForm'
 import { FurnishingPicker } from '../../components/FurnishingPicker'
 import { getPricing, listingFeeOwed, payListingFee } from '../../lib/listing-fee'
 import { formatNairaFull } from '../../lib/format'
+import { OVERDUE_URGENT_MESSAGE } from '../../lib/user-profile'
 
 // ClearRent operates in Lagos today, so the State field is defaulted rather
 // than fixed. Nothing rejects another state outright: admin review is the gate,
@@ -233,6 +234,12 @@ export default function ListPropertyPage() {
     }
     if (!draft.furnishing) {
       setError('Say how furnished the property is.')
+      return
+    }
+    // firestore.rules refuses it anyway; saying why beats a bare permissions
+    // error after the photos have uploaded.
+    if (profile?.overdueUrgentIssues?.length) {
+      setError(OVERDUE_URGENT_MESSAGE)
       return
     }
     // The rules refuse a lower rent, which surfaced as a bare permissions error

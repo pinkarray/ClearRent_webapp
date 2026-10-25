@@ -131,7 +131,18 @@ export type UserProfile = {
   totalListingsCreated?: number
   /** Rules require this before a tenant may request an inspection. */
   hasBankDetails?: boolean
+  /**
+   * Urgent issues left unanswered past the admin rung (server-written by
+   * issueResponseReminders). Rules refuse a new listing or a relist while any
+   * remain; it empties the moment the landlord responds.
+   */
+  overdueUrgentIssues?: string[]
 }
+
+/** Shown when a landlord tries to publish or relist while blocked. */
+export const OVERDUE_URGENT_MESSAGE =
+  'An urgent issue a tenant reported has been waiting on you for over 3 days. ' +
+  'Respond to it in Issues before you publish or relist a property.'
 
 export async function getUserProfile(uid: string): Promise<UserProfile | null> {
   const snap = await getDoc(doc(clientDb(), 'users', uid))

@@ -8,6 +8,7 @@ import { PropertyAgreementSection } from '../../../../components/PropertyAgreeme
 import { fingerprint } from '../../../../lib/form-state'
 import { getPricing, listingFeeOwed, payListingFee } from '../../../../lib/listing-fee'
 import { formatNairaFull } from '../../../../lib/format'
+import { OVERDUE_URGENT_MESSAGE } from '../../../../lib/user-profile'
 import { FurnishingPicker } from '../../../../components/FurnishingPicker'
 import {
   READINESS_ITEMS,
@@ -29,7 +30,7 @@ export default function EditListingPage() {
 
   const params = useParams<{ id: string }>()
   const propertyId = params.id
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
 
   const [listing, setListing] = useState<EditableListing | null>(null)
   const [amenities, setAmenities] = useState('')
@@ -293,7 +294,15 @@ export default function EditListingPage() {
             <input
               type="checkbox"
               checked={listing.isAvailable}
-              onChange={(e) => set('isAvailable', e.target.checked)}
+              onChange={(e) => {
+                // Relisting is what the urgent-issue block stops (rules
+                // enforce it); taking a listing down is always allowed.
+                if (e.target.checked && profile?.overdueUrgentIssues?.length) {
+                  setError(OVERDUE_URGENT_MESSAGE)
+                  return
+                }
+                set('isAvailable', e.target.checked)
+              }}
             />
             Available for rent
           </label>

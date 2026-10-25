@@ -132,6 +132,22 @@ export default function EditListingPage() {
     return <p className="text-sm text-content-secondary">Loading…</p>
   }
 
+  // Any signed-in account can READ a listing, so the editor used to render for
+  // someone else's: the full form, every save then refused by the rules.
+  if (listing.landlordId !== user.uid) {
+    return (
+      <div className="card p-6">
+        <p className="font-semibold text-content">This is not your listing</p>
+        <p className="mt-1 text-sm text-content-secondary">
+          Only the landlord who listed it can edit it.
+        </p>
+        <Link href="/dashboard" className="btn-ghost mt-4 inline-block px-4 py-2 text-sm no-underline">
+          Back to dashboard
+        </Link>
+      </div>
+    )
+  }
+
   const dirty =
     savedState !== null && fingerprint([listing, amenities, rules]) !== savedState
   const frozen = listing.currentTenantsCount > 0

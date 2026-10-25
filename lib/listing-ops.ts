@@ -60,6 +60,8 @@ export async function markReadyForInspections(
 }
 
 export type EditableListing = {
+  /** Only the owner may edit (firestore.rules); the page checks this first. */
+  landlordId: string
   title: string
   description: string
   rent: number
@@ -107,6 +109,7 @@ export async function loadListingForEdit(propertyId: string): Promise<EditableLi
   if (!snap.exists()) return null
   const d = snap.data()
   return {
+    landlordId: (d.landlordId as string) ?? '',
     title: (d.title as string) ?? '',
     description: (d.description as string) ?? '',
     rent: (d.rent as number) ?? 0,

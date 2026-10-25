@@ -230,7 +230,11 @@ export async function createInspectionRequest(
   let agentBaseLocation: string | null = null
 
   if (isAgentHandled) {
-    const agentSnap = await getDoc(doc(clientDb(), 'users', property.assignedAgentId as string))
+    // Another person's profile: read the public mirror (public_profile_ops.ts),
+    // which carries an agent's phone and coordinates rounded to ~1km.
+    const agentSnap = await getDoc(
+      doc(clientDb(), 'public_profiles', property.assignedAgentId as string),
+    )
     const a = agentSnap.data() ?? {}
     agentName = (a.fullName as string) ?? null
     agentPhone = (a.phone as string) ?? null

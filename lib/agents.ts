@@ -32,9 +32,10 @@ export type Agent = {
 }
 
 export async function verifiedAgents(): Promise<Agent[]> {
+  // Another person's profile: read the public mirror (public_profile_ops.ts).
   const snap = await getDocs(
     query(
-      collection(clientDb(), 'users'),
+      collection(clientDb(), 'public_profiles'),
       where('accountType', '==', 'agent'),
       where('isVerified', '==', true),
     ),

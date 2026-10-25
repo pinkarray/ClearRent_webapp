@@ -246,9 +246,10 @@ export function watchHandledProperties(
  * action here is to pitch, which is what the app does too.
  */
 export async function discoverProperties(): Promise<HandledProperty[]> {
+  // Another person's profile: read the public mirror (public_profile_ops.ts).
   const landlords = await getDocs(
     query(
-      collection(clientDb(), 'users'),
+      collection(clientDb(), 'public_profiles'),
       where('accountType', '==', 'landlord'),
       where('verificationStatus', '==', 'verified'),
     ),

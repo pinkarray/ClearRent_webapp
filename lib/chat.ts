@@ -349,7 +349,8 @@ export async function getOrCreatePitchConversation(
     )
     if (!existing.empty) return { id: existing.docs[0].id }
 
-    const landlordSnap = await getDoc(doc(clientDb(), 'users', landlordId))
+    // Another person's profile: read the public mirror (public_profile_ops.ts).
+    const landlordSnap = await getDoc(doc(clientDb(), 'public_profiles', landlordId))
     const landlord = landlordSnap.data()
     if (!landlord) return { error: 'Could not find that landlord.' }
     if (landlord.verificationStatus !== 'verified') {
@@ -414,7 +415,8 @@ export async function getOrCreateCaretakerConversation(
     )
     if (!existing.empty) return { id: existing.docs[0].id }
 
-    const landlordSnap = await getDoc(doc(clientDb(), 'users', landlordId))
+    // Another person's profile: read the public mirror (public_profile_ops.ts).
+    const landlordSnap = await getDoc(doc(clientDb(), 'public_profiles', landlordId))
     const landlord = landlordSnap.data()
     if (!landlord) return { error: 'Could not find that landlord.' }
     if (landlord.verificationStatus !== 'verified') {

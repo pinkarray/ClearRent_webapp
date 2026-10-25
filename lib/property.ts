@@ -321,7 +321,8 @@ export async function getPublishedProperty(id: string): Promise<PublicProperty |
 
 /**
  * What the public is told about a listing's landlord, when the admin has
- * switched it on (config/features publicLandlordRecord / publicLandlordRatings).
+ * switched it on (config/features publicLandlordRecord / publicLandlordRatings,
+ * or showIssueRecord on this one landlord).
  * Each part is null while its switch is off, so nothing reaches the page.
  * Read from public_profiles, never the private user doc.
  */
@@ -337,12 +338,14 @@ export async function getLandlordRecord(propertyId: string): Promise<LandlordRec
     db.collection('config').doc('features').get(),
   ])
   const f = features.data() ?? {}
-  const showIssues = f.publicLandlordRecord === true
   const showRating = f.publicLandlordRatings === true
   const landlordId = str(prop.data()?.landlordId)
-  if ((!showIssues && !showRating) || !landlordId) return { issues: null, rating: null }
+  if (!landlordId) return { issues: null, rating: null }
 
   const p = (await db.collection('public_profiles').doc(landlordId).get()).data() ?? {}
+  // Shown for everyone by the platform switch, or for this landlord alone by
+  // the admin's per-landlord switch (Standing card).
+  const showIssues = f.publicLandlordRecord === true || p.showIssueRecord === true
   const rec = (p.issueRecord ?? {}) as Record<string, unknown>
   return {
     issues: showIssues

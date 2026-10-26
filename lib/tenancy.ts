@@ -201,6 +201,13 @@ export type ActiveRental = {
   handoverProofUrl: string
   /** Snapshotted at acceptance, so a later listing edit cannot change it. */
   cautionDeposit: number
+  /**
+   * Furnished stay: paid up front, so the landlord's payout waits for the
+   * tenant's 48-hour move-in check. Server-written: 'awaiting' | 'confirmed'
+   * | 'reported' | 'resolved', or '' on a yearly lease.
+   */
+  moveInCheck: string
+  moveInCheckDeadline: Date | null
   createdAt: Date | null
 }
 
@@ -238,6 +245,8 @@ function toRental(d: QueryDocumentSnapshot): ActiveRental {
       handoverTenantConfirmedAt:
         x.handoverTenantConfirmedAt?.toDate?.() ?? null,
       tenantContested: x.tenantContested === true,
+      moveInCheck: (x.moveInCheck as string) ?? '',
+      moveInCheckDeadline: x.moveInCheckDeadline?.toDate?.() ?? null,
       tenantContestStatement: (x.tenantContestStatement as string) ?? '',
       handoverProofUrl: (x.handoverProofUrl as string) ?? '',
       cautionDeposit: (x.cautionDeposit as number) ?? 0,
@@ -369,6 +378,25 @@ export async function acceptAgreement(
  * caller is the tenant, the interest is 'accepted', and the agreement is
  * finalized.
  */
+/** Furnished stay: the place matches the listing. Null on success. */
+export async function confirmMoveIn(rentalId: string): Promise<string | null> {
+  return moveInCall('confirmMoveIn', { rentalId })
+}
+
+/** Furnished stay: what does not match. Holds the payout. Null on success. */
+export async function reportMoveInProblem(rentalId: string, text: string): Promise<string | null> {
+  return moveInCall('reportMoveInProblem', { rentalId, text })
+}
+
+async function moveInCall(name: string, data: Record<string, string>): Promise<string | null> {
+  try {
+    await httpsCallable(callables(), name)(data)
+    return null
+  } catch (err) {
+    return (err instanceof Error && err.message) || 'That did not go through. Try again.'
+  }
+}
+
 export async function recordRentPayment(
   rentalInterestId: string,
   paymentReference: string,

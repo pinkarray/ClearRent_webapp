@@ -29,6 +29,7 @@ import { openInNewTab } from '../../../lib/open-in-new-tab'
 import MoveOutConditionCapture from '../../../components/MoveOutConditionCapture'
 import RateLandlord from '../../../components/RateLandlord'
 import { useAskText } from '../../../components/AskText'
+import { MoveInCheck } from '../../../components/MoveInCheck'
 
 const INTEREST_COPY: Record<string, string> = {
   pending_acceptance: 'Waiting for the landlord to accept',
@@ -94,6 +95,8 @@ export default function TenancyPage() {
   /** Rental id whose signed copy we are collecting, or null. */
   const [signingFor, setSigningFor] = useState<string | null>(null)
   const [askQuestion, askQuestionDialog] = useAskText()
+  // Read once for the move-in check: the clock is not render-pure.
+  const [now] = useState(() => Date.now())
 
   const isLandlord = profile?.accountType === 'landlord'
 
@@ -335,6 +338,18 @@ export default function TenancyPage() {
                     off the market until the tenant answers. Web had no surface
                     for this at all, so a tenant could only close it from the
                     app and the landlord's unit sat stranded. */}
+                {/* Furnished stay: the 48-hour move-in check, once moved in. */}
+                {!isLandlord &&
+                  r.moveInCheck === 'awaiting' &&
+                  r.leaseStartDate !== null &&
+                  r.leaseStartDate.getTime() <= now && (
+                    <MoveInCheck
+                      rentalId={r.id}
+                      propertyId={r.propertyId}
+                      deadline={r.moveInCheckDeadline}
+                    />
+                  )}
+
                 {!isLandlord && r.handoverStage === 'awaiting_evidence' && user && (
                   <MoveOutConditionCapture rentalId={r.id} uid={user.uid} />
                 )}

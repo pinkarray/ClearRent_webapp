@@ -208,6 +208,11 @@ export type ActiveRental = {
    */
   moveInCheck: string
   moveInCheckDeadline: Date | null
+  /** 'furnished' or 'yearly'. A furnished stay is extended, not renewed. */
+  stayType: string
+  /** Furnished stay: months paid for so far, and the monthly rent. */
+  stayMonths: number
+  monthlyRent: number
   createdAt: Date | null
 }
 
@@ -247,6 +252,9 @@ function toRental(d: QueryDocumentSnapshot): ActiveRental {
       tenantContested: x.tenantContested === true,
       moveInCheck: (x.moveInCheck as string) ?? '',
       moveInCheckDeadline: x.moveInCheckDeadline?.toDate?.() ?? null,
+      stayType: x.stayType === 'furnished' ? 'furnished' : 'yearly',
+      stayMonths: (x.stayMonths as number) ?? 0,
+      monthlyRent: (x.monthlyRent as number) ?? 0,
       tenantContestStatement: (x.tenantContestStatement as string) ?? '',
       handoverProofUrl: (x.handoverProofUrl as string) ?? '',
       cautionDeposit: (x.cautionDeposit as number) ?? 0,
@@ -388,7 +396,19 @@ export async function reportMoveInProblem(rentalId: string, text: string): Promi
   return moveInCall('reportMoveInProblem', { rentalId, text })
 }
 
-async function moveInCall(name: string, data: Record<string, string>): Promise<string | null> {
+/** Furnished stay: records a paid extension. Null on success. */
+export async function completeStayExtension(
+  sourceId: string,
+  paymentReference: string,
+  months: number,
+): Promise<string | null> {
+  return moveInCall('completeStayExtension', { sourceId, paymentReference, months })
+}
+
+async function moveInCall(
+  name: string,
+  data: Record<string, string | number>,
+): Promise<string | null> {
   try {
     await httpsCallable(callables(), name)(data)
     return null

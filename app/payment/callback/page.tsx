@@ -13,6 +13,7 @@ import {
 import { confirmInspectionPayment } from '../../../lib/inspections'
 import { finalizeVerificationPayment } from '../../../lib/verification'
 import { completeRenewal } from '../../../lib/renewal'
+import { completeStayExtension } from '../../../lib/tenancy'
 import { recordRentPayment } from '../../../lib/tenancy'
 import { confirmListingFee } from '../../../lib/listing-fee'
 
@@ -149,6 +150,26 @@ function PaymentCallback() {
         }
       }
 
+      if (p?.type === 'extension') {
+        const sourceId = typeof p.context?.sourceId === 'string' ? p.context.sourceId : null
+        const months = typeof p.context?.months === 'number' ? p.context.months : null
+        if (!sourceId || !months) {
+          setPhase('failed')
+          setMessage(
+            'Payment succeeded but we lost track of which stay it extended. Contact support with reference ' +
+              reference +
+              '.',
+          )
+          return
+        }
+        const err = await completeStayExtension(sourceId, reference, months)
+        if (err) {
+          setPhase('failed')
+          setMessage(err)
+          return
+        }
+      }
+
       if (p?.type === 'listing') {
         const propertyId =
           typeof p.context?.propertyId === 'string' ? p.context.propertyId : null
@@ -200,6 +221,8 @@ function PaymentCallback() {
             ? 'Rent paid. Your tenancy is now active.'
             : p?.type === 'renewal'
               ? 'Renewal complete. Your tenancy has been extended.'
+              : p?.type === 'extension'
+                ? 'Stay extended. Your new end date is on your tenancy page.'
               : p?.type === 'verification'
                 ? 'Payment confirmed. Your verification is now with our team.'
                 : p?.type === 'listing'

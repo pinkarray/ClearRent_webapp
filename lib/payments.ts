@@ -22,7 +22,14 @@ import { clientAuth, clientDb, initAppCheck } from './firebase-client'
 
 const REGION = 'us-central1'
 
-export type PaymentType = 'verification' | 'inspection' | 'listing' | 'rent' | 'renewal'
+export type PaymentType =
+  | 'verification'
+  | 'inspection'
+  | 'listing'
+  | 'rent'
+  | 'renewal'
+  // Furnished stay, months added (rent only). Priced server-side.
+  | 'extension'
 
 export type InitializedPayment = {
   authorizationUrl: string

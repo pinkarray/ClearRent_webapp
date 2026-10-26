@@ -30,6 +30,7 @@ import MoveOutConditionCapture from '../../../components/MoveOutConditionCapture
 import RateLandlord from '../../../components/RateLandlord'
 import { useAskText } from '../../../components/AskText'
 import { MoveInCheck } from '../../../components/MoveInCheck'
+import { ExtendStay } from '../../../components/ExtendStay'
 
 const INTEREST_COPY: Record<string, string> = {
   pending_acceptance: 'Waiting for the landlord to accept',
@@ -338,6 +339,22 @@ export default function TenancyPage() {
                     off the market until the tenant answers. Web had no surface
                     for this at all, so a tenant could only close it from the
                     app and the landlord's unit sat stranded. */}
+                {/* Furnished stay: add months before it ends (rent only). */}
+                {!isLandlord &&
+                  r.stayType === 'furnished' &&
+                  (r.status === 'active' || r.status === 'expiring_soon') &&
+                  r.leaseEndDate !== null &&
+                  r.leaseEndDate.getTime() > now && (
+                    <ExtendStay
+                      rentalId={r.id}
+                      propertyId={r.propertyId}
+                      propertyTitle={r.propertyTitle}
+                      stayMonths={r.stayMonths}
+                      monthlyRent={r.monthlyRent}
+                      leaseEndDate={r.leaseEndDate}
+                    />
+                  )}
+
                 {/* Furnished stay: the 48-hour move-in check, once moved in. */}
                 {!isLandlord &&
                   r.moveInCheck === 'awaiting' &&

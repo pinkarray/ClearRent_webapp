@@ -9,6 +9,7 @@ import {
   agreementStatusLabel,
   tenantRentalHistory,
   type ActiveRental,
+  displayRent,
 } from '../../../../lib/tenancy'
 import { openInNewTab } from '../../../../lib/open-in-new-tab'
 
@@ -80,7 +81,7 @@ export default function LeaseDetailsPage() {
 
       <section className="card px-5 py-1">
         <Row label="Status" value={rental.status} />
-        <Row label="Rent" value={`${formatNaira(rental.rentAmount)} / ${rental.rentFrequency}`} />
+        <Row label="Rent" value={`${formatNaira(displayRent(rental))} / ${rental.rentFrequency}`} />
         {rental.agentFee > 0 && <Row label="Agent fee" value={formatNaira(rental.agentFee)} />}
         <Row label="Total paid" value={formatNaira(rental.totalPaid)} />
         <Row label="Lease start" value={formatDate(rental.leaseStartDate)} />

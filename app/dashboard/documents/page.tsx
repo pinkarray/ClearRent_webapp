@@ -11,7 +11,7 @@ import {
   tenantPayments,
   type PaymentRecord,
 } from '../../../lib/documents'
-import { tenantRentalHistory, type ActiveRental } from '../../../lib/tenancy'
+import { displayRent, tenantRentalHistory, type ActiveRental } from '../../../lib/tenancy'
 import { tenantLinks, type TenancyLink } from '../../../lib/renewal'
 import { openInNewTab } from '../../../lib/open-in-new-tab'
 
@@ -143,7 +143,7 @@ export default function DocumentsPage() {
                       {formatDate(r.leaseStartDate)} → {formatDate(r.leaseEndDate)}
                     </p>
                     <p className="text-sm text-content-secondary">
-                      {r.landlordName} · {formatNaira(r.rentAmount)}/
+                      {r.landlordName} · {formatNaira(displayRent(r))}/
                       {r.rentFrequency === 'yearly' ? 'yr' : 'mo'}
                     </p>
                   </div>

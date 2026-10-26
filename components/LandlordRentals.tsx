@@ -9,6 +9,7 @@ import { formatDate } from '../lib/format'
 import { getOrCreatePropertyConversation } from '../lib/chat'
 import {
   confirmMoveOut,
+  displayRent,
   handoverConfirmCondition,
   handoverSettle,
   rentalStatusLabel,
@@ -173,7 +174,7 @@ export default function LandlordRentals() {
             </div>
 
             <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm text-content-secondary">
-              <span>{formatNaira(r.rentAmount)} / {r.rentFrequency}</span>
+              <span>{formatNaira(displayRent(r))} / {r.rentFrequency}</span>
               <span>
                 {formatDate(r.leaseStartDate)} → {formatDate(r.leaseEndDate)}
               </span>

@@ -234,6 +234,14 @@ export type ActiveRental = {
   createdAt: Date | null
 }
 
+/**
+ * The figure to show beside the rent period. A furnished stay's rentAmount is
+ * the whole stay (monthly rent x months), so "/ monthly" needs the monthly rent.
+ */
+export function displayRent(r: ActiveRental): number {
+  return r.stayType === 'furnished' && r.monthlyRent > 0 ? r.monthlyRent : r.rentAmount
+}
+
 function toRental(d: QueryDocumentSnapshot): ActiveRental {
   const x = d.data()
   return {

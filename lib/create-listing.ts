@@ -12,6 +12,7 @@ import { getStorage, ref as storageRef, uploadBytes } from 'firebase/storage'
 import { clientApp, clientDb } from './firebase-client'
 import { trackPropertyAdded } from './activity'
 import { getPricing } from './listing-fee'
+import { stayPayload, type Stay } from './stay'
 
 export type ListingInput = {
   title: string
@@ -36,6 +37,8 @@ export type ListingInput = {
   cautionDepositRefundable: boolean
   /** 'unfurnished' | 'partly' | 'fully'. Required by the form. */
   furnishing: string
+  /** How it is let. A furnished stay overrides rentFrequency to 'monthly'. */
+  stay: Stay
   amenities: string[]
   rules: string[]
   landlordLivesInProperty: boolean
@@ -122,6 +125,7 @@ export async function createListing(uid: string, input: ListingInput): Promise<s
     cautionDeposit: input.cautionDeposit,
     cautionDepositRefundable: input.cautionDepositRefundable,
     furnishing: input.furnishing,
+    ...stayPayload(input.stay),
     // Born hidden, as the app creates it; adminReviewPropertyDoc sets it true
     // on approval. `true` here put unreviewed web listings in front of agents
     // on Discover, which filters on availability alone.

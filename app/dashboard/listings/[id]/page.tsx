@@ -9,6 +9,8 @@ import { fingerprint } from '../../../../lib/form-state'
 import { getPricing, listingFeeOwed, payListingFee } from '../../../../lib/listing-fee'
 import { formatNairaFull } from '../../../../lib/format'
 import { publishBlockReason } from '../../../../lib/user-profile'
+import { StayFields } from '../../../../components/StayFields'
+import { stayError } from '../../../../lib/stay'
 import { FurnishingPicker } from '../../../../components/FurnishingPicker'
 import {
   READINESS_ITEMS,
@@ -97,6 +99,11 @@ export default function EditListingPage() {
     if (!listing) return
     setError(null)
     setMessage(null)
+    const stayProblem = stayError(listing.stay, listing.furnishing)
+    if (stayProblem) {
+      setError(stayProblem)
+      return
+    }
     setBusy(true)
     const err = await saveListingEdits(propertyId, {
       ...listing,
@@ -109,7 +116,11 @@ export default function EditListingPage() {
       return
     }
     setMessage('Changes saved.')
-    const saved = { ...listing, savedFurnishing: listing.furnishing }
+    const saved = {
+      ...listing,
+      savedFurnishing: listing.furnishing,
+      savedStayType: listing.stay.stayType,
+    }
     setListing(saved)
     setSavedState(fingerprint([saved, amenities, rules]))
   }
@@ -214,9 +225,36 @@ export default function EditListingPage() {
             />
           </label>
 
+          <div>
+            <span className="text-sm font-medium text-content">How it is let</span>
+            <div className="mt-1.5">
+              <StayFields
+                uid={user.uid}
+                value={listing.stay}
+                onChange={
+                  frozen
+                    ? undefined
+                    : (v) =>
+                        setListing((l) =>
+                          l
+                            ? {
+                                ...l,
+                                stay: v,
+                                // Fully furnished by definition (stayValid).
+                                ...(v.stayType === 'furnished' ? { furnishing: 'fully' } : {}),
+                              }
+                            : l,
+                        )
+                }
+              />
+            </div>
+          </div>
+
           <div className="grid gap-4 sm:grid-cols-3">
             <label className="block">
-              <span className="text-sm font-medium text-content">Rent (₦)</span>
+              <span className="text-sm font-medium text-content">
+                {listing.stay.stayType === 'furnished' ? 'Monthly rent (₦)' : 'Rent (₦)'}
+              </span>
               <input
                 className="input-field mt-1.5 px-4 py-3"
                 type="number"

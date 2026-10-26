@@ -15,6 +15,8 @@ import {
 import { areaDisplayName, areaGroups, lgaName } from '../../lib/lagos-areas'
 import ResidenceForm from '../../components/ResidenceForm'
 import { FurnishingPicker } from '../../components/FurnishingPicker'
+import { StayFields } from '../../components/StayFields'
+import { EMPTY_STAY, stayError, type Stay } from '../../lib/stay'
 import { getPricing, listingFeeOwed, payListingFee } from '../../lib/listing-fee'
 import { formatNairaFull } from '../../lib/format'
 import { publishBlockReason } from '../../lib/user-profile'
@@ -65,6 +67,7 @@ type Draft = {
   cautionDepositRefundable: boolean
   // No default: required, so it is a real answer. Same as the app.
   furnishing: string | null
+  stay: Stay
   amenities: string
   rules: string
   currentTenantsCount: string
@@ -94,6 +97,7 @@ const EMPTY: Draft = {
   cautionDeposit: '0',
   cautionDepositRefundable: true,
   furnishing: null,
+  stay: EMPTY_STAY,
   amenities: '',
   rules: '',
   currentTenantsCount: '0',
@@ -236,6 +240,12 @@ export default function ListPropertyPage() {
       setError('Say how furnished the property is.')
       return
     }
+    // firestore.rules stayValid() refuses these; say why before any upload.
+    const stayProblem = stayError(draft.stay, draft.furnishing)
+    if (stayProblem) {
+      setError(stayProblem)
+      return
+    }
     // firestore.rules refuses it anyway; saying why beats a bare permissions
     // error after the photos have uploaded.
     const blocked = publishBlockReason(profile)
@@ -281,6 +291,7 @@ export default function ListPropertyPage() {
         cautionDeposit: toFloat(draft.cautionDeposit),
         cautionDepositRefundable: draft.cautionDepositRefundable,
         furnishing: draft.furnishing,
+        stay: draft.stay,
         amenities: csv(draft.amenities),
         rules: csv(draft.rules),
         // Web lists whole properties only, and a property one tenant gets in
@@ -632,8 +643,27 @@ export default function ListPropertyPage() {
 
           <section className="card space-y-4 p-6">
             <h2 className="font-semibold text-content">Money</h2>
+            {user && (
+              <StayFields
+                uid={user.uid}
+                value={draft.stay}
+                onChange={(v) =>
+                  setDraft((d) => ({
+                    ...d,
+                    stay: v,
+                    // A furnished stay is monthly and fully furnished by
+                    // definition (stayValid).
+                    ...(v.stayType === 'furnished'
+                      ? { rentFrequency: 'monthly', furnishing: 'fully' }
+                      : d.stay.stayType === 'furnished'
+                        ? { rentFrequency: 'yearly' }
+                        : {}),
+                  }))
+                }
+              />
+            )}
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Rent (₦)">
+              <Field label={draft.stay.stayType === 'furnished' ? 'Monthly rent (₦)' : 'Rent (₦)'}>
                 <input
                   className="input-field px-4 py-3"
                   type="number"
@@ -643,16 +673,18 @@ export default function ListPropertyPage() {
                   onChange={(e) => set('rent', e.target.value)}
                 />
               </Field>
-              <Field label="Rent frequency">
-                <select
-                  className="input-field px-4 py-3"
-                  value={draft.rentFrequency}
-                  onChange={(e) => set('rentFrequency', e.target.value)}
-                >
-                  <option value="yearly">yearly</option>
-                  <option value="monthly">monthly</option>
-                </select>
-              </Field>
+              {draft.stay.stayType !== 'furnished' && (
+                <Field label="Rent frequency">
+                  <select
+                    className="input-field px-4 py-3"
+                    value={draft.rentFrequency}
+                    onChange={(e) => set('rentFrequency', e.target.value)}
+                  >
+                    <option value="yearly">yearly</option>
+                    <option value="monthly">monthly</option>
+                  </select>
+                </Field>
+              )}
               <Field label="Agent fee (₦)" hint="Flat amount, not a percentage.">
                 <input
                   className="input-field px-4 py-3"

@@ -3,6 +3,7 @@ import { getStorage, ref as storageRef, uploadBytes } from 'firebase/storage'
 import { clientApp, clientAuth, clientDb } from './firebase-client'
 import { getResidence } from './residence'
 import { furnishingOrNull } from './format'
+import { stayFromDoc, stayPayload, type Stay } from './stay'
 
 /**
  * The readiness checklist, copied from `PropertyService.readinessChecklistItems`.
@@ -76,6 +77,9 @@ export type EditableListing = {
    * value being edited.
    */
   savedFurnishing: string | null
+  /** How it is let. Frozen with the money terms while a tenant is in. */
+  stay: Stay
+  savedStayType: Stay['stayType']
   isAvailable: boolean
   amenities: string[]
   rules: string[]
@@ -118,6 +122,8 @@ export async function loadListingForEdit(propertyId: string): Promise<EditableLi
     cautionDepositRefundable: d.cautionDepositRefundable !== false,
     furnishing: furnishingOrNull(d.furnishing),
     savedFurnishing: furnishingOrNull(d.furnishing),
+    stay: stayFromDoc(d),
+    savedStayType: stayFromDoc(d).stayType,
     isAvailable: d.isAvailable === true,
     amenities: Array.isArray(d.amenities) ? (d.amenities as string[]) : [],
     rules: Array.isArray(d.rules) ? (d.rules as string[]) : [],
@@ -156,6 +162,11 @@ export async function saveListingEdits(
     payload.agentFee = edits.agentFee
     payload.cautionDeposit = edits.cautionDeposit
     payload.cautionDepositRefundable = edits.cautionDepositRefundable
+    Object.assign(payload, stayPayload(edits.stay))
+    // Back from a furnished stay: the rent figure is yearly again.
+    if (edits.stay.stayType === 'yearly' && edits.savedStayType === 'furnished') {
+      payload.rentFrequency = 'yearly'
+    }
   }
 
   try {

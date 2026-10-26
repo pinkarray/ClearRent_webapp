@@ -258,6 +258,13 @@ export default function TenancyPage() {
                     <p className="text-sm text-content-secondary">
                       {isLandlord ? i.tenantName : formatNaira(i.paymentAmount) + ' total'}
                     </p>
+                    {/* Furnished stay: how long and from when. */}
+                    {i.stayMonths > 0 && i.stayStartDay && (
+                      <p className="text-sm text-content-secondary">
+                        Furnished stay: {i.stayMonths} month{i.stayMonths === 1 ? '' : 's'} from{' '}
+                        {i.stayStartDay.split('-').reverse().join('/')}
+                      </p>
+                    )}
                   </div>
                   <span className="chip shrink-0">
                     {INTEREST_COPY[i.status] ?? i.status}

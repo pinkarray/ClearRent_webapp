@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { RefundNotice } from '../../../components/RefundNotice'
 import { useRouter } from 'next/navigation'
-import { collection, onSnapshot, orderBy, query, where } from 'firebase/firestore'
+import { collection, doc, getDoc, onSnapshot, orderBy, query, where } from 'firebase/firestore'
+import { useStayPicker } from '../../../components/StayPicker'
+import { stayFromDoc } from '../../../lib/stay'
 import { useAuth } from '../../../components/AuthProvider'
 import { clientDb } from '../../../lib/firebase-client'
 import { startPayment } from '../../../lib/payments'
@@ -75,6 +77,7 @@ function formatNaira(n: number): string {
 export default function TenantInspectionsPage() {
   const { user } = useAuth()
   const router = useRouter()
+  const [pickStay, stayDialog] = useStayPicker()
   const [rows, setRows] = useState<Row[] | null>(null)
   useScrollToHash(rows !== null)
   const [payingId, setPayingId] = useState<string | null>(null)
@@ -120,7 +123,31 @@ export default function TenantInspectionsPage() {
   async function expressInterest(r: Row) {
     setPayError(null)
     setPayingId(r.id)
-    const res = await createRentalInterest(r.id)
+    // A furnished stay is priced by its length, so the tenant says how long
+    // and from when before anything is sent.
+    let stayPick: { months: number; startDay: string } | undefined
+    try {
+      const p = (await getDoc(doc(clientDb(), 'properties', r.propertyId))).data()
+      if (p) {
+        const stay = stayFromDoc(p)
+        if (stay.stayType === 'furnished') {
+          const picked = await pickStay({
+            title: 'Your stay',
+            monthlyRent: typeof p.rent === 'number' ? p.rent : 0,
+            stay,
+          })
+          if (!picked) {
+            setPayingId(null)
+            return
+          }
+          stayPick = picked
+        }
+      }
+    } catch {
+      // Unreadable listing: send without a choice. A yearly lease needs none,
+      // and the server refuses a furnished stay sent without one, by name.
+    }
+    const res = await createRentalInterest(r.id, stayPick)
     setPayingId(null)
     if ('error' in res) {
       setPayError(res.error)
@@ -393,6 +420,7 @@ export default function TenantInspectionsPage() {
           </div>
         )}
       </div>
+      {stayDialog}
     </>
   )
 }

@@ -43,19 +43,28 @@ function callables() {
  */
 export async function createRentalInterest(
   inspectionRequestId: string,
+  /** Furnished stays only: months and the Lagos move-in day ("yyyy-mm-dd"). */
+  stay?: { months: number; startDay: string },
 ): Promise<{ interestId: string } | { error: string }> {
   try {
     const fn = httpsCallable<
-      { inspectionRequestId: string },
+      { inspectionRequestId: string; stayMonths?: number; stayStartDate?: string },
       { interestId: string; created: boolean }
     >(callables(), 'createRentalInterest')
-    const res = await fn({ inspectionRequestId })
+    const res = await fn({
+      inspectionRequestId,
+      ...(stay ? { stayMonths: stay.months, stayStartDate: stay.startDay } : {}),
+    })
     return { interestId: res.data.interestId }
   } catch (err) {
     const code = (err as { code?: string })?.code ?? ''
     const message = err instanceof Error ? err.message : ''
     if (code === 'functions/failed-precondition') {
       return { error: message || 'Complete and rate the inspection first.' }
+    }
+    // The stay choice was refused (length or day); the server says which.
+    if (code === 'functions/invalid-argument' && message) {
+      return { error: message }
     }
     if (code === 'functions/unauthenticated') {
       return { error: 'The request was rejected (App Check or sign-in). Reload and try again.' }

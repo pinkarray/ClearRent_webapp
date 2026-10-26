@@ -14,6 +14,15 @@ import {
 import { getFunctions, httpsCallable } from 'firebase/functions'
 import { getStorage, ref, uploadBytes } from 'firebase/storage'
 import { clientApp, clientDb, initAppCheck } from './firebase-client'
+import { stayFromDoc, type InventoryItem } from './stay'
+
+/** One line of the landlord's furnished move-out check. */
+export type ItemCheck = {
+  name: string
+  qty: number
+  state: 'ok' | 'damaged' | 'missing'
+  note?: string
+}
 
 /**
  * From a completed inspection to a tenancy, and out again.
@@ -213,6 +222,10 @@ export type ActiveRental = {
   /** Furnished stay: months paid for so far, and the monthly rent. */
   stayMonths: number
   monthlyRent: number
+  /** The item list frozen at acceptance; both checks are made against it. */
+  inventory: InventoryItem[]
+  /** The landlord's item-by-item move-out check against `inventory`. */
+  handoverInventory: ItemCheck[]
   createdAt: Date | null
 }
 
@@ -255,6 +268,10 @@ function toRental(d: QueryDocumentSnapshot): ActiveRental {
       stayType: x.stayType === 'furnished' ? 'furnished' : 'yearly',
       stayMonths: (x.stayMonths as number) ?? 0,
       monthlyRent: (x.monthlyRent as number) ?? 0,
+      inventory: stayFromDoc({ inventory: x.inventory }).inventory,
+      handoverInventory: Array.isArray(x.handoverInventory)
+        ? (x.handoverInventory as ItemCheck[])
+        : [],
       tenantContestStatement: (x.tenantContestStatement as string) ?? '',
       handoverProofUrl: (x.handoverProofUrl as string) ?? '',
       cautionDeposit: (x.cautionDeposit as number) ?? 0,
@@ -628,12 +645,15 @@ export function agreementStatusLabel(status: string): string {
 export async function handoverConfirmCondition(
   rentalId: string,
   notes: string,
+  /** Furnished stay: the item-by-item check against the move-in list. */
+  items?: ItemCheck[],
 ): Promise<string | null> {
   try {
     await updateDoc(doc(clientDb(), 'active_rentals', rentalId), {
       handoverStage: 'awaiting_settlement',
       handoverConditionConfirmedAt: serverTimestamp(),
       handoverConditionNotes: notes.trim() || null,
+      ...(items ? { handoverInventory: items } : {}),
       updatedAt: serverTimestamp(),
     })
     return null

@@ -31,6 +31,7 @@ import RateLandlord from '../../../components/RateLandlord'
 import { useAskText } from '../../../components/AskText'
 import { MoveInCheck } from '../../../components/MoveInCheck'
 import { ExtendStay } from '../../../components/ExtendStay'
+import { MoveOutItemSummary } from '../../../components/MoveOutItemCheck'
 
 const INTEREST_COPY: Record<string, string> = {
   pending_acceptance: 'Waiting for the landlord to accept',
@@ -364,6 +365,7 @@ export default function TenancyPage() {
                       rentalId={r.id}
                       propertyId={r.propertyId}
                       deadline={r.moveInCheckDeadline}
+                      frozenItems={r.inventory}
                     />
                   )}
 
@@ -375,6 +377,12 @@ export default function TenancyPage() {
                   (r.status === 'ended_by_tenant' || r.status === 'ended_by_landlord') && (
                     <RateLandlord rentalId={r.id} />
                   )}
+
+                {/* What the landlord marked at move-out: the tenant contests
+                    it below, alongside the deposit, if it is wrong. */}
+                {!isLandlord && r.handoverInventory.length > 0 && (
+                  <MoveOutItemSummary checks={r.handoverInventory} />
+                )}
 
                 {!isLandlord &&
                   r.handoverStage === 'awaiting_confirm' &&

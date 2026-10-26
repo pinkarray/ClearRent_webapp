@@ -17,12 +17,17 @@ export function MoveInCheck({
   rentalId,
   propertyId,
   deadline,
+  frozenItems,
 }: {
   rentalId: string
   propertyId: string
   deadline: Date | null
+  /** The list frozen on the rental at acceptance; preferred over the listing's. */
+  frozenItems: InventoryItem[]
 }) {
-  const [items, setItems] = useState<InventoryItem[] | null>(null)
+  // Fetched only for a rental from before the list was frozen on it.
+  const [fetched, setFetched] = useState<InventoryItem[] | null>(null)
+  const items = frozenItems.length > 0 ? frozenItems : fetched
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   // Shown until the live rental catches up with the server's write.
@@ -31,11 +36,13 @@ export function MoveInCheck({
   // Read once: the clock is not render-pure.
   const [now] = useState(() => Date.now())
 
+  const needsFetch = frozenItems.length === 0
   useEffect(() => {
+    if (!needsFetch) return
     getDoc(doc(clientDb(), 'properties', propertyId))
-      .then((s) => setItems(stayFromDoc(s.data() ?? {}).inventory))
-      .catch(() => setItems([]))
-  }, [propertyId])
+      .then((s) => setFetched(stayFromDoc(s.data() ?? {}).inventory))
+      .catch(() => setFetched([]))
+  }, [propertyId, needsFetch])
 
   async function confirm() {
     setBusy(true)

@@ -14,9 +14,11 @@ import {
   rentalStatusLabel,
   watchActiveRentals,
   type ActiveRental,
+  type ItemCheck,
 } from '../lib/tenancy'
 import { useScrollToHash } from '../lib/use-scroll-to-hash'
 import TenantWalkthrough from './TenantWalkthrough'
+import { MoveOutItemForm, MoveOutItemSummary } from './MoveOutItemCheck'
 
 function formatNaira(n: number): string {
   return `₦${n.toLocaleString('en-NG')}`
@@ -114,10 +116,10 @@ export default function LandlordRentals() {
     if (err) setError(err)
   }
 
-  async function confirmCondition(rentalId: string) {
+  async function confirmCondition(rentalId: string, items?: ItemCheck[]) {
     setError(null)
     setBusyId(rentalId)
-    const err = await handoverConfirmCondition(rentalId, conditionNotes[rentalId] ?? '')
+    const err = await handoverConfirmCondition(rentalId, conditionNotes[rentalId] ?? '', items)
     setBusyId(null)
     if (err) setError(err)
   }
@@ -286,7 +288,22 @@ export default function LandlordRentals() {
                   <TenantWalkthrough rentalId={r.id} tenantId={r.tenantId} />
                 )}
 
-                {r.handoverStage === 'awaiting_condition' && (
+                {/* Furnished stay: item by item against the move-in list. */}
+                {r.handoverStage === 'awaiting_condition' &&
+                  r.stayType === 'furnished' &&
+                  r.inventory.length > 0 && (
+                    <MoveOutItemForm
+                      items={r.inventory}
+                      busy={busyId === r.id}
+                      onSubmit={(items) => void confirmCondition(r.id, items)}
+                    />
+                  )}
+                {r.handoverInventory.length > 0 && (
+                  <MoveOutItemSummary checks={r.handoverInventory} />
+                )}
+
+                {r.handoverStage === 'awaiting_condition' &&
+                  !(r.stayType === 'furnished' && r.inventory.length > 0) && (
                   <div className="mt-3">
                     <textarea
                       className="input-field px-3 py-2.5 text-sm"

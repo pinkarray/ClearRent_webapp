@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { collection, onSnapshot, query, where } from 'firebase/firestore'
 import AgentHome from '../../components/AgentHome'
 import CaretakerBanner from '../../components/CaretakerBanner'
+import AnnouncementsBanner from '../../components/AnnouncementsBanner'
 import { useAuth } from '../../components/AuthProvider'
 import { clientDb } from '../../lib/firebase-client'
 import { resolveDocStatuses } from '../../lib/ownership'
@@ -113,6 +114,8 @@ export default function DashboardPage() {
         they signed up with - the role decides their capsule, not this work.
         Renders nothing for everyone else.
       */}
+      <AnnouncementsBanner uid={user.uid} accountType={accountType} />
+
       <CaretakerBanner />
 
       {/*

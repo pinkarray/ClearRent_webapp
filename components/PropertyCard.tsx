@@ -86,7 +86,9 @@ export function PropertyCard({ property }: { property: PublicProperty }) {
             property.furnishing ? 'text-content-secondary' : 'text-content-hint'
           }`}
         >
-          {furnishingLabel(property.furnishing)}
+          {property.stay.stayType === 'furnished'
+            ? `Furnished stay, ${property.stay.minStayMonths} to ${property.stay.maxStayMonths} months`
+            : furnishingLabel(property.furnishing)}
         </p>
       </div>
     </Link>

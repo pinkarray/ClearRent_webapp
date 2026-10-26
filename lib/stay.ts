@@ -27,8 +27,14 @@ export const EMPTY_STAY: Stay = {
 export function stayFromDoc(d: Record<string, unknown>): Stay {
   const furnished = d.stayType === 'furnished'
   const from = d.availableFrom
+  // Duck-typed: the public pages read through the admin SDK, whose Timestamp
+  // is not the client SDK's class.
   const date =
-    from instanceof Timestamp ? from.toDate() : typeof from === 'string' ? new Date(from) : null
+    from && typeof (from as Timestamp).toDate === 'function'
+      ? (from as Timestamp).toDate()
+      : typeof from === 'string'
+        ? new Date(from)
+        : null
   return {
     stayType: furnished ? 'furnished' : 'yearly',
     minStayMonths: typeof d.minStayMonths === 'number' ? d.minStayMonths : 1,

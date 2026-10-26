@@ -204,6 +204,18 @@ export default async function PropertyDetailPage({ params }: Props) {
                   label="Furnishing"
                   value={property.furnishing ? furnishingLabel(property.furnishing) : 'Not stated'}
                 />
+                {property.stay.stayType === 'furnished' && (
+                  <Row
+                    label="Let as"
+                    value={`Furnished stay, ${property.stay.minStayMonths} to ${property.stay.maxStayMonths} months, paid up front`}
+                    hint={
+                      property.stay.availableFrom &&
+                      new Date(`${property.stay.availableFrom}T00:00:00`) > new Date()
+                        ? `Available from ${new Date(`${property.stay.availableFrom}T00:00:00`).toLocaleDateString('en-GB')}`
+                        : 'Available now'
+                    }
+                  />
+                )}
                 {property.landlordLine && <Row label="Landlord" value={property.landlordLine} />}
                 {record.issues && (
                   <Row
@@ -240,6 +252,35 @@ export default async function PropertyDetailPage({ params }: Props) {
                 <p className="mt-2 whitespace-pre-line text-content-secondary">
                   {property.description}
                 </p>
+              </div>
+            )}
+
+            {/* What both sides check at move-in and move-out. */}
+            {property.stay.stayType === 'furnished' && property.stay.inventory.length > 0 && (
+              <div className="card mt-6 p-6">
+                <h2 className="text-lg font-semibold text-content">What&rsquo;s included</h2>
+                <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+                  {property.stay.inventory.map((item) => (
+                    <li
+                      key={item.name}
+                      className="flex items-center gap-3 rounded-lg p-2"
+                      style={{ border: '1px solid var(--border)' }}
+                    >
+                      {item.photoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={item.photoUrl}
+                          alt={item.name}
+                          className="h-12 w-12 shrink-0 rounded-md object-cover"
+                        />
+                      ) : (
+                        <span className="h-12 w-12 shrink-0 rounded-md bg-surface-secondary" />
+                      )}
+                      <span className="flex-1 text-sm text-content">{item.name}</span>
+                      <span className="text-sm text-content-secondary">× {item.qty}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
 

@@ -41,6 +41,7 @@ export default async function PropertiesPage({
     minRent: parseNumber(one('minRent')),
     maxRent: parseNumber(one('maxRent')),
     furnishing: one('furnishing'),
+    stay: one('stay'),
   }
 
   const properties = await getPublishedProperties(filters)
@@ -57,7 +58,7 @@ export default async function PropertiesPage({
           inspection. Exact addresses are shared once your inspection is approved.
         </p>
 
-        <form className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-6" method="get">
+        <form className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-7" method="get">
           <input
             className="input-field px-4 py-3"
             name="state"
@@ -96,6 +97,16 @@ export default async function PropertiesPage({
                 {label}
               </option>
             ))}
+          </select>
+          <select
+            className="input-field px-4 py-3"
+            name="stay"
+            aria-label="Stay"
+            defaultValue={filters.stay ?? ''}
+          >
+            <option value="">Any stay</option>
+            <option value="yearly">Yearly lease</option>
+            <option value="furnished">Furnished stay (1 to 11 months)</option>
           </select>
           <button className="btn-primary px-6 py-3" type="submit">
             Search

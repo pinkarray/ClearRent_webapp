@@ -1,6 +1,7 @@
 import { adminDb } from './firebase-admin'
 import { residenceShortLine } from './residence-line'
 import { furnishingOrNull } from './format'
+import { stayFromDoc, type Stay } from './stay'
 
 /**
  * The only shape of a property that may reach a browser on a public page.
@@ -36,6 +37,8 @@ export type PublicProperty = {
   cautionDepositRefundable: boolean
   /** 'unfurnished' | 'partly' | 'fully', or null: "Not stated" (legacy listings). */
   furnishing: string | null
+  /** How it is let; availableFrom is yyyy-mm-dd or ''. */
+  stay: Stay
   amenities: string[]
   rules: string[]
   recurringDues: { name?: string; amount?: number; frequency?: string }[]
@@ -190,6 +193,7 @@ function toPublicProperty(
     // advertised as refundable, same default as the Flutter model.
     cautionDepositRefundable: d.cautionDepositRefundable !== false,
     furnishing: furnishingOrNull(d.furnishing),
+    stay: stayFromDoc(d),
     amenities: strList(d.amenities),
     rules: strList(d.rules),
     recurringDues: Array.isArray(d.recurringDues)
@@ -256,6 +260,8 @@ export type PropertyFilters = {
   minRent?: number
   maxRent?: number
   furnishing?: string
+  /** 'yearly' | 'furnished'. One stay type per listing. */
+  stay?: string
 }
 
 function matchesFilters(p: PublicProperty, f: PropertyFilters): boolean {
@@ -270,7 +276,8 @@ function matchesFilters(p: PublicProperty, f: PropertyFilters): boolean {
     (f.maxRent === undefined || p.rent <= f.maxRent) &&
     // A listing that never stated its level could be either, so it matches
     // only when no level is asked for. Same rule as the app's filter.
-    (!f.furnishing || p.furnishing === f.furnishing)
+    (!f.furnishing || p.furnishing === f.furnishing) &&
+    (!f.stay || p.stay.stayType === f.stay)
   )
 }
 

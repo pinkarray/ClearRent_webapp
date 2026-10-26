@@ -28,6 +28,8 @@ export function ExtendStay({
   leaseEndDate: Date | null
 }) {
   const [maxStay, setMaxStay] = useState<number | null>(null)
+  // config/pricing.extensionFee; the server charges it either way.
+  const [fee, setFee] = useState(2500)
   const [months, setMonths] = useState(1)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -39,6 +41,12 @@ export function ExtendStay({
         setMaxStay(typeof m === 'number' ? m : 11)
       })
       .catch(() => setMaxStay(11))
+    getDoc(doc(clientDb(), 'config', 'pricing'))
+      .then((s) => {
+        const f = s.data()?.extensionFee
+        if (typeof f === 'number') setFee(f)
+      })
+      .catch(() => {})
   }, [propertyId])
 
   if (maxStay === null) return null
@@ -48,7 +56,7 @@ export function ExtendStay({
     setBusy(true)
     setError(null)
     try {
-      await startPayment('extension', monthlyRent * months, '/dashboard/tenancy', {
+      await startPayment('extension', monthlyRent * months + fee, '/dashboard/tenancy', {
         sourceId: rentalId,
         months,
         propertyTitle,
@@ -72,8 +80,9 @@ export function ExtendStay({
       ) : (
         <>
           <p className="mt-0.5 text-sm text-content-secondary">
-            Extend it: you pay the rent for the extra months only. Up to {maxStay} months in all;
-            you have {stayMonths}.
+            Extend it: you pay the rent for the extra months, which all goes to the landlord, plus
+            a {formatNairaFull(fee)} processing fee. Up to {maxStay} months in all; you have{' '}
+            {stayMonths}.
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <select
@@ -90,7 +99,7 @@ export function ExtendStay({
               ))}
             </select>
             <button className="btn-primary px-4 py-2 text-sm" disabled={busy} onClick={pay}>
-              {busy ? 'Working…' : `Pay ${formatNairaFull(monthlyRent * months)} and extend`}
+              {busy ? 'Working…' : `Pay ${formatNairaFull(monthlyRent * months + fee)} and extend`}
             </button>
           </div>
           {error && <p className="mt-2 text-sm text-error">{error}</p>}

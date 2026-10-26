@@ -95,6 +95,9 @@ export type RentalInterest = {
   /** Furnished stay: what the tenant asked for. 0 / '' on a yearly lease. */
   stayMonths: number
   stayStartDay: string
+  /** The landlord's service fee, fixed when the tenant asked, and what they receive. */
+  landlordDealFee: number
+  landlordPayout: number
 }
 
 function interestsQuery(field: 'tenantId' | 'landlordId', uid: string) {
@@ -115,6 +118,8 @@ function toInterest(d: QueryDocumentSnapshot): RentalInterest {
     paymentAmount: (x.paymentAmount as number) ?? 0,
     stayMonths: (x.stayMonths as number) ?? 0,
     stayStartDay: (x.stayStartDay as string) ?? '',
+    landlordDealFee: (x.landlordDealFee as number) ?? 0,
+    landlordPayout: (x.landlordPayout as number) ?? 0,
   } satisfies RentalInterest
 }
 

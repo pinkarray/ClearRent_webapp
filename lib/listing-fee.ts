@@ -12,12 +12,17 @@ import { startPayment } from './payments'
   to SHOW, with the same defaults as functions/src/pricing.ts.
 */
 
+/** One rent band of the landlord's and agent's service fee; upTo null = no ceiling. */
+export type FeeBand = { upTo: number | null; landlord: number; agent: number }
+
 export type Pricing = {
   listing: number
   inspectionTotal: number
   inspectionHandler: number
   /** Lowest rent a listing may have; firestore.rules enforces the same floor. */
   minRent: number
+  /** Landlord and agent service fee by rent band, lowest first. */
+  serviceFeeBands: FeeBand[]
 }
 
 const DEFAULTS: Pricing = {
@@ -25,6 +30,34 @@ const DEFAULTS: Pricing = {
   inspectionTotal: 10000,
   inspectionHandler: 7000,
   minRent: 10000,
+  serviceFeeBands: [
+    { upTo: 300000, landlord: 7500, agent: 3750 },
+    { upTo: 700000, landlord: 15000, agent: 7500 },
+    { upTo: 1500000, landlord: 30000, agent: 15000 },
+    { upTo: 3000000, landlord: 50000, agent: 25000 },
+    { upTo: null, landlord: 75000, agent: 37500 },
+  ],
+}
+
+/** The configured bands, or the defaults if any entry is malformed (as the server does). */
+function toBands(raw: unknown): FeeBand[] {
+  if (!Array.isArray(raw) || raw.length === 0) return DEFAULTS.serviceFeeBands
+  const out: FeeBand[] = []
+  for (const b of raw as Record<string, unknown>[]) {
+    const upTo = b?.upTo
+    if ((upTo !== null && typeof upTo !== 'number') || typeof b.landlord !== 'number' || typeof b.agent !== 'number') {
+      return DEFAULTS.serviceFeeBands
+    }
+    out.push({ upTo: upTo as number | null, landlord: b.landlord, agent: b.agent })
+  }
+  out.sort((x, y) => (x.upTo ?? Infinity) - (y.upTo ?? Infinity))
+  return out[out.length - 1].upTo === null ? out : DEFAULTS.serviceFeeBands
+}
+
+/** The landlord's service fee for a deal of this rent (a furnished stay's whole stay). */
+export function landlordServiceFee(rent: number, bands: FeeBand[]): number {
+  const band = bands.find((b) => b.upTo === null || rent <= b.upTo) ?? bands[bands.length - 1]
+  return band?.landlord ?? 0
 }
 
 export async function getPricing(): Promise<Pricing> {
@@ -37,6 +70,7 @@ export async function getPricing(): Promise<Pricing> {
       inspectionHandler:
         typeof insp.handler === 'number' ? insp.handler : DEFAULTS.inspectionHandler,
       minRent: typeof d.minRent === 'number' ? d.minRent : DEFAULTS.minRent,
+      serviceFeeBands: toBands(d.serviceFeeBands),
     }
   } catch {
     return DEFAULTS

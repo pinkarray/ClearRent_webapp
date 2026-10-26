@@ -271,6 +271,13 @@ export default function TenancyPage() {
                   </span>
                 </div>
 
+                {isLandlord && i.status === 'pending_acceptance' && i.landlordPayout > 0 && (
+                  <p className="mt-3 text-sm text-content">
+                    ClearRent service fee: {formatNaira(i.landlordDealFee)}. You receive{' '}
+                    {formatNaira(i.landlordPayout)}.
+                  </p>
+                )}
+
                 {isLandlord && i.status === 'pending_acceptance' && (
                   <button
                     className="btn-primary mt-4 px-5 py-2.5 text-sm"

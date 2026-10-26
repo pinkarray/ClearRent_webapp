@@ -17,7 +17,13 @@ import ResidenceForm from '../../components/ResidenceForm'
 import { FurnishingPicker } from '../../components/FurnishingPicker'
 import { StayFields } from '../../components/StayFields'
 import { EMPTY_STAY, stayError, type Stay } from '../../lib/stay'
-import { getPricing, listingFeeOwed, payListingFee } from '../../lib/listing-fee'
+import {
+  getPricing,
+  landlordServiceFee,
+  listingFeeOwed,
+  payListingFee,
+  type FeeBand,
+} from '../../lib/listing-fee'
 import { formatNairaFull } from '../../lib/format'
 import { publishBlockReason } from '../../lib/user-profile'
 
@@ -166,6 +172,7 @@ export default function ListPropertyPage() {
   const [createdOwesFee, setCreatedOwesFee] = useState(false)
   const [listingPrice, setListingPrice] = useState(10000)
   const [minRent, setMinRent] = useState(10000)
+  const [feeBands, setFeeBands] = useState<FeeBand[]>([])
   const [paying, setPaying] = useState(false)
   /** Areas for the chosen state, grouped by LGA. Empty outside Lagos/Ogun. */
   const [groups, setGroups] = useState<Array<{ lga: string; label: string; areas: string[] }>>([])
@@ -197,6 +204,7 @@ export default function ListPropertyPage() {
     void getPricing().then((p) => {
       setListingPrice(p.listing)
       setMinRent(p.minRent)
+      setFeeBands(p.serviceFeeBands)
     })
   }, [user, createdId])
 
@@ -712,6 +720,26 @@ export default function ListPropertyPage() {
               />
               Caution deposit is refundable at move-out
             </label>
+            {/* What the landlord pays: a fixed fee for the rent's band, out of
+                the rent when a tenant pays. A furnished stay's band depends on
+                how long the tenant books, so it is a range. */}
+            {feeBands.length > 0 && toFloat(draft.rent) > 0 && (
+              <p className="text-sm text-content-secondary">
+                ClearRent service fee when you get a tenant:{' '}
+                {(() => {
+                  const rent = toFloat(draft.rent)
+                  if (draft.stay.stayType !== 'furnished') {
+                    return formatNairaFull(landlordServiceFee(rent, feeBands))
+                  }
+                  const low = landlordServiceFee(rent * draft.stay.minStayMonths, feeBands)
+                  const high = landlordServiceFee(rent * draft.stay.maxStayMonths, feeBands)
+                  return low === high
+                    ? formatNairaFull(low)
+                    : `${formatNairaFull(low)} to ${formatNairaFull(high)}, depending on how long the tenant stays`
+                })()}
+                , taken from the rent.
+              </p>
+            )}
           </section>
 
           <section className="card space-y-4 p-6">

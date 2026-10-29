@@ -365,7 +365,7 @@ export default function ListPropertyPage() {
 
   return (
     <main className="mesh-bg min-h-screen">
-      <div className="container max-w-3xl py-12">
+      <div className="container max-w-3xl pb-12 pt-20">
         <div className="flex items-center justify-between gap-6">
           <Link
             href="/dashboard"
@@ -378,7 +378,7 @@ export default function ListPropertyPage() {
           </span>
         </div>
 
-        <h1 className="mt-4 text-3xl font-bold text-content">List a property</h1>
+        <h1 className="mt-6 text-3xl font-bold text-content">List a property</h1>
 
         {/* A new account has no verificationStatus at all, so absent counts as
             unverified: otherwise it met a disabled button with no reason. */}

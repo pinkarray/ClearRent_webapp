@@ -239,7 +239,9 @@ body {
 }
 
 .section { padding: 96px 0; }
-.container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+/* Side padding only: a `padding` shorthand here is unlayered, so it beat every
+   py-/pt-/pb- utility on a container and pinned pages to the top edge. */
+.container { max-width: 1200px; margin: 0 auto; padding-inline: 24px; }
 
 .verified-badge {
   display: inline-flex;
@@ -263,7 +265,7 @@ body {
 
 @media (max-width: 768px) {
   .section { padding: 64px 0; }
-  .container { padding: 0 20px; }
+  .container { padding-inline: 20px; }
 }
 
 /* ─── Product surfaces ──────────────────────────────────────────────────────

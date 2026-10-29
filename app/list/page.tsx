@@ -365,7 +365,7 @@ export default function ListPropertyPage() {
 
   return (
     <main className="mesh-bg min-h-screen">
-      <div className="container max-w-3xl py-12">
+      <div className="container max-w-3xl pb-12 pt-6">
         <div className="flex items-center justify-between gap-6">
           <Link
             href="/dashboard"

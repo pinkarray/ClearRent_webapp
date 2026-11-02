@@ -12,6 +12,7 @@ import {
 import { getFunctions, httpsCallable } from 'firebase/functions'
 import { clientApp, clientDb, initAppCheck } from './firebase-client'
 import { resolveDocStatuses } from './ownership'
+import { areaLine } from './format'
 
 /*
   The agent's own side: coverage, availability, the properties they handle, and
@@ -167,7 +168,7 @@ function toHandled(id: string, x: Record<string, unknown>): HandledProperty {
   return {
     id,
     title: (x.title as string) ?? '(untitled)',
-    approximateAddress: [lga, city, (x.state as string) ?? ''].filter(Boolean).join(', '),
+    approximateAddress: areaLine(lga, city, (x.state as string) ?? ''),
     city,
     lga,
     rent: (x.rent as number) ?? 0,

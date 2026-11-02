@@ -1,6 +1,6 @@
 import { adminDb } from './firebase-admin'
 import { residenceShortLine } from './residence-line'
-import { furnishingOrNull } from './format'
+import { areaLine, furnishingOrNull } from './format'
 import { stayFromDoc, type Stay } from './stay'
 
 /**
@@ -122,8 +122,7 @@ function parseCeilingTypes(d: RawProperty): string[] {
  * Flutter app so both surfaces render the same string.
  */
 function approximateAddress(d: RawProperty): string {
-  const parts = [str(d.lga), str(d.city), str(d.state)].filter((p) => p.length > 0)
-  return parts.length === 0 ? 'Location available after approval' : parts.join(', ')
+  return areaLine(str(d.lga), str(d.city), str(d.state)) || 'Location available after approval'
 }
 
 /**

@@ -11,6 +11,7 @@ import {
   where,
 } from 'firebase/firestore'
 import { clientDb } from './firebase-client'
+import { areaLine } from './format'
 
 /*
   Saved properties live at `users/{uid}/savedProperties/{propertyId}` - a
@@ -97,7 +98,7 @@ export async function loadSavedProperties(ids: string[]): Promise<SavedProperty[
         id: d.id,
         title: (x.title as string) ?? '(untitled)',
         // Same area-level string the public pages show - never the street.
-        approximateAddress: [lga, city, state].filter(Boolean).join(', '),
+        approximateAddress: areaLine(lga, city, state),
         rent: (x.rent as number) ?? 0,
         rentFrequency: (x.rentFrequency as string) ?? 'yearly',
         bedrooms: (x.bedrooms as number) ?? 0,

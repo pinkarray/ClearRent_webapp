@@ -96,6 +96,19 @@ export function sharedFacilities(p: {
   return parts.join(' · ')
 }
 
+/**
+ * "Alagomeji, Yaba, Lagos" - the area line shown before the street is
+ * unlocked. Neighbourhood first: the council area is stored as its full label,
+ * "Lagos Mainland LGA (Yaba)", which led the line with a name tenants don't
+ * search by. The bracketed district is the familiar one, so it stands in for
+ * the label, and it is dropped when it repeats the neighbourhood.
+ */
+export function areaLine(lga: string, city: string, state = ''): string {
+  const district = /\(([^)]+)\)\s*$/.exec(lga)?.[1] ?? lga.replace(/\s+LGA\b.*$/, '')
+  const parts = [city, district, state].map((p) => p.trim()).filter(Boolean)
+  return parts.filter((p, i) => parts.findIndex((q) => q.toLowerCase() === p.toLowerCase()) === i).join(', ')
+}
+
 /** BuildingModel.structures - what the whole building is. */
 const STRUCTURE_LABELS: Record<string, string> = {
   duplex: 'duplex',

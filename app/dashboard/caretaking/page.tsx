@@ -11,6 +11,7 @@ import {
   revokeCaretaker,
   type CaretakerInvite,
 } from '../../../lib/caretaker'
+import { areaLine } from '../../../lib/format'
 
 type ManagedProperty = { id: string; title: string; area: string }
 
@@ -46,7 +47,7 @@ export default function CaretakingPage() {
         return {
           id: d.id,
           title: (x.title as string) ?? 'Untitled property',
-          area: [x.lga, x.city].filter(Boolean).join(', '),
+          area: areaLine((x.lga as string) ?? '', (x.city as string) ?? ''),
         }
       }),
     )

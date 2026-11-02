@@ -14,6 +14,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions'
 import { clientApp, clientDb, initAppCheck } from './firebase-client'
 import { trackInspectionRequest } from './activity'
 import { getPricing } from './listing-fee'
+import { areaLine } from './format'
 
 /**
  * Booking an inspection.
@@ -105,10 +106,8 @@ export type BookableProperty = {
 }
 
 function approximateAddress(d: Record<string, unknown>): string {
-  const parts = [d.lga, d.city, d.state]
-    .map((p) => (typeof p === 'string' ? p : ''))
-    .filter((p) => p.length > 0)
-  return parts.length === 0 ? 'Location available after approval' : parts.join(', ')
+  const s = (p: unknown) => (typeof p === 'string' ? p : '')
+  return areaLine(s(d.lga), s(d.city), s(d.state)) || 'Location available after approval'
 }
 
 export async function loadBookableProperty(id: string): Promise<BookableProperty | null> {

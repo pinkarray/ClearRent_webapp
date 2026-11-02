@@ -62,6 +62,34 @@ type Row = {
 
 const OPEN_STATUSES = ['pending', 'pendingVerification', 'declinedByAgent']
 
+/**
+ * What a finished or in-flight request means to the HANDLER. The chip printed
+ * the raw status, so a landlord read "awaitingOutcome · paid". The tenant's
+ * page has its own copy, written for the tenant.
+ */
+const STATUS_LABEL: Record<string, string> = {
+  pending: 'Waiting for you',
+  approved: 'Approved',
+  pendingPayment: 'Approved, waiting for payment',
+  pendingVerification: 'Checking the payment',
+  declinedByAgent: 'Declined by your agent',
+  declined: 'Declined',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
+  awaitingOutcome: 'Under review by our team',
+  rebookOffered: 'Tenant is picking a new time',
+  expiredUnapproved: 'Not approved in time',
+  expired: 'Expired',
+  refunded: 'Refunded',
+}
+
+/** "someNewStatus" reads as "Some new status" rather than the raw value. */
+function statusLabel(status: string): string {
+  if (STATUS_LABEL[status]) return STATUS_LABEL[status]
+  const words = status.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/_/g, ' ').toLowerCase()
+  return words.charAt(0).toUpperCase() + words.slice(1)
+}
+
 function formatNaira(n: number): string {
   return `₦${n.toLocaleString('en-NG')}`
 }
@@ -76,6 +104,8 @@ function formatNaira(n: number): string {
 export default function HandlerRequestsPage() {
   const { user, profile } = useAuth()
   const [askText, askDialog] = useAskText()
+  /** The request waiting on the "before you approve" check, as in the app. */
+  const [confirming, setConfirming] = useState<Row | null>(null)
   const [asLandlord, setAsLandlord] = useState<Row[] | null>(null)
   const [asAgent, setAsAgent] = useState<Row[] | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
@@ -308,7 +338,7 @@ export default function HandlerRequestsPage() {
                         <button
                           className="btn-primary px-6 py-2.5 text-sm"
                           disabled={busyId === r.id || !profile?.hasBankDetails}
-                          onClick={() => handleApprove(r)}
+                          onClick={() => setConfirming(r)}
                         >
                           {busyId === r.id
                             ? 'Working…'
@@ -352,7 +382,7 @@ export default function HandlerRequestsPage() {
                       <p className="text-sm text-content-secondary">{r.tenantName}</p>
                     </div>
                     <span className="chip shrink-0">
-                      {r.status}
+                      {statusLabel(r.status)}
                       {r.paymentStatus === 'paid' ? ' · paid' : ''}
                     </span>
 
@@ -415,6 +445,46 @@ export default function HandlerRequestsPage() {
         )}
       </div>
       {askDialog}
+      {/* The app's confirmInspectionReadiness: a nudge, not a gate. A tenant
+          who pays and finds a different unit, or a locked gate, is the
+          viewing that ends in a refund. */}
+      {confirming && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Before you approve"
+          onClick={() => setConfirming(null)}
+        >
+          <div className="card w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <p className="font-semibold text-content">Before you approve</p>
+            <p className="mt-1 text-sm text-content-secondary">{confirming.propertyTitle}</p>
+            <p className="mt-4 text-sm text-content-secondary">
+              Quick check, so the tenant has a good viewing:
+            </p>
+            <ul className="mt-3 space-y-2 text-sm text-content">
+              <li>✓ Photos and details match the actual unit</li>
+              <li>✓ Rent and fees are up to date</li>
+              <li>✓ Access is arranged for the scheduled time</li>
+            </ul>
+            <div className="mt-5 flex justify-end gap-3">
+              <button className="btn-ghost px-5 py-2.5 text-sm" onClick={() => setConfirming(null)}>
+                Cancel
+              </button>
+              <button
+                className="btn-primary px-5 py-2.5 text-sm"
+                onClick={() => {
+                  const r = confirming
+                  setConfirming(null)
+                  void handleApprove(r)
+                }}
+              >
+                Confirm and approve
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

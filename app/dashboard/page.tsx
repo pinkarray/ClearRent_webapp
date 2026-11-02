@@ -11,6 +11,8 @@ import { clientDb } from '../../lib/firebase-client'
 import { resolveDocStatuses } from '../../lib/ownership'
 import { saveAccountType, type AccountType } from '../../lib/user-profile'
 import { watchResidence } from '../../lib/residence'
+import { getPricing } from '../../lib/listing-fee'
+import { formatNairaFull } from '../../lib/format'
 
 type OwnListing = {
   id: string
@@ -46,10 +48,16 @@ export default function DashboardPage() {
   const { user, profile, refreshProfile } = useAuth()
   const [listings, setListings] = useState<OwnListing[] | null>(null)
   const [savingType, setSavingType] = useState(false)
+  /** The handler's share of a viewing, from config/pricing - not typed in. */
+  const [handlerFee, setHandlerFee] = useState<number | null>(null)
   // Asked once of every landlord with listings; live, so the card leaves on save.
   const [residenceMissing, setResidenceMissing] = useState(false)
   const uid = user?.uid
   const accountType = profile?.accountType
+
+  useEffect(() => {
+    void getPricing().then((p) => setHandlerFee(p.inspectionHandler))
+  }, [])
 
   // Live: an admin verifies the ownership document from the staff dashboard,
   // so the flip to "Live on public browse" is never something the landlord's
@@ -205,8 +213,9 @@ export default function DashboardPage() {
           <section className="card p-6">
             <h3 className="text-lg font-semibold text-content">Inspection requests</h3>
             <p className="mt-1 text-sm text-content-secondary">
-              Approve or decline tenants who want to view your properties. You earn ₦7,000
-              per completed inspection.
+              Approve or decline tenants who want to view your properties.
+              {handlerFee !== null &&
+                ` You earn ${formatNairaFull(handlerFee)} for each viewing you hold yourself.`}
             </p>
             <div className="mt-4 flex flex-wrap gap-3">
               <Link href="/dashboard/requests" className="btn-primary px-5 py-2.5 text-sm no-underline">

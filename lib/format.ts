@@ -15,6 +15,11 @@ export function formatNairaFull(amount: number): string {
   return `₦${amount.toLocaleString('en-NG')}`
 }
 
+/** "₦10,000 to get verified, then ₦7,000 a year". */
+export function verificationLine(f: { initial: number; renewal: number }): string {
+  return `${formatNairaFull(f.initial)} to get verified, then ${formatNairaFull(f.renewal)} a year`
+}
+
 export function rentPeriod(frequency: string): string {
   return frequency === 'yearly' ? '/year' : '/month'
 }

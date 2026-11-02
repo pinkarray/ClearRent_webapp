@@ -1,13 +1,22 @@
 'use client'
 
-const plans = [
+import { formatNairaFull as naira } from '../lib/format'
+import type { PublicPricing } from '../lib/public-pricing'
+
+/**
+ * Every amount comes from the live schedule (see getPublicPricing). `onDeal`
+ * is what each side pays when a rental closes: leaving it off let the section
+ * promise "no commissions on your rent" while a fee came out of the rent.
+ */
+const plans = (p: PublicPricing) => [
   {
     type: 'tenant',
     label: 'Tenant',
     icon: '🏡',
-    price: '₦5,000',
+    price: naira(p.verification.tenant.initial),
     period: 'to get verified',
-    renewal: '₦3,000/year to stay verified',
+    renewal: `${naira(p.verification.tenant.renewal)}/year to stay verified`,
+    onDeal: `When you rent: a flat ${naira(p.dealFee)} on top of the rent`,
     description: 'Find and secure a verified property with confidence.',
     features: [
       'NIN identity verification',
@@ -24,14 +33,15 @@ const plans = [
     type: 'landlord',
     label: 'Landlord',
     icon: '🏠',
-    price: '₦15,000',
+    price: naira(p.verification.landlord.initial),
     period: 'to get verified',
-    renewal: '₦12,000/year to stay verified',
+    renewal: `${naira(p.verification.landlord.renewal)}/year to stay verified`,
+    onDeal: `When you get a tenant: a flat fee from the rent, ${naira(p.landlordFee.min)} to ${naira(p.landlordFee.max)} depending on the rent`,
     description: 'List your property and connect with serious, verified tenants.',
     features: [
       'NIN + ownership document verification',
       'First property listing free',
-      'Additional listings at flat fee',
+      `Each listing after that ${naira(p.listing)}`,
       'Verified tenant pool access',
       'Inspection management tools',
       'Direct tenant communication',
@@ -43,9 +53,10 @@ const plans = [
     type: 'agent',
     label: 'Agent',
     icon: '👔',
-    price: '₦10,000',
+    price: naira(p.verification.agent.initial),
     period: 'to get verified',
-    renewal: '₦7,000/year to stay verified',
+    renewal: `${naira(p.verification.agent.renewal)}/year to stay verified`,
+    onDeal: 'When a deal closes: half the landlord\'s fee, from your agent fee',
     description: 'Earn on inspections with full platform support.',
     features: [
       'Full identity + guarantor verification',
@@ -60,7 +71,7 @@ const plans = [
   },
 ]
 
-export default function Pricing() {
+export default function Pricing({ pricing }: { pricing: PublicPricing }) {
   return (
     <section className="section" id="pricing" style={{ background: 'var(--bg-secondary)' }}>
       <div className="container">
@@ -80,7 +91,7 @@ export default function Pricing() {
             Get verified. Start renting.
           </h2>
           <p style={{ fontSize: 17, color: 'var(--text-secondary)', maxWidth: 520, margin: '0 auto', lineHeight: 1.7 }}>
-            One-time verification to get on the platform. A small annual fee to stay active. No hidden charges, no commissions on your rent.
+            Verification to get on the platform, a small annual fee to stay active, and one flat fee when you close a deal. No percentages, no hidden charges.
           </p>
         </div>
 
@@ -90,7 +101,7 @@ export default function Pricing() {
           gap: 24,
           alignItems: 'start',
         }}>
-          {plans.map(plan => (
+          {plans(pricing).map(plan => (
             <div
               key={plan.type}
               style={{
@@ -146,6 +157,14 @@ export default function Pricing() {
               }}>
                 then {plan.renewal}
               </div>
+              <div style={{
+                fontSize: 13,
+                opacity: 0.8,
+                marginBottom: 12,
+                fontWeight: 500,
+              }}>
+                {plan.onDeal}
+              </div>
               <p style={{
                 fontSize: 14,
                 opacity: plan.highlight ? 0.85 : undefined,
@@ -199,7 +218,7 @@ export default function Pricing() {
         </div>
 
         <p style={{ textAlign: 'center', marginTop: 32, fontSize: 13, color: 'var(--text-hint)' }}>
-          Inspection fees are separate and transparent - you see exactly what you pay before booking.
+          A viewing costs {naira(pricing.viewing)}, shown before you book and paid only once the visit is approved.
         </p>
       </div>
     </section>

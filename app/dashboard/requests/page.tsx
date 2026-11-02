@@ -20,6 +20,7 @@ import {
 import { RescheduleActions } from '../../../components/RescheduleActions'
 import { InspectionActions } from '../../../components/InspectionActions'
 import { useAskText } from '../../../components/AskText'
+import { getPricing } from '../../../lib/listing-fee'
 
 type Row = {
   id: string
@@ -106,6 +107,11 @@ export default function HandlerRequestsPage() {
   const [askText, askDialog] = useAskText()
   /** The request waiting on the "before you approve" check, as in the app. */
   const [confirming, setConfirming] = useState<Row | null>(null)
+  /** The handler's share of a viewing, from config/pricing - not typed in. */
+  const [handlerFee, setHandlerFee] = useState<number | null>(null)
+  useEffect(() => {
+    void getPricing().then((p) => setHandlerFee(p.inspectionHandler))
+  }, [])
   const [asLandlord, setAsLandlord] = useState<Row[] | null>(null)
   const [asAgent, setAsAgent] = useState<Row[] | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
@@ -259,7 +265,8 @@ export default function HandlerRequestsPage() {
             </p>
             <p className="mt-1 text-sm text-content-secondary">
               Rules require a payout destination before you can accept an inspection - that is
-              where your {formatNaira(7000)} handler fee is settled.{' '}
+              where your{handlerFee !== null ? ` ${formatNaira(handlerFee)}` : ''} handler fee is
+              settled.{' '}
               <Link href="/dashboard/bank" className="text-primary no-underline">
                 Add one
               </Link>

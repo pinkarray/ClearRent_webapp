@@ -27,7 +27,7 @@ const steps: Record<UserType, { icon: string; title: string; desc: string }[]> =
   ],
 }
 
-export default function HowItWorks() {
+export default function HowItWorks({ agentVerification }: { agentVerification: string }) {
   const [active, setActive] = useState<UserType>('tenant')
 
   return (
@@ -157,7 +157,7 @@ export default function HowItWorks() {
               Join as a Verified Agent →
             </a>
             <p style={{ marginTop: 12, fontSize: 13, color: 'var(--text-hint)' }}>
-              ₦10,000 to get verified, then ₦7,000 a year. Start earning immediately after approval.
+              {agentVerification}. Start earning immediately after approval.
             </p>
           </div>
         )}

@@ -56,7 +56,7 @@ const agentAdvantages = [
   },
 ]
 
-export default function WhyClearRent() {
+export default function WhyClearRent({ agentVerification }: { agentVerification: string }) {
   return (
     <>
       {/* Platform features */}
@@ -189,7 +189,7 @@ export default function WhyClearRent() {
                 Join as a Verified Agent →
               </a>
               <p style={{ marginTop: 10, fontSize: 12, color: 'var(--text-hint)' }}>
-                ₦10,000 to get verified, then ₦7,000 a year · Start earning after approval
+                {agentVerification} · Start earning after approval
               </p>
             </div>
 

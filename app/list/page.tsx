@@ -26,6 +26,14 @@ import {
 } from '../../lib/listing-fee'
 import { formatNairaFull } from '../../lib/format'
 import { publishBlockReason } from '../../lib/user-profile'
+import { isSingleSpace } from '../../lib/format'
+import {
+  EMPTY_UNIT,
+  UnitFields,
+  toUnitInput,
+  unitProblem,
+  type UnitDraft,
+} from '../../components/UnitFields'
 
 // ClearRent operates in Lagos today, so the State field is defaulted rather
 // than fixed. Nothing rejects another state outright: admin review is the gate,
@@ -37,9 +45,8 @@ const LAGOS = 'Lagos'
 // system understands, so a web-created listing rendered with a raw type string
 // in the app and matched no tenant filter. 'shop' is out until the commercial
 // branch exists, same as the app.
-// Web lists WHOLE properties only, so this mirrors
-// PropertyModel.wholePropertyTypes - 'room' is absent because a lone room is a
-// unit inside a building, which is the app's grouped flow.
+// Mirrors PropertyModel.wholePropertyTypes - 'room' is absent because a lone
+// room is a unit inside a building, which picks from UNIT_TYPES instead.
 const PROPERTY_TYPES: Array<[value: string, label: string]> = [
   ['flat', 'Flat'],
   ['duplex', 'Duplex'],
@@ -183,6 +190,14 @@ export default function ListPropertyPage() {
   const [areaQuery, setAreaQuery] = useState('')
   /** undefined while loading; null until the landlord says where they live. */
   const [residence, setResidence] = useState<Residence | null | undefined>(undefined)
+  /** What is being let: the whole property, or one unit inside a building. */
+  const [scope, setScope] = useState<'whole' | 'unit' | null>(null)
+  const [unit, setUnit] = useState<UnitDraft>(EMPTY_UNIT)
+  const inBuilding = scope === 'unit'
+  /** A unit joining an existing building inherits its document, so none is asked. */
+  const joiningBuilding = inBuilding && !unit.creating && !!unit.buildingId
+  /** A single space inside a building has no rooms to count; its type is its size. */
+  const singleSpaceUnit = inBuilding && isSingleSpace(unit.unitType)
 
   // Listing is a landlord action behind auth. Unauthenticated visitors go to
   // /login, which owns sign-in for the whole site.
@@ -234,9 +249,18 @@ export default function ListPropertyPage() {
     setError(null)
     setCreatedId(null)
 
+    if (!scope) {
+      setError('Say what you are letting out: the whole property, or one unit inside it.')
+      return
+    }
+    const unitError = inBuilding ? unitProblem(unit) : null
+    if (unitError) {
+      setError(unitError)
+      return
+    }
     // Required, as the app requires it. Without a document the listing is born
     // 'none', which admin cannot verify OR reject - it just sits there.
-    if (!ownershipDoc) {
+    if (!ownershipDoc && !joiningBuilding) {
       setError('Attach proof of ownership - a C of O, deed, or other document.')
       return
     }
@@ -281,12 +305,16 @@ export default function ListPropertyPage() {
       const input: ListingInput = {
         title: draft.title.trim(),
         description: draft.description.trim(),
-        propertyType: draft.propertyType,
-        bedrooms: toInt(draft.bedrooms),
+        propertyType: inBuilding ? unit.unitType : draft.propertyType,
+        // A single space is one room; a room & parlour adds the parlour. Same
+        // defaults the app applies, since the counters are not asked.
+        bedrooms: singleSpaceUnit ? 1 : toInt(draft.bedrooms),
         bathrooms: toInt(draft.bathrooms),
         toilets: toInt(draft.toilets),
-        livingRooms: toInt(draft.livingRooms, 1),
-        guestRooms: toInt(draft.guestRooms),
+        livingRooms: singleSpaceUnit
+          ? unit.unitType === 'roomAndParlour' ? 1 : 0
+          : toInt(draft.livingRooms, 1),
+        guestRooms: singleSpaceUnit ? 0 : toInt(draft.guestRooms),
         kitchens: toInt(draft.kitchens, 1),
         images,
         address: draft.address.trim(),
@@ -302,9 +330,8 @@ export default function ListPropertyPage() {
         stay: draft.stay,
         amenities: csv(draft.amenities),
         rules: csv(draft.rules),
-        // Web lists whole properties only, and a property one tenant gets in
-        // full cannot also be the landlord's home. saveResidence below stamps
-        // the tenant-facing line.
+        // saveResidence below stamps the tenant-facing residence fields, and
+        // marks the landlord on the premises only for an accepted home building.
         landlordLivesInProperty: false,
         landlordLivesOnPremises: false,
         currentTenantsCount: toInt(draft.currentTenantsCount),
@@ -312,7 +339,8 @@ export default function ListPropertyPage() {
         caretakerLivesOnPremises: draft.caretakerLivesOnPremises,
         ceilingTypes: draft.ceilingTypes,
         videoUrl: draft.videoUrl.trim() || null,
-        ownershipDocFile: ownershipDoc,
+        unit: inBuilding ? toUnitInput(unit) : null,
+        ownershipDocFile: joiningBuilding ? null : ownershipDoc,
         ownershipDocType,
       }
 
@@ -327,6 +355,8 @@ export default function ListPropertyPage() {
       setFiles([])
       setOwnershipDoc(null)
       setOwnershipDocType('c_of_o')
+      setScope(null)
+      setUnit(EMPTY_UNIT)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create listing')
     } finally {
@@ -438,19 +468,41 @@ export default function ListPropertyPage() {
           </div>
         )}
 
-        {/* Web lists whole properties only. Grouping units under one building
-            (a room in your duplex, two flats in one compound) lives in the app,
-            where the building picker and its shared ownership document are. */}
-        <div className="card mt-6 border-l-4 border-l-primary p-5">
-          <p className="font-semibold text-content">This lists a whole property</p>
-          <p className="mt-1 text-sm text-content-secondary">
-            One tenant gets the entire place. Letting rooms or flats separately -
-            each at its own rent, under one ownership document - is done in the
-            ClearRent app.
-          </p>
-        </div>
-
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+          {/* Asked first, as in the app: it decides how the listing is
+              described and whose ownership document covers it. */}
+          <section className="card space-y-4 p-6">
+            <h2 className="font-semibold text-content">What are you letting out?</h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {(
+                [
+                  ['whole', 'The whole property', 'One tenant gets the entire place: a flat, a bungalow, a whole duplex.'],
+                  ['unit', 'One unit inside it', 'A room or flat in a house, compound or building you own. Each unit is listed at its own rent, and one ownership document covers them all.'],
+                ] as const
+              ).map(([value, label, sub]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setScope(value)}
+                  className="rounded-lg p-4 text-left"
+                  style={{
+                    border: '1px solid ' + (scope === value ? 'var(--primary)' : 'var(--border)'),
+                    background: 'var(--surface)',
+                  }}
+                >
+                  <span
+                    className="block font-medium"
+                    style={{ color: scope === value ? 'var(--primary)' : 'var(--text-primary)' }}
+                  >
+                    {label}
+                  </span>
+                  <span className="mt-1 block text-xs text-content-secondary">{sub}</span>
+                </button>
+              ))}
+            </div>
+            {inBuilding && <UnitFields uid={user.uid} value={unit} onChange={setUnit} />}
+          </section>
+
           <section className="card space-y-4 p-6">
             <h2 className="font-semibold text-content">The basics</h2>
             <Field label="Title">
@@ -471,19 +523,21 @@ export default function ListPropertyPage() {
               />
             </Field>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Property type">
-                <select
-                  className="input-field px-4 py-3"
-                  value={draft.propertyType}
-                  onChange={(e) => set('propertyType', e.target.value)}
-                >
-                  {PROPERTY_TYPES.map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </Field>
+              {!inBuilding && (
+                <Field label="Property type">
+                  <select
+                    className="input-field px-4 py-3"
+                    value={draft.propertyType}
+                    onChange={(e) => set('propertyType', e.target.value)}
+                  >
+                    {PROPERTY_TYPES.map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              )}
               <Field label="Ceiling types" hint="Pick every type that applies.">
                 <div className="flex flex-wrap gap-2">
                   {CEILING_TYPES.map((t) => {
@@ -516,31 +570,33 @@ export default function ListPropertyPage() {
             </div>
           </section>
 
-          <section className="card space-y-4 p-6">
-            <h2 className="font-semibold text-content">The space</h2>
-            <div className="grid gap-4 sm:grid-cols-3">
-              {(
-                [
-                  ['bedrooms', 'Bedrooms'],
-                  ['bathrooms', 'Bathrooms'],
-                  ['toilets', 'Toilets'],
-                  ['livingRooms', 'Living rooms'],
-                  ['guestRooms', 'Guest rooms'],
-                  ['kitchens', 'Kitchens'],
-                ] as const
-              ).map(([key, label]) => (
-                <Field key={key} label={label}>
-                  <input
-                    className="input-field px-4 py-3"
-                    type="number"
-                    min={0}
-                    value={draft[key]}
-                    onChange={(e) => set(key, e.target.value)}
-                  />
-                </Field>
-              ))}
-            </div>
-          </section>
+          {!singleSpaceUnit && (
+            <section className="card space-y-4 p-6">
+              <h2 className="font-semibold text-content">The space</h2>
+              <div className="grid gap-4 sm:grid-cols-3">
+                {(
+                  [
+                    ['bedrooms', 'Bedrooms'],
+                    ['bathrooms', 'Bathrooms'],
+                    ['toilets', 'Toilets'],
+                    ['livingRooms', 'Living rooms'],
+                    ['guestRooms', 'Guest rooms'],
+                    ['kitchens', 'Kitchens'],
+                  ] as const
+                ).map(([key, label]) => (
+                  <Field key={key} label={label}>
+                    <input
+                      className="input-field px-4 py-3"
+                      type="number"
+                      min={0}
+                      value={draft[key]}
+                      onChange={(e) => set(key, e.target.value)}
+                    />
+                  </Field>
+                ))}
+              </div>
+            </section>
+          )}
 
           <section className="card space-y-4 p-6">
             <h2 className="font-semibold text-content">Location</h2>
@@ -853,40 +909,52 @@ export default function ListPropertyPage() {
           </section>
 
           <section className="card space-y-4 p-6">
-            <h2 className="font-semibold text-content">Proof of ownership</h2>
-            <p className="text-sm text-content-secondary">
-              An admin checks this before your listing goes on public browse. A C of O
-              or deed runs to several pages - upload it as one PDF.
-            </p>
-
-            <Field label="Document type">
-              <select
-                className="input-field px-4 py-3"
-                value={ownershipDocType}
-                onChange={(e) =>
-                  setOwnershipDocType(e.target.value as 'c_of_o' | 'deed' | 'other')
-                }
-              >
-                <option value="c_of_o">Certificate of Occupancy</option>
-                <option value="deed">Deed of Assignment</option>
-                <option value="other">Other property document</option>
-              </select>
-            </Field>
-
-            <Field label="Document">
-              <input
-                className="input-field px-4 py-3"
-                type="file"
-                accept="application/pdf,image/*"
-                required
-                onChange={(e) => setOwnershipDoc(e.target.files?.[0] ?? null)}
-              />
-            </Field>
-
-            {ownershipDoc && (
+            <h2 className="font-semibold text-content">
+              {inBuilding && unit.creating ? "Building's proof of ownership" : 'Proof of ownership'}
+            </h2>
+            {joiningBuilding ? (
               <p className="text-sm text-content-secondary">
-                Attached: {ownershipDoc.name}
+                This unit inherits the building&apos;s ownership document. No separate upload needed.
               </p>
+            ) : (
+              <>
+                <p className="text-sm text-content-secondary">
+                  {inBuilding && unit.creating
+                    ? 'Upload the C of O or title document for this building. It is verified once and covers every unit you list under it.'
+                    : 'An admin checks this before your listing goes on public browse.'}{' '}
+                  A C of O or deed runs to several pages - upload it as one PDF.
+                </p>
+
+                <Field label="Document type">
+                  <select
+                    className="input-field px-4 py-3"
+                    value={ownershipDocType}
+                    onChange={(e) =>
+                      setOwnershipDocType(e.target.value as 'c_of_o' | 'deed' | 'other')
+                    }
+                  >
+                    <option value="c_of_o">Certificate of Occupancy</option>
+                    <option value="deed">Deed of Assignment</option>
+                    <option value="other">Other property document</option>
+                  </select>
+                </Field>
+
+                <Field label="Document">
+                  <input
+                    className="input-field px-4 py-3"
+                    type="file"
+                    accept="application/pdf,image/*"
+                    required
+                    onChange={(e) => setOwnershipDoc(e.target.files?.[0] ?? null)}
+                  />
+                </Field>
+
+                {ownershipDoc && (
+                  <p className="text-sm text-content-secondary">
+                    Attached: {ownershipDoc.name}
+                  </p>
+                )}
+              </>
             )}
           </section>
 

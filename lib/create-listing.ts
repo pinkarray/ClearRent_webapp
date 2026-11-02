@@ -13,6 +13,27 @@ import { clientApp, clientDb } from './firebase-client'
 import { trackPropertyAdded } from './activity'
 import { getPricing } from './listing-fee'
 import { stayPayload, type Stay } from './stay'
+import { createBuilding } from './buildings'
+
+/** One unit inside a building. Absent when the whole property is let. */
+export type UnitInput = {
+  /** An existing building to join; its ownership document covers this unit. */
+  buildingId: string | null
+  /** A building to create now, carrying the ownership document. */
+  newBuilding: { name: string; structure: string } | null
+  /** Derived from type + number, "Self Contain 2". */
+  unitLabel: string
+  floor: string
+  /** 'private' | 'shared', kitchen and living room also 'none'. */
+  bathroomAccess: string
+  toiletAccess: string
+  kitchenAccess: string
+  livingRoomAccess: string
+  /** The building the unit sits in: the site's structure, or on a compound the one picked. */
+  unitBuildingStructure: string | null
+  /** "A", "B" - only on a compound. */
+  unitBuildingLabel: string | null
+}
 
 export type ListingInput = {
   title: string
@@ -49,16 +70,19 @@ export type ListingInput = {
   /** A flat can mix ceiling types, so this is a list - matches the app. */
   ceilingTypes: string[]
   videoUrl: string | null
+  unit: UnitInput | null
   /**
    * Proof of ownership - a C of O, deed of assignment, or other document.
+   * Null only for a unit joining an existing building, which inherits that
+   * building's document.
    *
-   * REQUIRED, exactly as the app requires it (`add_property_screen.dart:1344`).
+   * REQUIRED otherwise, exactly as the app requires it (`add_property_screen.dart:1344`).
    * Web used to write `ownershipDocStatus: 'none'` and collect nothing, which
    * made every web listing a dead end: admin gates verify/reject on status
    * `'pending'`, so a `'none'` listing showed "No document uploaded" with no
    * action available, and could never be verified or published.
    */
-  ownershipDocFile: File
+  ownershipDocFile: File | null
   /** Matches the app's `_ownershipDocType`. */
   ownershipDocType: 'c_of_o' | 'deed' | 'other'
 }
@@ -79,20 +103,35 @@ export type ListingInput = {
  */
 export async function createListing(uid: string, input: ListingInput): Promise<string> {
   const db = clientDb()
+  const unit = input.unit
+  const joining = !!unit?.buildingId
 
   // Uploaded BEFORE the property doc is written: storage rules make
   // `ownership/{uid}/{docId}` write-once (`resource == null`), so a failed
   // upload must not leave behind a listing claiming a document it never got.
   // The stored value is the PATH, not a download URL - the same as the app
   // (`property_service.dart:91`), which is what the admin viewer resolves.
-  const ext = input.ownershipDocFile.name.includes('.')
-    ? input.ownershipDocFile.name.split('.').pop()
-    : 'pdf'
-  const ownershipDocPath = `ownership/${uid}/cofo_${Date.now()}.${ext}`
-  await uploadBytes(
-    storageRef(getStorage(clientApp()), ownershipDocPath),
-    input.ownershipDocFile,
-  )
+  let ownershipDocPath: string | null = null
+  if (!joining) {
+    const file = input.ownershipDocFile
+    if (!file) throw new Error('Attach proof of ownership.')
+    const ext = file.name.includes('.') ? file.name.split('.').pop() : 'pdf'
+    ownershipDocPath = `ownership/${uid}/cofo_${Date.now()}.${ext}`
+    await uploadBytes(storageRef(getStorage(clientApp()), ownershipDocPath), file)
+  }
+
+  // A new building takes the document; the unit inherits it. Same order as the
+  // app: building first, so the property can name it (rules check it is ours).
+  let buildingId = unit?.buildingId ?? null
+  if (unit?.newBuilding && ownershipDocPath) {
+    buildingId = await createBuilding(uid, {
+      name: unit.newBuilding.name,
+      address: input.address,
+      structure: unit.newBuilding.structure,
+      ownershipDocUrl: ownershipDocPath,
+      ownershipDocType: input.ownershipDocType,
+    })
+  }
 
   const userSnap = await getDoc(doc(db, 'users', uid))
   const userData = userSnap.data()
@@ -145,12 +184,11 @@ export async function createListing(uid: string, input: ListingInput): Promise<s
     // the accept-time slot guard keys off this number, so it is not the
     // landlord's to raise. firestore.rules pins it to 1.
     maxTenants: 1,
-    // Web lists WHOLE properties only - it writes no buildingId - so there is
-    // nobody to share with and the access fields do not apply. They are asked
-    // and stored only for a unit inside a building, where every type can share
-    // (a self contain in a compound still queues for the toilet). Public pages
-    // gate the sharing rows on `grouped`, so omitting them shows nothing here
-    // rather than "Not stated".
+    // The access fields are asked and stored only for a unit inside a
+    // building, where every type can share (a self contain in a compound still
+    // queues for the toilet). A whole property has nobody to share with, and
+    // public pages gate the sharing rows on `grouped`, so omitting them there
+    // shows nothing rather than "Not stated".
     viewCount: 0,
     inquiryCount: 0,
     savedCount: 0,
@@ -168,12 +206,30 @@ export async function createListing(uid: string, input: ListingInput): Promise<s
     inspectionPropertyCluster: null,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
-    // Born awaiting review, with the document attached. rules:625 allows the
-    // owner to create at 'none' or 'pending' and nothing else - 'verified' is
-    // the admin's to write, via adminReviewPropertyDoc.
-    ownershipDocStatus: 'pending',
-    ownershipDocUrl: ownershipDocPath,
-    ownershipDocType: input.ownershipDocType,
+    // A whole property is born awaiting review with its document attached;
+    // 'verified' is the admin's to write, via adminReviewPropertyDoc. A unit
+    // carries no document and reads its building's - rules insist on
+    // 'inherited' and no doc fields for it.
+    ...(buildingId && unit
+      ? {
+          buildingId,
+          ownershipDocStatus: 'inherited',
+          unitLabel: unit.unitLabel,
+          ...(unit.floor ? { floor: unit.floor } : {}),
+          bathroomAccess: unit.bathroomAccess,
+          toiletAccess: unit.toiletAccess,
+          kitchenAccess: unit.kitchenAccess,
+          livingRoomAccess: unit.livingRoomAccess,
+          ...(unit.unitBuildingStructure
+            ? { unitBuildingStructure: unit.unitBuildingStructure }
+            : {}),
+          ...(unit.unitBuildingLabel ? { unitBuildingLabel: unit.unitBuildingLabel } : {}),
+        }
+      : {
+          ownershipDocStatus: 'pending',
+          ownershipDocUrl: ownershipDocPath,
+          ownershipDocType: input.ownershipDocType,
+        }),
   }
 
   // The parent doc must be committed BEFORE the subdoc: the subdoc's write rule

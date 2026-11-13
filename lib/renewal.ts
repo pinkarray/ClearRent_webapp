@@ -1,6 +1,7 @@
 import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore'
 import { getFunctions, httpsCallable } from 'firebase/functions'
 import { clientApp, clientDb, initAppCheck } from './firebase-client'
+import { landlordServiceFee, toBands } from './listing-fee'
 
 /*
   Renewal (System D). A tenancy reaches its term and the tenant pays again.
@@ -19,22 +20,25 @@ import { clientApp, clientDb, initAppCheck } from './firebase-client'
 export const DEFAULT_DEAL_FEE = 5000
 
 /**
- * The tenant's ₦5,000 deal-completion fee, read from `config/pricing` so a
- * change does not need a deploy (`functions/src/pricing.ts:38` holds the same
- * default). `config/*` is readable by any signed-in user.
+ * ClearRent's fee on a renewal of this rent: the deal-completion fee plus the
+ * service fee for the rent's band, both paid by the tenant on top of the rent.
+ * Read from `config/pricing` so a change does not need a deploy; mirrors
+ * renewalFee() in functions/src/pricing.ts. `config/*` is readable by any
+ * signed-in user.
  *
- * This is for display only - `resolveServerAmount` recomputes
- * `rentAmount + dealFee` from the source document, so a tampered client total
- * cannot change what is charged.
+ * This is for display only - `resolveServerAmount` recomputes the total from
+ * the source document, so a tampered client total cannot change what is
+ * charged.
  */
-export async function dealFee(): Promise<number> {
+export async function renewalFee(rent: number): Promise<number> {
+  let d: Record<string, unknown> = {}
   try {
-    const snap = await getDoc(doc(clientDb(), 'config', 'pricing'))
-    const v = snap.data()?.dealFee
-    return typeof v === 'number' ? v : DEFAULT_DEAL_FEE
+    d = (await getDoc(doc(clientDb(), 'config', 'pricing'))).data() ?? {}
   } catch {
-    return DEFAULT_DEAL_FEE
+    // Defaults below.
   }
+  const deal = typeof d.dealFee === 'number' ? d.dealFee : DEFAULT_DEAL_FEE
+  return deal + landlordServiceFee(rent, toBands(d.serviceFeeBands))
 }
 
 /** A landlord-added tenancy whose rent is collected off-platform, until renewal. */

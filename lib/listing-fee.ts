@@ -40,7 +40,7 @@ const DEFAULTS: Pricing = {
 }
 
 /** The configured bands, or the defaults if any entry is malformed (as the server does). */
-function toBands(raw: unknown): FeeBand[] {
+export function toBands(raw: unknown): FeeBand[] {
   if (!Array.isArray(raw) || raw.length === 0) return DEFAULTS.serviceFeeBands
   const out: FeeBand[] = []
   for (const b of raw as Record<string, unknown>[]) {
@@ -54,7 +54,10 @@ function toBands(raw: unknown): FeeBand[] {
   return out[out.length - 1].upTo === null ? out : DEFAULTS.serviceFeeBands
 }
 
-/** The landlord's service fee for a deal of this rent (a furnished stay's whole stay). */
+/**
+ * The band's service fee for a deal of this rent (a month stay's whole stay).
+ * Paid by the tenant on top of the rent, never taken from the landlord's rent.
+ */
 export function landlordServiceFee(rent: number, bands: FeeBand[]): number {
   const band = bands.find((b) => b.upTo === null || rent <= b.upTo) ?? bands[bands.length - 1]
   return band?.landlord ?? 0

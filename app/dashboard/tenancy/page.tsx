@@ -29,7 +29,6 @@ import { openInNewTab } from '../../../lib/open-in-new-tab'
 import MoveOutConditionCapture from '../../../components/MoveOutConditionCapture'
 import RateLandlord from '../../../components/RateLandlord'
 import { useAskText } from '../../../components/AskText'
-import { MoveInCheck } from '../../../components/MoveInCheck'
 import { ExtendStay } from '../../../components/ExtendStay'
 import { MoveOutItemSummary } from '../../../components/MoveOutItemCheck'
 
@@ -273,8 +272,8 @@ export default function TenancyPage() {
 
                 {isLandlord && i.status === 'pending_acceptance' && i.landlordPayout > 0 && (
                   <p className="mt-3 text-sm text-content">
-                    ClearRent service fee: {formatNaira(i.landlordDealFee)}. You receive{' '}
-                    {formatNaira(i.landlordPayout)}.
+                    You receive {formatNaira(i.landlordPayout)}. ClearRent&apos;s fee is paid by the
+                    tenant, not taken from your rent.
                   </p>
                 )}
 
@@ -356,7 +355,7 @@ export default function TenancyPage() {
                     app and the landlord's unit sat stranded. */}
                 {/* Furnished stay: add months before it ends (rent only). */}
                 {!isLandlord &&
-                  r.stayType === 'furnished' &&
+                  r.stayType !== 'yearly' &&
                   (r.status === 'active' || r.status === 'expiring_soon') &&
                   r.leaseEndDate !== null &&
                   r.leaseEndDate.getTime() > now && (
@@ -367,19 +366,6 @@ export default function TenancyPage() {
                       stayMonths={r.stayMonths}
                       monthlyRent={r.monthlyRent}
                       leaseEndDate={r.leaseEndDate}
-                    />
-                  )}
-
-                {/* Furnished stay: the 48-hour move-in check, once moved in. */}
-                {!isLandlord &&
-                  r.moveInCheck === 'awaiting' &&
-                  r.leaseStartDate !== null &&
-                  r.leaseStartDate.getTime() <= now && (
-                    <MoveInCheck
-                      rentalId={r.id}
-                      propertyId={r.propertyId}
-                      deadline={r.moveInCheckDeadline}
-                      frozenItems={r.inventory}
                     />
                   )}
 

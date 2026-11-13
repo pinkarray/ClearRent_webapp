@@ -68,7 +68,7 @@ export function useStayPicker(): [(options: Options) => Promise<StayPick | null>
         <p className="font-semibold text-content">{options.title}</p>
         <p className="mt-1 text-sm text-content-secondary">
           Choose how long and when you move in. You pay for the whole stay once the landlord
-          accepts and the agreement is signed.
+          accepts and the agreement is signed, before you move in.
         </p>
         <label className="mt-4 block text-sm text-content-secondary">
           How many months ({min} to {max})
@@ -97,7 +97,7 @@ export function useStayPicker(): [(options: Options) => Promise<StayPick | null>
         </label>
         <p className="mt-4 rounded-md bg-primary-tint px-3 py-2 text-sm text-content">
           Rent: {formatNairaFull(options.monthlyRent * months)} (
-          {formatNairaFull(options.monthlyRent)} x {months}). The deal fee and any agent fee are
+          {formatNairaFull(options.monthlyRent)} x {months}). ClearRent&apos;s fee and any agent fee are
           added at payment.
         </p>
         <div className="mt-5 flex justify-end gap-3">

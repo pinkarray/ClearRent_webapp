@@ -6,7 +6,7 @@ import { useParams, useSearchParams } from 'next/navigation'
 import { useAuth } from '../../../../../components/AuthProvider'
 import { formatDate } from '../../../../../lib/format'
 import { canPay, startPayment } from '../../../../../lib/payments'
-import { dealFee, tenantLinks } from '../../../../../lib/renewal'
+import { renewalFee, tenantLinks } from '../../../../../lib/renewal'
 import { tenantRentalHistory } from '../../../../../lib/tenancy'
 
 function formatNaira(n: number): string {
@@ -25,9 +25,9 @@ type Source = {
   Renewal / promotion checkout, the web counterpart of
   `renewal_payment_screen.dart`.
 
-  The tenant is charged rent + the deal-completion fee. The amount shown is
-  computed here for display only - `resolveServerAmount` (pricing.ts:221)
-  recomputes `rentAmount + dealFee` from the source document and rejects the
+  The tenant is charged rent + ClearRent's fee (deal fee + band service fee).
+  The amount shown is computed here for display only - `resolveServerAmount`
+  recomputes it from the source document and rejects the
   payment if the caller is not that document's tenant.
 
   The completion callable is dispatched on the return leg, in
@@ -48,10 +48,10 @@ function RenewPage() {
   useEffect(() => {
     if (!user) return
     ;(async () => {
-      setFee(await dealFee())
       if (linked) {
         const links = await tenantLinks(user.uid)
         const l = links.find((x) => x.id === params.id)
+        setFee(await renewalFee(l?.rentAmount ?? 0))
         setSource(
           l
             ? {
@@ -67,6 +67,7 @@ function RenewPage() {
       }
       const rentals = await tenantRentalHistory(user.uid)
       const r = rentals.find((x) => x.id === params.id)
+      setFee(await renewalFee(r?.rentAmount ?? 0))
       setSource(
         r
           ? {
@@ -144,7 +145,7 @@ function RenewPage() {
           <span className="font-medium text-content">{formatNaira(source.rent)}</span>
         </div>
         <div className="flex items-baseline justify-between gap-2 border-b border-divider py-3">
-          <span className="text-sm text-content-secondary">Deal completion fee</span>
+          <span className="text-sm text-content-secondary">ClearRent fee</span>
           <span className="font-medium text-content">{formatNaira(fee)}</span>
         </div>
         <div className="flex items-baseline justify-between gap-2 py-3">

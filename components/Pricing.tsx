@@ -5,8 +5,8 @@ import type { PublicPricing } from '../lib/public-pricing'
 
 /**
  * Every amount comes from the live schedule (see getPublicPricing). `onDeal`
- * is what each side pays when a rental closes: leaving it off let the section
- * promise "no commissions on your rent" while a fee came out of the rent.
+ * is what each side pays when a rental closes. Every ClearRent fee is added to
+ * the tenant's total; nothing comes out of the landlord's rent or agent's fee.
  */
 const plans = (p: PublicPricing) => [
   {
@@ -16,7 +16,7 @@ const plans = (p: PublicPricing) => [
     price: naira(p.verification.tenant.initial),
     period: 'to get verified',
     renewal: `${naira(p.verification.tenant.renewal)}/year to stay verified`,
-    onDeal: `When you rent: a flat ${naira(p.dealFee)} on top of the rent`,
+    onDeal: `When you rent: ${naira(p.dealFee)} plus a service fee of ${naira(p.landlordFee.min)} to ${naira(p.landlordFee.max)} by rent band, on top of the rent (a little more when an agent brought the home)`,
     description: 'Find and secure a verified property with confidence.',
     features: [
       'NIN identity verification',
@@ -36,7 +36,7 @@ const plans = (p: PublicPricing) => [
     price: naira(p.verification.landlord.initial),
     period: 'to get verified',
     renewal: `${naira(p.verification.landlord.renewal)}/year to stay verified`,
-    onDeal: `When you get a tenant: a flat fee from the rent, ${naira(p.landlordFee.min)} to ${naira(p.landlordFee.max)} depending on the rent`,
+    onDeal: 'When you get a tenant: you receive the full rent. Nothing is taken from it',
     description: 'List your property and connect with serious, verified tenants.',
     features: [
       'NIN + ownership document verification',
@@ -56,7 +56,7 @@ const plans = (p: PublicPricing) => [
     price: naira(p.verification.agent.initial),
     period: 'to get verified',
     renewal: `${naira(p.verification.agent.renewal)}/year to stay verified`,
-    onDeal: 'When a deal closes: half the landlord\'s fee, from your agent fee',
+    onDeal: 'When a deal closes: you receive your full agent fee. Nothing is taken from it',
     description: 'Earn on inspections with full platform support.',
     features: [
       'Full identity + guarantor verification',

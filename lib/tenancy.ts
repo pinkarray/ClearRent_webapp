@@ -95,8 +95,7 @@ export type RentalInterest = {
   /** Furnished stay: what the tenant asked for. 0 / '' on a yearly lease. */
   stayMonths: number
   stayStartDay: string
-  /** The landlord's service fee, fixed when the tenant asked, and what they receive. */
-  landlordDealFee: number
+  /** What the landlord receives: the full rent. */
   landlordPayout: number
 }
 
@@ -118,7 +117,6 @@ function toInterest(d: QueryDocumentSnapshot): RentalInterest {
     paymentAmount: (x.paymentAmount as number) ?? 0,
     stayMonths: (x.stayMonths as number) ?? 0,
     stayStartDay: (x.stayStartDay as string) ?? '',
-    landlordDealFee: (x.landlordDealFee as number) ?? 0,
     landlordPayout: (x.landlordPayout as number) ?? 0,
   } satisfies RentalInterest
 }
@@ -220,14 +218,7 @@ export type ActiveRental = {
   handoverProofUrl: string
   /** Snapshotted at acceptance, so a later listing edit cannot change it. */
   cautionDeposit: number
-  /**
-   * Furnished stay: paid up front, so the landlord's payout waits for the
-   * tenant's 48-hour move-in check. Server-written: 'awaiting' | 'confirmed'
-   * | 'reported' | 'resolved', or '' on a yearly lease.
-   */
-  moveInCheck: string
-  moveInCheckDeadline: Date | null
-  /** 'furnished' or 'yearly'. A furnished stay is extended, not renewed. */
+  /** 'furnished', 'short' or 'yearly'. A month stay is extended, not renewed. */
   stayType: string
   /** Furnished stay: months paid for so far, and the monthly rent. */
   stayMonths: number
@@ -244,7 +235,7 @@ export type ActiveRental = {
  * the whole stay (monthly rent x months), so "/ monthly" needs the monthly rent.
  */
 export function displayRent(r: ActiveRental): number {
-  return r.stayType === 'furnished' && r.monthlyRent > 0 ? r.monthlyRent : r.rentAmount
+  return r.stayType !== 'yearly' && r.monthlyRent > 0 ? r.monthlyRent : r.rentAmount
 }
 
 function toRental(d: QueryDocumentSnapshot): ActiveRental {
@@ -281,9 +272,7 @@ function toRental(d: QueryDocumentSnapshot): ActiveRental {
       handoverTenantConfirmedAt:
         x.handoverTenantConfirmedAt?.toDate?.() ?? null,
       tenantContested: x.tenantContested === true,
-      moveInCheck: (x.moveInCheck as string) ?? '',
-      moveInCheckDeadline: x.moveInCheckDeadline?.toDate?.() ?? null,
-      stayType: x.stayType === 'furnished' ? 'furnished' : 'yearly',
+      stayType: x.stayType === 'furnished' || x.stayType === 'short' ? x.stayType : 'yearly',
       stayMonths: (x.stayMonths as number) ?? 0,
       monthlyRent: (x.monthlyRent as number) ?? 0,
       inventory: stayFromDoc({ inventory: x.inventory }).inventory,
@@ -421,16 +410,6 @@ export async function acceptAgreement(
  * caller is the tenant, the interest is 'accepted', and the agreement is
  * finalized.
  */
-/** Furnished stay: the place matches the listing. Null on success. */
-export async function confirmMoveIn(rentalId: string): Promise<string | null> {
-  return moveInCall('confirmMoveIn', { rentalId })
-}
-
-/** Furnished stay: what does not match. Holds the payout. Null on success. */
-export async function reportMoveInProblem(rentalId: string, text: string): Promise<string | null> {
-  return moveInCall('reportMoveInProblem', { rentalId, text })
-}
-
 /** Furnished stay: records a paid extension. Null on success. */
 export async function completeStayExtension(
   sourceId: string,

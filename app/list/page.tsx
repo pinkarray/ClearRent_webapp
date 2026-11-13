@@ -719,15 +719,17 @@ export default function ListPropertyPage() {
                     // definition (stayValid).
                     ...(v.stayType === 'furnished'
                       ? { rentFrequency: 'monthly', furnishing: 'fully' }
-                      : d.stay.stayType === 'furnished'
-                        ? { rentFrequency: 'yearly' }
-                        : {}),
+                      : v.stayType === 'short'
+                        ? { rentFrequency: 'monthly' }
+                        : d.stay.stayType !== 'yearly'
+                          ? { rentFrequency: 'yearly' }
+                          : {}),
                   }))
                 }
               />
             )}
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label={draft.stay.stayType === 'furnished' ? 'Monthly rent (₦)' : 'Rent (₦)'}>
+              <Field label={draft.stay.stayType !== 'yearly' ? 'Monthly rent (₦)' : 'Rent (₦)'}>
                 <input
                   className="input-field px-4 py-3"
                   type="number"
@@ -737,7 +739,7 @@ export default function ListPropertyPage() {
                   onChange={(e) => set('rent', e.target.value)}
                 />
               </Field>
-              {draft.stay.stayType !== 'furnished' && (
+              {draft.stay.stayType === 'yearly' && (
                 <Field label="Rent frequency">
                   <select
                     className="input-field px-4 py-3"
@@ -776,15 +778,15 @@ export default function ListPropertyPage() {
               />
               Caution deposit is refundable at move-out
             </label>
-            {/* What the landlord pays: a fixed fee for the rent's band, out of
-                the rent when a tenant pays. A furnished stay's band depends on
-                how long the tenant books, so it is a range. */}
+            {/* The service fee for the rent's band, which the TENANT pays on
+                top; the landlord gets the whole rent. A month stay's band
+                depends on how long the tenant books, so it is a range. */}
             {feeBands.length > 0 && toFloat(draft.rent) > 0 && (
               <p className="text-sm text-content-secondary">
-                ClearRent service fee when you get a tenant:{' '}
+                You receive the full rent. ClearRent&apos;s service fee (
                 {(() => {
                   const rent = toFloat(draft.rent)
-                  if (draft.stay.stayType !== 'furnished') {
+                  if (draft.stay.stayType === 'yearly') {
                     return formatNairaFull(landlordServiceFee(rent, feeBands))
                   }
                   const low = landlordServiceFee(rent * draft.stay.minStayMonths, feeBands)
@@ -793,7 +795,7 @@ export default function ListPropertyPage() {
                     ? formatNairaFull(low)
                     : `${formatNairaFull(low)} to ${formatNairaFull(high)}, depending on how long the tenant stays`
                 })()}
-                , taken from the rent.
+                ) is paid by the tenant on top, never taken from your rent.
               </p>
             )}
           </section>

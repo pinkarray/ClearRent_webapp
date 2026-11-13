@@ -225,7 +225,7 @@ export function TermsContent() {
         'Agent verification: ₦10,000 to verify, then ₦7,000 for each annual renewal',
         'Property listing fees: as displayed at the time of listing',
         'Inspection fees: as displayed to tenants before booking, calculated by area and handler',
-        'Deal completion fee: a fee charged to the parties to a completed rental on first rent payment, as displayed at the time, which unlocks post-deal tools',
+        'Deal completion and service fees: charged to the tenant on top of the rent when a rental is paid for, as displayed before payment. The service fee is a fixed amount by rent band. No ClearRent fee is deducted from a landlord\'s rent or an agent\'s fee',
       ])}
       {p('All fees are displayed before you are charged. All fees are processed securely via Paystack. Fees are subject to change with notice to registered users; changes do not affect fees already paid.')}
 

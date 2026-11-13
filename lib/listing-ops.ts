@@ -163,8 +163,8 @@ export async function saveListingEdits(
     payload.cautionDeposit = edits.cautionDeposit
     payload.cautionDepositRefundable = edits.cautionDepositRefundable
     Object.assign(payload, stayPayload(edits.stay))
-    // Back from a furnished stay: the rent figure is yearly again.
-    if (edits.stay.stayType === 'yearly' && edits.savedStayType === 'furnished') {
+    // Back from a month stay: the rent figure is yearly again.
+    if (edits.stay.stayType === 'yearly' && edits.savedStayType !== 'yearly') {
       payload.rentFrequency = 'yearly'
     }
   }

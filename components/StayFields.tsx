@@ -100,15 +100,20 @@ export function StayFields({
           'Furnished stay',
           '1 to 11 months, paid up front. Must be fully furnished.',
         )}
+        {choice(
+          'short',
+          'Short lease',
+          'An unfurnished or partly furnished home for 1 to 11 months, paid up front before moving in.',
+        )}
       </div>
 
-      {value.stayType === 'furnished' && (
+      {value.stayType !== 'yearly' && (
         <>
           <div className="grid gap-4 sm:grid-cols-3">
             {(
               [
-                ['minStayMonths', 'Shortest stay'],
-                ['maxStayMonths', 'Longest stay'],
+                ['minStayMonths', value.stayType === 'short' ? 'Shortest lease' : 'Shortest stay'],
+                ['maxStayMonths', value.stayType === 'short' ? 'Longest lease' : 'Longest stay'],
               ] as const
             ).map(([key, label]) => (
               <label key={key} className="block">
@@ -141,6 +146,7 @@ export function StayFields({
             </label>
           </div>
 
+          {value.stayType === 'furnished' && (
           <div>
             <span className="text-sm font-medium text-content">What&rsquo;s included</span>
             <span className="mt-0.5 block text-xs text-content-hint">
@@ -265,6 +271,7 @@ export function StayFields({
               </div>
             )}
           </div>
+          )}
         </>
       )}
     </div>

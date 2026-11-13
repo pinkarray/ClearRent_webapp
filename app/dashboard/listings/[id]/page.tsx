@@ -253,7 +253,7 @@ export default function EditListingPage() {
           <div className="grid gap-4 sm:grid-cols-3">
             <label className="block">
               <span className="text-sm font-medium text-content">
-                {listing.stay.stayType === 'furnished' ? 'Monthly rent (₦)' : 'Rent (₦)'}
+                {listing.stay.stayType !== 'yearly' ? 'Monthly rent (₦)' : 'Rent (₦)'}
               </span>
               <input
                 className="input-field mt-1.5 px-4 py-3"

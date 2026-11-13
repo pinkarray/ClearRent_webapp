@@ -204,10 +204,10 @@ export default async function PropertyDetailPage({ params }: Props) {
                   label="Furnishing"
                   value={property.furnishing ? furnishingLabel(property.furnishing) : 'Not stated'}
                 />
-                {property.stay.stayType === 'furnished' && (
+                {property.stay.stayType !== 'yearly' && (
                   <Row
                     label="Let as"
-                    value={`Furnished stay, ${property.stay.minStayMonths} to ${property.stay.maxStayMonths} months, paid up front`}
+                    value={`${property.stay.stayType === 'short' ? 'Short lease' : 'Furnished stay'}, ${property.stay.minStayMonths} to ${property.stay.maxStayMonths} months, paid up front`}
                     hint={
                       property.stay.availableFrom &&
                       new Date(`${property.stay.availableFrom}T00:00:00`) > new Date()

@@ -78,8 +78,8 @@ export const SECOND_DOCUMENT: Record<
     folder: 'proof_of_income',
     docKey: 'proofOfIncome',
     requestKey: 'proofOfIncomeUrl',
-    label: 'Proof of income',
-    hint: 'A payslip, bank statement or employment letter.',
+    label: '6-month bank statement',
+    hint: 'Your last 6 months, showing your income coming in. The PDF from your bank is best.',
   },
   landlord: {
     folder: 'utility_bill',

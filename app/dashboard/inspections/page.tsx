@@ -130,9 +130,9 @@ export default function TenantInspectionsPage() {
       const p = (await getDoc(doc(clientDb(), 'properties', r.propertyId))).data()
       if (p) {
         const stay = stayFromDoc(p)
-        if (stay.stayType === 'furnished') {
+        if (stay.stayType !== 'yearly') {
           const picked = await pickStay({
-            title: 'Your stay',
+            title: stay.stayType === 'short' ? 'Your lease' : 'Your stay',
             monthlyRent: typeof p.rent === 'number' ? p.rent : 0,
             stay,
           })

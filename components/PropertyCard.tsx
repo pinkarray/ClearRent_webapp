@@ -88,7 +88,9 @@ export function PropertyCard({ property }: { property: PublicProperty }) {
         >
           {property.stay.stayType === 'furnished'
             ? `Furnished stay, ${property.stay.minStayMonths} to ${property.stay.maxStayMonths} months`
-            : furnishingLabel(property.furnishing)}
+            : property.stay.stayType === 'short'
+              ? `Short lease, ${property.stay.minStayMonths} to ${property.stay.maxStayMonths} months`
+              : furnishingLabel(property.furnishing)}
         </p>
       </div>
     </Link>

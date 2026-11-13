@@ -107,6 +107,7 @@ export default async function PropertiesPage({
             <option value="">Any stay</option>
             <option value="yearly">Yearly lease</option>
             <option value="furnished">Furnished stay (1 to 11 months)</option>
+            <option value="short">Short lease (1 to 11 months)</option>
           </select>
           <button className="btn-primary px-6 py-3" type="submit">
             Search

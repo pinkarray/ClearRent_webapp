@@ -259,7 +259,7 @@ export type PropertyFilters = {
   minRent?: number
   maxRent?: number
   furnishing?: string
-  /** 'yearly' | 'furnished'. One stay type per listing. */
+  /** 'yearly' | 'furnished' | 'short'. One stay type per listing. */
   stay?: string
 }
 

@@ -92,7 +92,8 @@ export type RentalInterest = {
   status: string
   rentAmount: number
   paymentAmount: number
-  /** Furnished stay: what the tenant asked for. 0 / '' on a yearly lease. */
+  /** Month stay: what the tenant asked for. 0 / '' on a yearly lease. */
+  stayType: string
   stayMonths: number
   stayStartDay: string
   /** What the landlord receives: the full rent. */
@@ -115,6 +116,7 @@ function toInterest(d: QueryDocumentSnapshot): RentalInterest {
     status: (x.status as string) ?? 'pending_acceptance',
     rentAmount: (x.rentAmount as number) ?? 0,
     paymentAmount: (x.paymentAmount as number) ?? 0,
+    stayType: (x.stayType as string) ?? 'yearly',
     stayMonths: (x.stayMonths as number) ?? 0,
     stayStartDay: (x.stayStartDay as string) ?? '',
     landlordPayout: (x.landlordPayout as number) ?? 0,

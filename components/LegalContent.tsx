@@ -134,7 +134,7 @@ export function PrivacyPolicyContent() {
       {p('To exercise any of these rights, contact us at info@verealtytech.com. We will respond within the timeframe required by the NDPA.')}
 
       {h('9. Data Retention')}
-      {p('We retain your personal data for as long as your account is active. If you delete your account, we will remove your personal data within 30 days, except where retention is required by law - for example, financial and transaction records, which we retain for the period required under applicable Nigerian tax and company law (generally up to six years). Anonymised or aggregated data that no longer identifies you may be retained for analytics.')}
+      {p('We retain your personal data for as long as your account is active. If you delete your account, we will remove your personal data within 30 days, except where retention is required by law. Identity verification and transaction records are kept for five years after your account is closed, as the Money Laundering (Prevention and Prohibition) Act 2022 requires, in restricted storage that only ClearRent can access, and are then deleted. Financial records may also be kept for the period Nigerian tax and company law requires (generally up to six years). Anonymised or aggregated data that no longer identifies you may be retained for analytics.')}
 
       {h('10. Children\'s Privacy')}
       {p('ClearRent is not intended for use by persons under 18 years of age. We do not knowingly collect personal data from minors. If you believe a minor has registered on our platform, please contact us immediately and we will remove the account and associated data.')}

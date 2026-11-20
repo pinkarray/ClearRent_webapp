@@ -11,6 +11,7 @@ import { formatNairaFull } from '../../../../lib/format'
 import { publishBlockReason } from '../../../../lib/user-profile'
 import { StayFields } from '../../../../components/StayFields'
 import { stayError } from '../../../../lib/stay'
+import { openViewingCount } from '../../../../lib/inspections'
 import { FurnishingPicker } from '../../../../components/FurnishingPicker'
 import {
   READINESS_ITEMS,
@@ -348,15 +349,31 @@ export default function EditListingPage() {
             <input
               type="checkbox"
               checked={listing.isAvailable}
-              onChange={(e) => {
+              onChange={async (e) => {
+                const checked = e.target.checked
                 // Relisting is what the urgent-issue block stops (rules
                 // enforce it); taking a listing down is always allowed.
-                const blocked = e.target.checked ? publishBlockReason(profile) : null
+                const blocked = checked ? publishBlockReason(profile) : null
                 if (blocked) {
                   setError(blocked)
                   return
                 }
-                set('isAvailable', e.target.checked)
+                // Taking it down cancels viewings that have not happened yet
+                // (onPropertyTaken), and refunds the ones already paid.
+                if (!checked && user) {
+                  const open = await openViewingCount(user.uid, propertyId)
+                  if (
+                    open > 0 &&
+                    !window.confirm(
+                      `This will cancel ${open} booked viewing${open === 1 ? '' : 's'}. ` +
+                        'Tenants who paid get their viewing fee back, minus the booking charge, ' +
+                        'plus a free booking on their next viewing. Continue?',
+                    )
+                  ) {
+                    return
+                  }
+                }
+                set('isAvailable', checked)
               }}
             />
             Available for rent

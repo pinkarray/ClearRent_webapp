@@ -12,7 +12,8 @@ import { clientDb } from '../../../lib/firebase-client'
 import { startPayment } from '../../../lib/payments'
 import { InspectionActions } from '../../../components/InspectionActions'
 import { createRentalInterest, watchInterests } from '../../../lib/tenancy'
-import { cancelInspection } from '../../../lib/inspections'
+import { cancelInspection, hasFreeBooking } from '../../../lib/inspections'
+import { getPricing } from '../../../lib/listing-fee'
 import { RescheduleActions } from '../../../components/RescheduleActions'
 import { RebookCard } from '../../../components/RebookCard'
 import { useScrollToHash } from '../../../lib/use-scroll-to-hash'
@@ -85,6 +86,17 @@ export default function TenantInspectionsPage() {
   // Which card a payment error belongs to, so it shows under that card's Pay
   // button. At the top of the page it went unseen and Pay looked dead.
   const [payErrorFor, setPayErrorFor] = useState<string | null>(null)
+  // A free-booking voucher waives ClearRent's charge: only the handler's share
+  // is paid. The server applies it; this is what the button shows.
+  const [freeBookingFee, setFreeBookingFee] = useState<number | null>(null)
+  useEffect(() => {
+    if (!user) return
+    void (async () => {
+      if (await hasFreeBooking(user.uid)) {
+        setFreeBookingFee((await getPricing()).inspectionHandler)
+      }
+    })()
+  }, [user])
   const [reloadKey, setReloadKey] = useState(0)
   const [cancelling, setCancelling] = useState<string | null>(null)
 
@@ -302,15 +314,16 @@ export default function TenantInspectionsPage() {
                 {r.status === 'approved' && r.paymentStatus === 'unpaid' && (
                   <div className="mt-4 border-t border-divider pt-4">
                     <p className="text-sm text-content-secondary">
-                      Approved. Pay {formatNaira(r.totalFee)} to confirm and unlock the exact
-                      address.
+                      Approved. Pay {formatNaira(freeBookingFee ?? r.totalFee)} to confirm and
+                      unlock the exact address.
+                      {freeBookingFee !== null && ' Your booking charge is free this time.'}
                     </p>
                     <button
                       className="btn-primary mt-3 px-6 py-2.5 text-sm"
                       disabled={payingId === r.id}
                       onClick={() => handlePay(r)}
                     >
-                      {payingId === r.id ? 'Connecting to Paystack…' : `Pay ${formatNaira(r.totalFee)}`}
+                      {payingId === r.id ? 'Connecting to Paystack…' : `Pay ${formatNaira(freeBookingFee ?? r.totalFee)}`}
                     </button>
                     {payErrorFor === r.id && payError && (
                       <p className="mt-2 text-sm text-error">{payError}</p>

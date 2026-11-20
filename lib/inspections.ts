@@ -731,3 +731,45 @@ export async function rebookInspection(
     return 'Could not book that time. Try again.'
   }
 }
+
+/**
+ * Does this tenant have a free-booking voucher to use? Earned when a house is
+ * rented before their paid viewing (viewing_release_ops.ts). The server applies
+ * it on its own; this only lets the pay button say so.
+ */
+export async function hasFreeBooking(uid: string): Promise<boolean> {
+  try {
+    const snap = await getDocs(
+      query(collection(clientDb(), 'viewing_credits'), where('uid', '==', uid)),
+    )
+    const now = Date.now()
+    return snap.docs.some((d) => {
+      const x = d.data()
+      const exp = (x.expiresAt as Timestamp | undefined)?.toMillis() ?? 0
+      return exp > now && (x.status === 'available' || x.status === 'reserved')
+    })
+  } catch {
+    return false
+  }
+}
+
+/** Viewings of a listing that have not happened yet, so marking it taken cancels them. */
+const NOT_HAPPENED = [
+  'pendingPayment', 'pendingVerification', 'pending', 'approved',
+  'declinedByAgent', 'expiredUnapproved', 'rebookOffered',
+]
+
+export async function openViewingCount(landlordId: string, propertyId: string): Promise<number> {
+  try {
+    const snap = await getDocs(
+      query(
+        collection(clientDb(), 'inspection_requests'),
+        where('landlordId', '==', landlordId),
+        where('propertyId', '==', propertyId),
+      ),
+    )
+    return snap.docs.filter((d) => NOT_HAPPENED.includes(d.data().status as string)).length
+  } catch {
+    return 0
+  }
+}
